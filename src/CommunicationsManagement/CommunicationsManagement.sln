@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CommunicationsManagement.API", "CommunicationsManagement.API\CommunicationsManagement.API.fsproj", "{088B3B1B-D55B-4B50-AE05-7A86D8431C93}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CommunicationsManagement.Test", "CommunicationsManagement.Test\CommunicationsManagement.Test.fsproj", "{382B4BF1-9787-40C1-B5EF-C887CD378565}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{088B3B1B-D55B-4B50-AE05-7A86D8431C93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{088B3B1B-D55B-4B50-AE05-7A86D8431C93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{088B3B1B-D55B-4B50-AE05-7A86D8431C93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{088B3B1B-D55B-4B50-AE05-7A86D8431C93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{382B4BF1-9787-40C1-B5EF-C887CD378565}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{382B4BF1-9787-40C1-B5EF-C887CD378565}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{382B4BF1-9787-40C1-B5EF-C887CD378565}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{382B4BF1-9787-40C1-B5EF-C887CD378565}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
