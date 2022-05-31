@@ -1,9 +1,4 @@
-﻿open System
-open System.Collections.Generic
-open System.Text
-open System.Threading.Tasks
-open CommunicationsManagement.API
-open EventStore.Client
+﻿open CommunicationsManagement.API
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
@@ -12,8 +7,7 @@ open Giraffe
 open EventStore
 
 
-let (>>=>) a b =
-  a >=> warbler (fun _ -> b)
+let (>>=>) a b = a >=> warbler (fun _ -> b)
 
 let webApp =
   choose [ route "/ping" >=> text "pong"
@@ -22,8 +16,7 @@ let webApp =
 
 let configureApp (app: IApplicationBuilder) = app.UseGiraffe webApp
 
-let configureServices (services: IServiceCollection) =
-  services.AddGiraffe() |> ignore
+let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
 [<EntryPoint>]
 let main _ =

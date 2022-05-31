@@ -4,10 +4,11 @@ open System
 open System.Collections.Generic
 open System.Text
 open System.Threading.Tasks
-open Models
+open CommunicationsManagement.API.Models
 open EventStore.Client
 open Configuration
 open Newtonsoft.Json
+open FsToolkit.ErrorHandling
 
 let settings =
   EventStoreClientSettings.Create configuration.EventStoreConnectionString
@@ -23,20 +24,38 @@ let getCheckpoint () =
   |> Option.map FromStream.After
   |> Option.defaultValue FromStream.Start
 
+let deserialize (evnt: ResolvedEvent) =
+  let decoded =
+    evnt.Event.Data.ToArray()
+    |> Encoding.UTF8.GetString
+
+  match evnt.Event.EventType with
+  | "Message" ->
+    try
+      decoded
+      |> JsonConvert.DeserializeObject<Message>
+      |> Message
+    with
+    | _ -> StreamEvent.Toxic("Message", decoded)
+  | t -> StreamEvent.Toxic(t, decoded)
+
+let private handleMessage m =
+  task {
+    if not <| state.ContainsKey(m.ID) then
+      state[m.ID] <- m.Amount
+    else
+      state[m.ID] <- state[m.ID] + m.Amount
+  }
+
+let handle =
+  function
+  | Message m -> m |> handleMessage
+  | Toxic _ -> Task.singleton ()
+
 let handleEvent (evnt: ResolvedEvent) =
   task {
-    let data = evnt.Event.Data.ToArray()
-    let decoded = Encoding.UTF8.GetString(data)
-    let parsed = JsonConvert.DeserializeObject<Message>(decoded)
-
-    if not <| state.ContainsKey(parsed.ID) then
-      state[parsed.ID] <- parsed.Amount
-    else
-      state[parsed.ID] <- state[parsed.ID] + parsed.Amount
-
-    checkpoint <- Some evnt.OriginalEventNumber
-
-    return ()
+    do! deserialize evnt |> handle
+    return checkpoint <- Some evnt.OriginalEventNumber
   }
 
 let rec subscribe () =
@@ -51,9 +70,8 @@ let rec subscribe () =
   task {
     try
       return!
-        client
-          .SubscribeToStreamAsync("deletable", getCheckpoint(), handle, false, reSubscribe)
-          :> Task
+        client.SubscribeToStreamAsync("deletable", getCheckpoint (), handle, false, reSubscribe)
+        :> Task
     with
     | _ ->
       do! Task.Delay(5000)
