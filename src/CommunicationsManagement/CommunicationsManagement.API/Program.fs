@@ -2,12 +2,10 @@
 open System.Collections.Generic
 open System.IO
 open System.Text
-open System.Threading
 open System.Threading.Tasks
 open EventStore.Client
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
@@ -69,10 +67,10 @@ let rec subscribe () =
 
   task {
     try
-      let! _ =
-        client.SubscribeToStreamAsync("deletable", getCheckpoint (), handle, false, reSubscribe)
-
-      return ()
+      return!
+        client
+          .SubscribeToStreamAsync("deletable", getCheckpoint(), handle, false, reSubscribe)
+          :> Task
     with
     | _ ->
       do! Task.Delay(5000)
@@ -81,17 +79,17 @@ let rec subscribe () =
 
 subscribe () |> ignore
 
-let getState = warbler (fun _ -> json state)
+let (>>=>) a b =
+  a >=> warbler (fun _ -> b)
 
 let webApp =
   choose [ route "/ping" >=> text "pong"
-           route "/inventory" >=> getState
+           route "/inventory" >>=> json state
            route "/" >=> htmlFile "./pages/index.html" ]
 
 let configureApp (app: IApplicationBuilder) = app.UseGiraffe webApp
 
 let configureServices (services: IServiceCollection) =
-  // Add Giraffe dependencies
   services.AddGiraffe() |> ignore
 
 [<EntryPoint>]
