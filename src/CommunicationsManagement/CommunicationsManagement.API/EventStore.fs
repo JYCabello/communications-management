@@ -58,24 +58,33 @@ let handleEvent (evnt: ResolvedEvent) =
     return checkpoint <- Some evnt.OriginalEventNumber
   }
 
-let rec subscribe () =
-  let reSubscribe (_: StreamSubscription) (reason: SubscriptionDroppedReason) (_: Exception) =
-    if reason = SubscriptionDroppedReason.Disposed |> not then
-      subscribe () |> ignore
-    else
-      ()
+let subscribe (subscription: SubscriptionDetails) =
+  let rec subscribeTo () =
+    let reSubscribe (_: StreamSubscription) (reason: SubscriptionDroppedReason) (_: Exception) =
+      if reason = SubscriptionDroppedReason.Disposed |> not then
+        subscribeTo () |> ignore
+      else
+        ()
 
-  let handle _ evnt _ = task { do! handleEvent evnt } :> Task
+    task {
+      try
+        return!
+          client
+            .SubscribeToStreamAsync(
+              subscription.StreamID,
+              getCheckpoint (),
+              subscription.Handler,
+              false,
+              reSubscribe)
+          :> Task
+      with
+      | _ ->
+        do! Task.Delay(5000)
+        return! subscribeTo ()
+    }
 
-  task {
-    try
-      return!
-        client.SubscribeToStreamAsync("deletable", getCheckpoint (), handle, false, reSubscribe)
-        :> Task
-    with
-    | _ ->
-      do! Task.Delay(5000)
-      return! subscribe ()
-  }
+  subscribeTo () |> ignore
 
-subscribe () |> ignore
+{ StreamID = "deletable"
+  Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }
+|> subscribe
