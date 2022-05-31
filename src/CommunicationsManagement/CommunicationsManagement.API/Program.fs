@@ -3,6 +3,7 @@ open System.Collections.Generic
 open System.IO
 open System.Text
 open System.Threading.Tasks
+open CommunicationsManagement.API
 open EventStore.Client
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -11,12 +12,7 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open Newtonsoft.Json
-
-[<CLIMutable>]
-type Configuration = { EventStoreConnectionString: string }
-
-[<CLIMutable>]
-type Message = { ID: int; Amount: int }
+open Models
 
 let configuration =
   ConfigurationBuilder()
