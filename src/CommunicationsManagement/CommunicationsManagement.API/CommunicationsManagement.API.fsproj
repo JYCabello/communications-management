@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <Compile Include="Models.fs" />
+        <Compile Include="Configuration.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

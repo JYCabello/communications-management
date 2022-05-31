@@ -1,26 +1,17 @@
 ﻿open System
 open System.Collections.Generic
-open System.IO
 open System.Text
 open System.Threading.Tasks
 open CommunicationsManagement.API
 open EventStore.Client
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open Newtonsoft.Json
 open Models
-
-let configuration =
-  ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", true, true)
-    .AddEnvironmentVariables()
-    .Build()
-    .Get<Configuration>()
+open Configuration
 
 let settings =
   EventStoreClientSettings.Create configuration.EventStoreConnectionString
