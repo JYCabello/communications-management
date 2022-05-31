@@ -2,12 +2,10 @@
 open System.Collections.Generic
 open System.IO
 open System.Text
-open System.Threading
 open System.Threading.Tasks
 open EventStore.Client
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
