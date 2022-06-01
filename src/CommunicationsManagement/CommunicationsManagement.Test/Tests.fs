@@ -9,7 +9,7 @@ open TestSetup
 [<Fact>]
 let ``My test`` () =
   task {
-    use! __ = startEventStore "sometestcontainer"
+    use! __ = testSetup ()
     Thread.Sleep(3_000)
     Assert.True(true)
   }
