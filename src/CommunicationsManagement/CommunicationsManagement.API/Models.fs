@@ -1,6 +1,5 @@
 ﻿module CommunicationsManagement.API.Models
 
-open System
 open System.Threading
 open System.Threading.Tasks
 open EventStore.Client

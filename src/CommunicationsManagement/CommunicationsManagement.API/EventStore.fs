@@ -68,7 +68,7 @@ let subscribe (subscription: SubscriptionDetails) =
 
     task {
       try
-        return!
+        do!
           client
             .SubscribeToStreamAsync(
               subscription.StreamID,
