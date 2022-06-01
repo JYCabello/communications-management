@@ -1,4 +1,4 @@
-﻿module TestProject1CommunicationsManagement.Test.TestContainers
+﻿module TestProject1CommunicationsManagement.Test.TestSetup
 
 open System
 open System.Collections.Generic
@@ -7,15 +7,57 @@ open System.Threading.Tasks
 open Docker.DotNet
 open Docker.DotNet.Models
 
+let getClient () =
+  let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine");
+  let defaultLinuxDockerEngineUri = Uri("unix:///var/run/docker.sock")
+  let engineUri =
+    if RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+    then defaultLinuxDockerEngineUri
+    else defaultWindowsDockerEngineUri
+  (new DockerClientConfiguration (engineUri)).CreateClient()
+
+let deleteContainer id =
+  task {
+    use client = getClient()
+    do! client.Containers.StopContainerAsync(id, ContainerStopParameters()) :> Task
+    do! client.Containers.RemoveContainerAsync(id, ContainerRemoveParameters())
+  }
+
+type Setup(containerID: string) =
+  interface IDisposable with
+    member this.Dispose() = deleteContainer containerID |> fun t -> t.Result
+
+let startContainer name cp =
+  task {
+    use client = getClient()
+    let! containers =
+      client
+        .Containers
+        .ListContainersAsync(
+          ContainersListParameters()
+          |> fun p ->
+              p.All <- true
+              p
+        )
+    let container =
+      containers
+      |> Seq.tryFind (fun c -> c.Names |> Seq.exists (fun n -> n = $"/{name}"))
+    
+    let! id =
+      match container with
+      | Some c -> c.ID |> Task.FromResult 
+      | None ->
+        task {
+          let! response = client.Containers.CreateContainerAsync(cp)
+          return response.ID
+        }
+    do! client.Containers.StartContainerAsync(id, ContainerStartParameters()) :> Task
+    return new Setup(id)
+  }
+
 let startEventStore name =
   task {
-    let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine");
-    let defaultLinuxDockerEngineUri = Uri("unix:///var/run/docker.sock")
-    let engineUri =
-      if RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-      then defaultLinuxDockerEngineUri
-      else defaultWindowsDockerEngineUri
-    use client = (new DockerClientConfiguration (engineUri)).CreateClient()
+    use client = getClient()
     let parameters = CreateContainerParameters()
     parameters.Name <- name
     parameters.Image <- "eventstore/eventstore:latest"
@@ -31,18 +73,21 @@ let startEventStore name =
     parameters.Env.Add("EVENTSTORE_INSECURE=true")
     parameters.Env.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true")
     parameters.Env.Add("EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true")
-    
+
     let hostConfig = HostConfig()
     let bindings =
       PortBinding()
       |> fun b ->
-        b.HostPort <- "2113"
+        b.HostPort <- "2113/tcp"
         b.HostIP <- "0.0.0.0"
         List<PortBinding>([b])
+    
 
     hostConfig.PortBindings <-
       Dictionary<string, IList<PortBinding>>()
-    hostConfig.PortBindings.Add("2113", bindings)
+    hostConfig.PortBindings.Add("2113/tcp", bindings)
+    
+    parameters.HostConfig <- hostConfig
   
     let! containers =
       client
@@ -67,4 +112,5 @@ let startEventStore name =
           return response.ID
         }
     do! client.Containers.StartContainerAsync(id, ContainerStartParameters()) :> Task
+    return new Setup(id)
   }

@@ -1,13 +1,15 @@
 module Tests
 
+open System.Threading
 open TestProject1CommunicationsManagement.Test
 open Xunit
-open TestContainers
+open TestSetup
 
 
 [<Fact>]
 let ``My test`` () =
   task {
-    do! startEventStore "sometestcontainer"
+    use! __ = startEventStore "sometestcontainer"
+    Thread.Sleep(3_000)
     Assert.True(true)
   }
