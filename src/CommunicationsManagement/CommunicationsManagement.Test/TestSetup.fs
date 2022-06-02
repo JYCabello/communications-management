@@ -9,13 +9,22 @@ open CommunicationsManagement.API.Models
 open Docker.DotNet
 open Docker.DotNet.Models
 open FsToolkit.ErrorHandling
+open OpenQA.Selenium
+open OpenQA.Selenium.Firefox
 
 type Setup(
   disposers: (unit -> unit) list,
-  getLastNotification: unit -> SendNotificationParams) =
+  getLastNotification: unit -> SendNotificationParams,
+  webDriver: WebDriver) =
     
   member this.lastNotification
     with get() = getLastNotification()
+  
+  member this.baseUrl
+    with get() = "http://localhost:5000"
+    
+  member this.driver
+    with get() = webDriver
     
   interface IDisposable with
     member this.Dispose() =
@@ -135,10 +144,13 @@ let testSetup () =
         do! h.StartAsync()
         return h
       }
+    
+    let driver = new FirefoxDriver()
       
     let disposers =
       [ fun () -> deleteContainer containerID |> fun t -> t.Result
-        fun () -> host.Dispose() ]
+        host.Dispose
+        driver.Dispose ]
     
-    return new Setup(disposers, getLastNotification)
+    return new Setup(disposers, getLastNotification, driver)
   }

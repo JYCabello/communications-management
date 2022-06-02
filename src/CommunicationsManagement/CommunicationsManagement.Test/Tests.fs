@@ -1,18 +1,19 @@
 module Tests
 
-open System.Threading
+open OpenQA.Selenium
 open TestProject1CommunicationsManagement.Test
 open Xunit
 open TestSetup
 
 
 [<Fact>]
-let ``My test`` () =
+let ``greets`` () =
   task {
-    use! __ = testSetup ()
-
-    for _ in [1..10] do
-      Thread.Sleep(150)
-
+    use! setup = testSetup ()
+    let driver = setup.driver
+    driver.Url <- setup.baseUrl
+    driver.Navigate() |> ignore
+    let greeting = driver.FindElement(By.Id("greeting"))
+    Assert.Equal("Hello there my friend!", greeting.Text)
     Assert.True(true)
   }
