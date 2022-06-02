@@ -36,8 +36,8 @@ let deserialize (evnt: ResolvedEvent) =
       |> JsonConvert.DeserializeObject<Message>
       |> Message
     with
-    | _ -> StreamEvent.Toxic("Message", decoded)
-  | t -> StreamEvent.Toxic(t, decoded)
+    | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
+  | t -> StreamEvent.Toxic  { Type = t; Content = decoded }
 
 let private handleMessage m =
   task {

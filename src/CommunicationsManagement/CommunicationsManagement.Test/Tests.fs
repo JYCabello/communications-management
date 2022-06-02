@@ -1,7 +1,6 @@
 module Tests
 
 open System.Threading
-open System.Threading.Tasks
 open TestProject1CommunicationsManagement.Test
 open Xunit
 open TestSetup
@@ -14,7 +13,7 @@ let ``My test`` () =
     use host = Main.buildHost ()
     do! host.StartAsync()
 
-    for _ in [ 1..100 ] do
+    for _ in [ 1..10 ] do
       Thread.Sleep(150)
 
     Assert.True(true)

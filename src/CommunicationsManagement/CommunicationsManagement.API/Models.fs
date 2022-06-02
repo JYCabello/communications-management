@@ -11,7 +11,7 @@ type Configuration = { EventStoreConnectionString: string }
 type Message = { ID: int; Amount: int }
 
 [<CLIMutable>]
-type ToxicEvent = { Content: string }
+type ToxicEvent = { Content: string; Type: string }
 
 type Roles =
   | Admin = 1
