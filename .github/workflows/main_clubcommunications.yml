@@ -24,6 +24,14 @@ jobs:
 
       - name: Pull event store image
         run: docker pull eventstore/eventstore:latest
+      
+      - name: Disable test parallelism
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: '**/xunit.runner.json'
+        env:
+          parallelizeAssembly: false
+          parallelizeTestCollections: false
 
       - name: Test
         run: dotnet test ./src/CommunicationsManagement/CommunicationsManagement.sln
