@@ -12,6 +12,11 @@
         <Compile Include="TestSetup.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
+        <Content Include="appsettings.json">
+          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+          <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -27,6 +32,10 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommunicationsManagement.API\CommunicationsManagement.API.fsproj" />
     </ItemGroup>
 
 </Project>

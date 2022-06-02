@@ -1,10 +1,14 @@
-﻿open CommunicationsManagement.API
+﻿module Main
+
+open System.Threading.Tasks
+open CommunicationsManagement.API
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open EventStore
+open Models
 
 
 let (>>=>) a b = a >=> warbler (fun _ -> b)
@@ -18,8 +22,7 @@ let configureApp (app: IApplicationBuilder) = app.UseGiraffe webApp
 
 let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
-[<EntryPoint>]
-let main _ =
+let buildHost () =
   Host
     .CreateDefaultBuilder()
     .ConfigureWebHostDefaults(fun webHostBuilder ->
@@ -28,6 +31,8 @@ let main _ =
         .ConfigureServices(configureServices)
       |> ignore)
     .Build()
-    .Run()
 
+[<EntryPoint>]
+let main _ =
+  buildHost().Run()
   0

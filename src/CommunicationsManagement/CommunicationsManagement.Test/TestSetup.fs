@@ -43,7 +43,7 @@ let private startContainer (cp: CreateContainerParameters) =
     let container =
       containers
       |> Seq.tryFind (fun c -> c.Names |> Seq.exists (fun n -> n = $"/{cp.Name}"))
-    
+
     let! id =
       match container with
       | Some c -> c.ID |> Task.FromResult 
@@ -53,31 +53,36 @@ let private startContainer (cp: CreateContainerParameters) =
           return response.ID
         }
     do! client.Containers.StartContainerAsync(id, ContainerStartParameters()) :> Task
+
     return id
   }
 
 let private eventStoreCreateParams =
   let name = "comm-mgmt-test-event-store-db-deleteme"
   let hostConfig =
-    let hc = HostConfig()
-    let bindings =
+    let hostConfig = HostConfig()
+    let http =
       PortBinding()
       |> fun b ->
         b.HostPort <- "2113/tcp"
         b.HostIP <- "0.0.0.0"
-        List<PortBinding>([b])
+        b
+    let other =
+      PortBinding()
+      |> fun b ->
+        b.HostPort <- "1113/tcp"
+        b.HostIP <- "0.0.0.0"
+        b
 
-    hc.PortBindings <-
+    hostConfig.PortBindings <-
       Dictionary<string, IList<PortBinding>>()
-    hc.PortBindings.Add("2113/tcp", bindings)
-    hc
+    hostConfig.PortBindings.Add("2113/tcp",List<PortBinding>([http]))
+    hostConfig.PortBindings.Add("1113/tcp",List<PortBinding>([other]))
+    hostConfig
 
   let createParams = CreateContainerParameters()
   createParams.Name <- name
   createParams.Image <- "eventstore/eventstore:latest"
-  createParams.ExposedPorts <- Dictionary<string, EmptyStruct>()
-  createParams.ExposedPorts.Add("2113/tcp", EmptyStruct())
-  createParams.ExposedPorts.Add("1113/tcp", EmptyStruct())
   createParams.Env <- List<string>()
   createParams.Env.Add("EVENTSTORE_CLUSTER_SIZE=1")
   createParams.Env.Add("EVENTSTORE_RUN_PROJECTIONS=All")
@@ -88,6 +93,7 @@ let private eventStoreCreateParams =
   createParams.Env.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true")
   createParams.Env.Add("EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true")
   createParams.HostConfig <- hostConfig
+  
   createParams
 
 let testSetup () =
