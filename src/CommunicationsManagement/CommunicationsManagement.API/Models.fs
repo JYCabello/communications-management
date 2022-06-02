@@ -10,6 +10,9 @@ type Configuration = { EventStoreConnectionString: string }
 [<CLIMutable>]
 type Message = { ID: int; Amount: int }
 
+[<CLIMutable>]
+type ToxicEvent = { Content: string }
+
 type Roles =
   | Admin = 1
   | Delegate = 2
@@ -19,7 +22,17 @@ let contains (searchTerm: Roles) (roles: Roles) = (searchTerm &&& roles) = searc
 
 type StreamEvent =
   | Message of Message
-  | Toxic of eventType: string * content: string
+  | Toxic of ToxicEvent
+
+let getEventTypeName =
+  function
+  | Message _ -> "Message"
+  | Toxic _ -> "Toxic"
+
+let getStreamName =
+  function
+  | Message _ -> "deletable"
+  | Toxic _ -> "toxic"
 
 type DomainError =
   | Unauthorized of protectedResourceName: string
@@ -31,7 +44,7 @@ type SubscriptionDetails =
   { StreamID: string
     Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task }
 
-type SendEventParams<'a> = { StreamID: string; Event: 'a }
+type SendEventParams = { Event: StreamEvent }
 
 type WelcomeNotification = { UserName: string }
 

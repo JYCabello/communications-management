@@ -9,6 +9,7 @@
     <ItemGroup>
         <Compile Include="Models.fs" />
         <Compile Include="Effects.fs" />
+        <Compile Include="Operations.fs" />
         <Compile Include="Configuration.fs" />
         <Compile Include="EventStore.fs" />
         <Compile Include="Program.fs" />

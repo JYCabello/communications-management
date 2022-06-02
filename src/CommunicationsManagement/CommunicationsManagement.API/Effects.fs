@@ -5,8 +5,8 @@ open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
 type IPorts =
-  abstract member sendEvent<'a> : SendEventParams<'a> -> Task
-  abstract member sendNotification : SendNotificationParams -> Task
+  abstract member sendEvent : SendEventParams -> Task<Result<unit, DomainError>>
+  abstract member sendNotification : SendNotificationParams -> Task<Result<unit, DomainError>>
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
@@ -17,6 +17,26 @@ let bindE (f: 'a -> Effect<'b>) (e: Effect<'a>) : Effect<'b> =
     taskResult {
       let! a = e p
       return! p |> f a
+    }
+
+
+let fromResult r : Effect<'a> = fun _ -> r
+let singleton a : Effect<'a> = fun _ -> a |> TaskResult.ok
+let error e : Effect<'a> = fun _ -> e |> TaskResult.error
+
+let fromOption rn o : Effect<'a> =
+  match o with
+  | Some a -> a |> singleton
+  | None -> NotFound rn |> error
+
+let fromTaskOption rn tskOpt : Effect<'a> =
+  fun _ ->
+    task {
+      let! o = tskOpt
+      return
+        match o with
+        | Some a -> Ok a
+        | None -> NotFound rn |> Error
     }
 
 let getPorts (p: IPorts) = p |> TaskResult.ok
