@@ -1,7 +1,9 @@
 ﻿module CommunicationsManagement.API.Models
 
 [<CLIMutable>]
-type Configuration = { EventStoreConnectionString: string }
+type Configuration =
+  { EventStoreConnectionString: string
+    BaseUrl: string }
 
 [<CLIMutable>]
 type Message = { ID: int; Amount: int }

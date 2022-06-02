@@ -19,14 +19,14 @@ type Setup
     disposers: (unit -> unit) list,
     getLastNotification: unit -> SendNotificationParams,
     webDriver: WebDriver,
-    sitePort
+    ports: IPorts
   ) =
 
   member this.lastNotification = getLastNotification ()
 
-  member this.baseUrl = $"http://localhost:{sitePort}"
-
   member this.driver = webDriver
+  
+  member this.config = ports.configuration
 
   interface IDisposable with
     member this.Dispose() =
@@ -127,25 +127,23 @@ let random = Random()
 let getRandomPort () = 30_000 |> random.Next |> (+) 10_000
 
 let getFreePort () =
-  task {
-    let rec go pn =
-      let isTaken =
-        getConnectionInfo ()
-        |> Seq.exists (fun ci -> ci.LocalEndPoint.Port = pn)
+  let rec go pn =
+    let isTaken =
+      getConnectionInfo ()
+      |> Seq.exists (fun ci -> ci.LocalEndPoint.Port = pn)
 
-      match isTaken with
-      | true -> getRandomPort () |> go
-      | false -> pn
+    match isTaken with
+    | true -> getRandomPort () |> go
+    | false -> pn
 
-    do! sm.WaitAsync()
-    let port = getRandomPort () |> go
-    sm.Release() |> ignore
-    return port
-  }
+  sm.Wait()
+  let port = getRandomPort () |> go
+  sm.Release() |> ignore
+  port
 
 let testSetup () =
   task {
-    let! containerPort = getFreePort ()
+    let containerPort = getFreePort ()
 
     let! containerID =
       startContainer
@@ -161,6 +159,17 @@ let testSetup () =
 
     let mutable ln: SendNotificationParams option = None
 
+    
+
+    let getLastNotification () =
+      match ln with
+      | Some n -> n
+      | None -> failwith "Expected a notification"
+
+    let sitePort = getFreePort ()
+    let baseUrl = $"http://localhost:{sitePort}"
+
+    
     let ports: IPorts =
       { new IPorts with
           member this.sendEvent p = () |> TaskResult.ok
@@ -168,14 +177,9 @@ let testSetup () =
 
           member this.configuration =
             { EventStoreConnectionString =
-                $"esdb://admin:changeit@localhost:{containerPort}?tls=false" } }
-
-    let getLastNotification () =
-      match ln with
-      | Some n -> n
-      | None -> failwith "Expected a notification"
-
-    let! sitePort = getFreePort ()
+                $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
+              BaseUrl = baseUrl }
+            }
 
     let! host =
       task {
@@ -188,6 +192,9 @@ let testSetup () =
       [ fun () -> deleteContainer containerID |> fun t -> t.Result
         host.Dispose
         driver.Dispose ]
+      
+    driver.Url <- baseUrl
+    driver.Navigate () |> ignore
 
-    return new Setup(disposers, getLastNotification, driver, sitePort)
+    return new Setup(disposers, getLastNotification, driver, ports)
   }
