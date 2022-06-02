@@ -3,7 +3,8 @@
 [<CLIMutable>]
 type Configuration =
   { EventStoreConnectionString: string
-    BaseUrl: string }
+    BaseUrl: string
+    AdminEmail: string }
 
 [<CLIMutable>]
 type Message = { ID: int; Amount: int }

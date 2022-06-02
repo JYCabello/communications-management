@@ -25,7 +25,7 @@ type Setup
   member this.lastNotification = getLastNotification ()
 
   member this.driver = webDriver
-  
+
   member this.config = ports.configuration
 
   interface IDisposable with
@@ -159,7 +159,7 @@ let testSetup () =
 
     let mutable ln: SendNotificationParams option = None
 
-    
+
 
     let getLastNotification () =
       match ln with
@@ -169,7 +169,7 @@ let testSetup () =
     let sitePort = getFreePort ()
     let baseUrl = $"http://localhost:{sitePort}"
 
-    
+
     let ports: IPorts =
       { new IPorts with
           member this.sendEvent p = () |> TaskResult.ok
@@ -178,8 +178,8 @@ let testSetup () =
           member this.configuration =
             { EventStoreConnectionString =
                 $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
-              BaseUrl = baseUrl }
-            }
+              BaseUrl = baseUrl
+              AdminEmail = "notareal@email.com" } }
 
     let! host =
       task {
@@ -192,9 +192,8 @@ let testSetup () =
       [ fun () -> deleteContainer containerID |> fun t -> t.Result
         host.Dispose
         driver.Dispose ]
-      
+
     driver.Url <- baseUrl
-    driver.Navigate () |> ignore
 
     return new Setup(disposers, getLastNotification, driver, ports)
   }
