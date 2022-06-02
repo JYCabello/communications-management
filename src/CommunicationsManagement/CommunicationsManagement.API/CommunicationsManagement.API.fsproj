@@ -3,9 +3,15 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
+        <WarningsAsErrors>FS0025</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Models.fs" />
+        <Compile Include="Effects.fs" />
+        <Compile Include="Operations.fs" />
+        <Compile Include="Configuration.fs" />
+        <Compile Include="EventStore.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -1,7 +1,32 @@
 module Tests
 
-open System
+open OpenQA.Selenium
+open TestProject1CommunicationsManagement.Test
 open Xunit
+open TestSetup
 
-[<Fact>]
-let ``My test`` () = Assert.True(true)
+// Putting the tests in different modules allows for parallelization
+
+module A =
+  [<Fact>]
+  let ``greets you`` () =
+    task {
+      use! setup = testSetup ()
+      let driver = setup.driver
+      driver.Url <- setup.baseUrl
+      driver.Navigate() |> ignore
+      let greeting = driver.FindElement(By.Id("greeting"))
+      Assert.Equal("Hello there my friend!", greeting.Text)
+    }
+
+module B =
+  [<Fact>]
+  let ``greets again`` () =
+    task {
+      use! setup = testSetup ()
+      let driver = setup.driver
+      driver.Url <- setup.baseUrl
+      driver.Navigate() |> ignore
+      let greeting = driver.FindElement(By.Id("greeting"))
+      Assert.Equal("Hello there my friend!", greeting.Text)
+    }
