@@ -2,7 +2,9 @@
 
 open System
 open System.Collections.Generic
+open System.Net.NetworkInformation
 open System.Runtime.InteropServices
+open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
@@ -80,7 +82,7 @@ let private startContainer (cp: CreateContainerParameters) =
     return id
   }
 
-let private eventStoreCreateParams =
+let private eventStoreCreateParams port =
   let name = "comm-mgmt-test-event-store-db-deleteme"
 
   let hostConfig =
@@ -89,20 +91,12 @@ let private eventStoreCreateParams =
     let http =
       PortBinding()
       |> fun b ->
-           b.HostPort <- "2113/tcp"
-           b.HostIP <- "0.0.0.0"
-           b
-
-    let other =
-      PortBinding()
-      |> fun b ->
-           b.HostPort <- "1113/tcp"
+           b.HostPort <- $"{port}/tcp"
            b.HostIP <- "0.0.0.0"
            b
 
     hostConfig.PortBindings <- Dictionary<string, IList<PortBinding>>()
     hostConfig.PortBindings.Add("2113/tcp", List<PortBinding>([ http ]))
-    hostConfig.PortBindings.Add("1113/tcp", List<PortBinding>([ other ]))
     hostConfig
 
   let createParams = CreateContainerParameters()
@@ -121,9 +115,38 @@ let private eventStoreCreateParams =
 
   createParams
 
+let sm = new SemaphoreSlim(1)
+
+let getConnectionInfo () =
+  IPGlobalProperties
+    .GetIPGlobalProperties()
+    .GetActiveTcpConnections()
+
+let random = Random()
+let getRandomPort () = 30_000 |> random.Next |> (+) 10_000
+
+let getFreePort () =
+  task {
+    let rec go pn =
+      let isTaken =
+        getConnectionInfo ()
+        |> Seq.exists (fun ci -> ci.LocalEndPoint.Port = pn)
+
+      match isTaken with
+      | true -> getRandomPort () |> go
+      | false -> pn
+
+    do! sm.WaitAsync()
+    let port = getRandomPort () |> go
+    sm.Release() |> ignore
+    return port
+  }
+
 let testSetup () =
   task {
-    let! containerID = startContainer eventStoreCreateParams
+    let! containerPort = getFreePort ()
+    let! containerID = startContainer <| eventStoreCreateParams containerPort
+
     let driver =
       let driverOptions =
         let dO = FirefoxOptions()
@@ -137,7 +160,11 @@ let testSetup () =
     let ports: IPorts =
       { new IPorts with
           member this.sendEvent p = () |> TaskResult.ok
-          member this.sendNotification p = taskResult { ln <- Some p } }
+          member this.sendNotification p = taskResult { ln <- Some p }
+
+          member this.configuration =
+            { EventStoreConnectionString =
+                $"esdb://admin:changeit@localhost:{containerPort}?tls=false" } }
 
     let getLastNotification () =
       match ln with

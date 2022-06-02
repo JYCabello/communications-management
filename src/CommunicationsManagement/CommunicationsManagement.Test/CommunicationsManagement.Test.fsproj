@@ -12,11 +12,6 @@
         <Compile Include="TestSetup.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
-        <Content Include="appsettings.json">
-          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-          <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        </Content>
     </ItemGroup>
 
     <ItemGroup>

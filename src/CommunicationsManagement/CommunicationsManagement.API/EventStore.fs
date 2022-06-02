@@ -4,16 +4,18 @@ open System
 open System.Collections.Generic
 open System.Text
 open System.Threading.Tasks
+open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open EventStore.Client
 open Configuration
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling
 
-let settings =
-  EventStoreClientSettings.Create configuration.EventStoreConnectionString
 
-let client = new EventStoreClient(settings)
+let getClient cs =
+  let settings = EventStoreClientSettings.Create cs
+
+  new EventStoreClient(settings)
 
 let state = Dictionary<int, int>()
 
@@ -58,7 +60,7 @@ let handleEvent (evnt: ResolvedEvent) =
     return checkpoint <- Some evnt.OriginalEventNumber
   }
 
-let subscribe (subscription: SubscriptionDetails) =
+let subscribe cs (subscription: SubscriptionDetails) =
   let rec subscribeTo () =
     let reSubscribe (_: StreamSubscription) (reason: SubscriptionDroppedReason) (_: Exception) =
       if reason = SubscriptionDroppedReason.Disposed |> not then
@@ -69,13 +71,14 @@ let subscribe (subscription: SubscriptionDetails) =
     task {
       try
         do!
-          client.SubscribeToStreamAsync(
-            subscription.StreamID,
-            getCheckpoint (),
-            subscription.Handler,
-            false,
-            reSubscribe
-          )
+          (getClient cs)
+            .SubscribeToStreamAsync(
+              subscription.StreamID,
+              getCheckpoint (),
+              subscription.Handler,
+              false,
+              reSubscribe
+            )
           :> Task
       with
       | _ ->
@@ -85,6 +88,7 @@ let subscribe (subscription: SubscriptionDetails) =
 
   subscribeTo () |> ignore
 
-{ StreamID = "deletable"
-  Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }
-|> subscribe
+let triggerSubscriptions (ports: IPorts) =
+  { StreamID = "deletable"
+    Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }
+  |> subscribe ports.configuration.EventStoreConnectionString

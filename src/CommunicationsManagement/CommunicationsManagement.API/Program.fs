@@ -13,7 +13,7 @@ open EventStore
 
 let (>>=>) a b = a >=> warbler (fun _ -> b)
 
-let webApp (ports: IPorts) =
+let webApp (_: IPorts) =
   choose [ route "/ping" >=> text "pong"
            route "/inventory" >>=> json state
            route "/" >=> htmlFile "./pages/index.html" ]
@@ -23,6 +23,8 @@ let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp por
 let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
 let buildHost ports =
+  triggerSubscriptions ports
+
   Host
     .CreateDefaultBuilder()
     .ConfigureWebHostDefaults(fun webHostBuilder ->
@@ -35,7 +37,8 @@ let buildHost ports =
 let ports: IPorts =
   { new IPorts with
       member this.sendEvent p = () |> TaskResult.ok
-      member this.sendNotification p = () |> TaskResult.ok }
+      member this.sendNotification p = () |> TaskResult.ok
+      member this.configuration = Configuration.configuration }
 
 [<EntryPoint>]
 let main _ =
