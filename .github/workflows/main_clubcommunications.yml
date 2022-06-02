@@ -51,6 +51,7 @@ jobs:
         env:
           EventStoreConnectionString: ${{ secrets.EVENTSTORECONNECTIONSTRING }}
           BaseUrl: ${{ secrets.BASEURL }}
+          AdminEmail: ${{ secrets.ADMINEMAIL }}
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2

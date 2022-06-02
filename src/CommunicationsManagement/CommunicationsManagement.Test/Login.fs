@@ -16,7 +16,7 @@ let ``logs in successfully`` () =
     let driver = setup.driver
     let input = driver.FindElement(By.Id("email-input")) :?> InputText
     let button = driver.FindElement(By.Id("email-sumbit"))
-
+    
 
     return ()
   }
