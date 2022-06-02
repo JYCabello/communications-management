@@ -4,8 +4,23 @@ open System
 open System.Collections.Generic
 open System.Runtime.InteropServices
 open System.Threading.Tasks
+open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Models
 open Docker.DotNet
 open Docker.DotNet.Models
+open FsToolkit.ErrorHandling
+
+type Setup(
+  disposers: (unit -> unit) list,
+  getLastNotification: unit -> SendNotificationParams) =
+    
+  member this.lastNotification
+    with get() = getLastNotification()
+    
+  interface IDisposable with
+    member this.Dispose() =
+      for disposer in disposers do
+        disposer ()
 
 let getDockerClient () =
   let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine")
@@ -26,12 +41,6 @@ let private deleteContainer id =
     do! client.Containers.StopContainerAsync(id, ContainerStopParameters()) :> Task
     do! client.Containers.RemoveContainerAsync(id, ContainerRemoveParameters())
   }
-
-type Setup(disposers: (unit -> unit) list) =
-  interface IDisposable with
-    member this.Dispose() =
-      for disposer in disposers do
-        disposer ()
 
 let private startContainer (cp: CreateContainerParameters) =
   task {
@@ -108,6 +117,28 @@ let testSetup () =
   task {
     let! containerID = startContainer eventStoreCreateParams
 
-    let disposers = [ fun () -> deleteContainer containerID |> fun t -> t.Result ]
-    return new Setup(disposers)
+    
+    let mutable ln: SendNotificationParams option = None
+    let ports: IPorts =
+      { new IPorts with
+        member this.sendEvent p = () |> TaskResult.ok
+        member this.sendNotification p = taskResult { ln <- Some p}
+      }
+    let getLastNotification () =
+      match ln with
+      | Some n -> n
+      | None -> failwith "Expected a notification"
+    
+    let! host =
+      task {
+        let h = Main.buildHost ports
+        do! h.StartAsync()
+        return h
+      }
+      
+    let disposers =
+      [ fun () -> deleteContainer containerID |> fun t -> t.Result
+        fun () -> host.Dispose() ]
+    
+    return new Setup(disposers, getLastNotification)
   }
