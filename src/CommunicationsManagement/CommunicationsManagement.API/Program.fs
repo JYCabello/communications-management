@@ -34,8 +34,8 @@ let buildHost ports =
 
 let ports: IPorts =
   { new IPorts with
-    member this.sendEvent p = () |> TaskResult.ok
-    member this.sendNotification p = () |> TaskResult.ok }
+      member this.sendEvent p = () |> TaskResult.ok
+      member this.sendNotification p = () |> TaskResult.ok }
 
 [<EntryPoint>]
 let main _ =

@@ -5,8 +5,8 @@ open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
 type IPorts =
-  abstract member sendEvent : SendEventParams -> Task<Result<unit, DomainError>>
-  abstract member sendNotification : SendNotificationParams -> Task<Result<unit, DomainError>>
+  abstract member sendEvent: SendEventParams -> Task<Result<unit, DomainError>>
+  abstract member sendNotification: SendNotificationParams -> Task<Result<unit, DomainError>>
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
@@ -33,6 +33,7 @@ let fromTaskOption rn tskOpt : Effect<'a> =
   fun _ ->
     task {
       let! o = tskOpt
+
       return
         match o with
         | Some a -> Ok a

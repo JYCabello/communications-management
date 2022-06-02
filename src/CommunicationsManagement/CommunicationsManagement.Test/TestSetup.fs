@@ -12,20 +12,19 @@ open FsToolkit.ErrorHandling
 open OpenQA.Selenium
 open OpenQA.Selenium.Firefox
 
-type Setup(
-  disposers: (unit -> unit) list,
-  getLastNotification: unit -> SendNotificationParams,
-  webDriver: WebDriver) =
-    
-  member this.lastNotification
-    with get() = getLastNotification()
-  
-  member this.baseUrl
-    with get() = "http://localhost:5000"
-    
-  member this.driver
-    with get() = webDriver
-    
+type Setup
+  (
+    disposers: (unit -> unit) list,
+    getLastNotification: unit -> SendNotificationParams,
+    webDriver: WebDriver
+  ) =
+
+  member this.lastNotification = getLastNotification ()
+
+  member this.baseUrl = "http://localhost:5000"
+
+  member this.driver = webDriver
+
   interface IDisposable with
     member this.Dispose() =
       for disposer in disposers do
@@ -126,31 +125,37 @@ let testSetup () =
   task {
     let! containerID = startContainer eventStoreCreateParams
 
-    
     let mutable ln: SendNotificationParams option = None
+
     let ports: IPorts =
       { new IPorts with
-        member this.sendEvent p = () |> TaskResult.ok
-        member this.sendNotification p = taskResult { ln <- Some p}
-      }
+          member this.sendEvent p = () |> TaskResult.ok
+          member this.sendNotification p = taskResult { ln <- Some p } }
+
     let getLastNotification () =
       match ln with
       | Some n -> n
       | None -> failwith "Expected a notification"
-    
+
     let! host =
       task {
         let h = Main.buildHost ports
         do! h.StartAsync()
         return h
       }
-    
-    let driver = new FirefoxDriver()
-      
+
+    let driver =
+      let driverOptions =
+        let dO = FirefoxOptions()
+        dO.AddArgument "--headless"
+        dO
+
+      new FirefoxDriver(driverOptions)
+
     let disposers =
       [ fun () -> deleteContainer containerID |> fun t -> t.Result
         host.Dispose
         driver.Dispose ]
-    
+
     return new Setup(disposers, getLastNotification, driver)
   }

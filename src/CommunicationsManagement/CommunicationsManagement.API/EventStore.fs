@@ -37,7 +37,7 @@ let deserialize (evnt: ResolvedEvent) =
       |> Message
     with
     | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
-  | t -> StreamEvent.Toxic  { Type = t; Content = decoded }
+  | t -> StreamEvent.Toxic { Type = t; Content = decoded }
 
 let private handleMessage m =
   task {
