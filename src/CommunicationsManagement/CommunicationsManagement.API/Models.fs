@@ -1,9 +1,5 @@
 ﻿module CommunicationsManagement.API.Models
 
-open System.Threading
-open System.Threading.Tasks
-open EventStore.Client
-
 [<CLIMutable>]
 type Configuration = { EventStoreConnectionString: string }
 
@@ -39,10 +35,6 @@ type DomainError =
   | NotFound of resourceName: string
   | Conflict
   | InternalServerError of errorMessage: string
-
-type SubscriptionDetails =
-  { StreamID: string
-    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task }
 
 type SendEventParams = { Event: StreamEvent }
 

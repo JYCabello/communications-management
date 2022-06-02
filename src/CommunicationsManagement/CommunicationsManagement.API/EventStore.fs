@@ -3,18 +3,21 @@
 open System
 open System.Collections.Generic
 open System.Text
+open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open EventStore.Client
-open Configuration
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling
 
 
+type SubscriptionDetails =
+  { StreamID: string
+    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task }
+
 let getClient cs =
   let settings = EventStoreClientSettings.Create cs
-
   new EventStoreClient(settings)
 
 let state = Dictionary<int, int>()
@@ -89,6 +92,8 @@ let subscribe cs (subscription: SubscriptionDetails) =
   subscribeTo () |> ignore
 
 let triggerSubscriptions (ports: IPorts) =
+  let sub = subscribe ports.configuration.EventStoreConnectionString
+
   { StreamID = "deletable"
     Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }
-  |> subscribe ports.configuration.EventStoreConnectionString
+  |> sub
