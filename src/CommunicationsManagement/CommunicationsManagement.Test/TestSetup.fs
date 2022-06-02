@@ -146,7 +146,10 @@ let getFreePort () =
 let testSetup () =
   task {
     let! containerPort = getFreePort ()
-    let! containerID = startContainer <| eventStoreCreateParams containerPort
+
+    let! containerID =
+      startContainer
+      <| eventStoreCreateParams containerPort
 
     let driver =
       let driverOptions =
@@ -174,7 +177,6 @@ let testSetup () =
 
     let! sitePort = getFreePort ()
 
-    
     let! host =
       task {
         let h = Main.buildHost ports <| Some sitePort
