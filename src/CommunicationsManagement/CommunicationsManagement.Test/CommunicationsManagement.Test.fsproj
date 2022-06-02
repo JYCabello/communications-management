@@ -12,7 +12,9 @@
         <Compile Include="TestSetup.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
-        <Content Include="xunit.runner.json" />
+        <Content Include="xunit.runner.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
