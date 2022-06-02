@@ -124,6 +124,13 @@ let private eventStoreCreateParams =
 let testSetup () =
   task {
     let! containerID = startContainer eventStoreCreateParams
+    let driver =
+      let driverOptions =
+        let dO = FirefoxOptions()
+        dO.AddArgument "--headless"
+        dO
+
+      new FirefoxDriver(driverOptions)
 
     let mutable ln: SendNotificationParams option = None
 
@@ -143,14 +150,6 @@ let testSetup () =
         do! h.StartAsync()
         return h
       }
-
-    let driver =
-      let driverOptions =
-        let dO = FirefoxOptions()
-        dO.AddArgument "--headless"
-        dO
-
-      new FirefoxDriver(driverOptions)
 
     let disposers =
       [ fun () -> deleteContainer containerID |> fun t -> t.Result
