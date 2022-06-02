@@ -29,9 +29,10 @@ let ``logs in successfully`` () =
       $"{setup.config.BaseUrl}/login/confirm?code={loginNotification.ActivationCode}",
       loginNotification.ActivationUrl
     )
-    
+
     driver.Url <- loginNotification.ActivationUrl
 
-
-    return ()
+    let link = driver.FindElement(By.Id("profile-link"))
+    Assert.Equal("Admin", link.Text)
+    Assert.Equal(setup.config.BaseUrl, driver.Url)
   }
