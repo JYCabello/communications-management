@@ -1,6 +1,5 @@
 module Tests
 
-open System.Threading
 open OpenQA.Selenium
 open TestProject1CommunicationsManagement.Test
 open Xunit
@@ -10,7 +9,7 @@ open TestSetup
 
 module A =
   [<Fact>]
-  let ``greets`` () =
+  let ``greets you`` () =
     task {
       use! setup = testSetup ()
       let driver = setup.driver
@@ -18,7 +17,6 @@ module A =
       driver.Navigate() |> ignore
       let greeting = driver.FindElement(By.Id("greeting"))
       Assert.Equal("Hello there my friend!", greeting.Text)
-      Assert.True(true)
     }
 
 module B =
@@ -31,5 +29,4 @@ module B =
       driver.Navigate() |> ignore
       let greeting = driver.FindElement(By.Id("greeting"))
       Assert.Equal("Hello there my friend!", greeting.Text)
-      Assert.True(true)
     }
