@@ -30,8 +30,8 @@ jobs:
         with:
           files: '**/xunit.runner.json'
         env:
-          parallelizeAssembly: false
-          parallelizeTestCollections: false
+          parallelizeAssembly: "false"
+          parallelizeTestCollections: "false"
 
       - name: Test
         run: dotnet test ./src/CommunicationsManagement/CommunicationsManagement.sln
