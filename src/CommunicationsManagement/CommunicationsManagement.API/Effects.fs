@@ -5,7 +5,8 @@ open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
 type IPorts =
-  abstract member subscribe: SubscriptionDetails
+  abstract member sendEvent<'a> : SendEventParams<'a> -> Task
+  abstract member sendNotification : SendNotificationParams -> Task
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 

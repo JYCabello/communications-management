@@ -10,10 +10,12 @@ open TestSetup
 [<Fact>]
 let ``My test`` () =
   task {
-    use! __ = testSetup()
-    use host = Main.buildHost()
+    use! __ = testSetup ()
+    use host = Main.buildHost ()
     do! host.StartAsync()
-    for _ in [1..100] do
+
+    for _ in [ 1..100 ] do
       Thread.Sleep(150)
+
     Assert.True(true)
   }

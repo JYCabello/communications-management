@@ -1,6 +1,5 @@
 ﻿module Main
 
-open System.Threading.Tasks
 open CommunicationsManagement.API
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -8,7 +7,6 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open EventStore
-open Models
 
 
 let (>>=>) a b = a >=> warbler (fun _ -> b)

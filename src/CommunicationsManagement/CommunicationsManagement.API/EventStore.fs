@@ -69,13 +69,13 @@ let subscribe (subscription: SubscriptionDetails) =
     task {
       try
         do!
-          client
-            .SubscribeToStreamAsync(
-              subscription.StreamID,
-              getCheckpoint (),
-              subscription.Handler,
-              false,
-              reSubscribe)
+          client.SubscribeToStreamAsync(
+            subscription.StreamID,
+            getCheckpoint (),
+            subscription.Handler,
+            false,
+            reSubscribe
+          )
           :> Task
       with
       | _ ->

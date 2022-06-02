@@ -8,17 +8,21 @@ open Docker.DotNet
 open Docker.DotNet.Models
 
 let getDockerClient () =
-  let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine");
+  let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine")
   let defaultLinuxDockerEngineUri = Uri("unix:///var/run/docker.sock")
+
   let engineUri =
-    if RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-    then defaultLinuxDockerEngineUri
-    else defaultWindowsDockerEngineUri
-  (new DockerClientConfiguration (engineUri)).CreateClient()
+    if RuntimeInformation.IsOSPlatform(OSPlatform.Linux) then
+      defaultLinuxDockerEngineUri
+    else
+      defaultWindowsDockerEngineUri
+
+  (new DockerClientConfiguration(engineUri))
+    .CreateClient()
 
 let private deleteContainer id =
   task {
-    use client = getDockerClient()
+    use client = getDockerClient ()
     do! client.Containers.StopContainerAsync(id, ContainerStopParameters()) :> Task
     do! client.Containers.RemoveContainerAsync(id, ContainerRemoveParameters())
   }
@@ -26,32 +30,34 @@ let private deleteContainer id =
 type Setup(disposers: (unit -> unit) list) =
   interface IDisposable with
     member this.Dispose() =
-      for disposer in disposers do disposer ()
+      for disposer in disposers do
+        disposer ()
 
 let private startContainer (cp: CreateContainerParameters) =
   task {
-    use client = getDockerClient()
+    use client = getDockerClient ()
+
     let! containers =
-      client
-        .Containers
-        .ListContainersAsync(
-          ContainersListParameters()
-          |> fun p ->
-              p.All <- true
-              p
-        )
+      client.Containers.ListContainersAsync(
+        ContainersListParameters()
+        |> fun p ->
+             p.All <- true
+             p
+      )
+
     let container =
       containers
       |> Seq.tryFind (fun c -> c.Names |> Seq.exists (fun n -> n = $"/{cp.Name}"))
 
     let! id =
       match container with
-      | Some c -> c.ID |> Task.FromResult 
+      | Some c -> c.ID |> Task.FromResult
       | None ->
         task {
           let! response = client.Containers.CreateContainerAsync(cp)
           return response.ID
         }
+
     do! client.Containers.StartContainerAsync(id, ContainerStartParameters()) :> Task
 
     return id
@@ -59,25 +65,27 @@ let private startContainer (cp: CreateContainerParameters) =
 
 let private eventStoreCreateParams =
   let name = "comm-mgmt-test-event-store-db-deleteme"
+
   let hostConfig =
     let hostConfig = HostConfig()
+
     let http =
       PortBinding()
       |> fun b ->
-        b.HostPort <- "2113/tcp"
-        b.HostIP <- "0.0.0.0"
-        b
+           b.HostPort <- "2113/tcp"
+           b.HostIP <- "0.0.0.0"
+           b
+
     let other =
       PortBinding()
       |> fun b ->
-        b.HostPort <- "1113/tcp"
-        b.HostIP <- "0.0.0.0"
-        b
+           b.HostPort <- "1113/tcp"
+           b.HostIP <- "0.0.0.0"
+           b
 
-    hostConfig.PortBindings <-
-      Dictionary<string, IList<PortBinding>>()
-    hostConfig.PortBindings.Add("2113/tcp",List<PortBinding>([http]))
-    hostConfig.PortBindings.Add("1113/tcp",List<PortBinding>([other]))
+    hostConfig.PortBindings <- Dictionary<string, IList<PortBinding>>()
+    hostConfig.PortBindings.Add("2113/tcp", List<PortBinding>([ http ]))
+    hostConfig.PortBindings.Add("1113/tcp", List<PortBinding>([ other ]))
     hostConfig
 
   let createParams = CreateContainerParameters()
@@ -93,14 +101,13 @@ let private eventStoreCreateParams =
   createParams.Env.Add("EVENTSTORE_ENABLE_EXTERNAL_TCP=true")
   createParams.Env.Add("EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true")
   createParams.HostConfig <- hostConfig
-  
+
   createParams
 
 let testSetup () =
   task {
     let! containerID = startContainer eventStoreCreateParams
-    
-    let disposers = 
-      [ fun () -> deleteContainer containerID |> fun t -> t.Result ]
+
+    let disposers = [ fun () -> deleteContainer containerID |> fun t -> t.Result ]
     return new Setup(disposers)
   }

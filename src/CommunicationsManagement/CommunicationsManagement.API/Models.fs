@@ -10,6 +10,13 @@ type Configuration = { EventStoreConnectionString: string }
 [<CLIMutable>]
 type Message = { ID: int; Amount: int }
 
+type Roles =
+  | Admin = 1
+  | Delegate = 2
+  | Press = 4
+
+let contains (searchTerm: Roles) (roles: Roles) = (searchTerm &&& roles) = searchTerm
+
 type StreamEvent =
   | Message of Message
   | Toxic of eventType: string * content: string
@@ -23,3 +30,22 @@ type DomainError =
 type SubscriptionDetails =
   { StreamID: string
     Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task }
+
+type SendEventParams<'a> = { StreamID: string; Event: 'a }
+
+type WelcomeNotification = { UserName: string }
+
+type LoginNotification =
+  { UserName: string
+    ActivationCode: string
+    ActivationUrl: string }
+
+type Notification =
+  | Welcome of WelcomeNotification
+  | Login of LoginNotification
+
+type Email = Email of string
+
+type SendNotificationParams =
+  { Notification: Notification
+    Email: Email }
