@@ -22,15 +22,21 @@ let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp por
 
 let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
-let buildHost ports =
+let buildHost ports forcedPort =
   triggerSubscriptions ports
-
+  
   Host
     .CreateDefaultBuilder()
     .ConfigureWebHostDefaults(fun webHostBuilder ->
       webHostBuilder
         .Configure(fun app -> configureApp app ports)
-        .ConfigureServices(configureServices)
+        .ConfigureServices(configureServices) |> ignore
+      
+      match forcedPort with
+      | Some n -> webHostBuilder.UseUrls($"http://localhost:%i{n}") |> ignore
+      | None -> ()
+      
+      webHostBuilder
       |> ignore)
     .Build()
 
@@ -42,5 +48,5 @@ let ports: IPorts =
 
 [<EntryPoint>]
 let main _ =
-  (buildHost ports).Run()
+  (buildHost ports None).Run()
   0

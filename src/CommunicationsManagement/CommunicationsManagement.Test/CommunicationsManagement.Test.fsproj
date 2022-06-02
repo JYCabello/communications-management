@@ -12,6 +12,7 @@
         <Compile Include="TestSetup.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
+        <Content Include="xunit.runner.json" />
     </ItemGroup>
 
     <ItemGroup>

@@ -18,12 +18,13 @@ type Setup
   (
     disposers: (unit -> unit) list,
     getLastNotification: unit -> SendNotificationParams,
-    webDriver: WebDriver
+    webDriver: WebDriver,
+    sitePort
   ) =
 
   member this.lastNotification = getLastNotification ()
 
-  member this.baseUrl = "http://localhost:5000"
+  member this.baseUrl = $"http://localhost:{sitePort}"
 
   member this.driver = webDriver
 
@@ -83,7 +84,7 @@ let private startContainer (cp: CreateContainerParameters) =
   }
 
 let private eventStoreCreateParams port =
-  let name = "comm-mgmt-test-event-store-db-deleteme"
+  let name = $"comm-mgmt-test-event-store-db-deleteme%i{port}"
 
   let hostConfig =
     let hostConfig = HostConfig()
@@ -91,7 +92,7 @@ let private eventStoreCreateParams port =
     let http =
       PortBinding()
       |> fun b ->
-           b.HostPort <- $"{port}/tcp"
+           b.HostPort <- $"%i{port}/tcp"
            b.HostIP <- "0.0.0.0"
            b
 
@@ -171,9 +172,12 @@ let testSetup () =
       | Some n -> n
       | None -> failwith "Expected a notification"
 
+    let! sitePort = getFreePort ()
+
+    
     let! host =
       task {
-        let h = Main.buildHost ports
+        let h = Main.buildHost ports <| Some sitePort
         do! h.StartAsync()
         return h
       }
@@ -183,5 +187,5 @@ let testSetup () =
         host.Dispose
         driver.Dispose ]
 
-    return new Setup(disposers, getLastNotification, driver)
+    return new Setup(disposers, getLastNotification, driver, sitePort)
   }

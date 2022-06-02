@@ -26,10 +26,6 @@ module B =
   let ``greets again`` () =
     task {
       use! setup = testSetup ()
-
-      for _ in [ 1..1_000 ] do
-        Thread.Sleep(100)
-
       let driver = setup.driver
       driver.Url <- setup.baseUrl
       driver.Navigate() |> ignore
