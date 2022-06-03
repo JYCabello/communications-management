@@ -44,7 +44,7 @@ let deserialize (evnt: ResolvedEvent) =
     | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
   | t -> StreamEvent.Toxic { Type = t; Content = decoded }
 
-let private handleMessage m =
+let private handleMessage (m: Message) =
   task {
     if not <| state.ContainsKey(m.ID) then
       state[m.ID] <- m.Amount

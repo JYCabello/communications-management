@@ -1,5 +1,7 @@
 ﻿module CommunicationsManagement.API.Models
 
+open System
+
 [<CLIMutable>]
 type Configuration =
   { EventStoreConnectionString: string
@@ -13,11 +15,25 @@ type Message = { ID: int; Amount: int }
 type ToxicEvent = { Content: string; Type: string }
 
 type Roles =
+  | None = 1
   | Delegate = 1
   | Press = 2
   | Admin = 131071
 
+type Email = Email of string
+
 let contains (searchTerm: Roles) (userRoles: Roles) = (searchTerm &&& userRoles) = searchTerm
+
+type User =
+  { Name: string
+    ID: Guid
+    Email: Email
+    Roles: Roles }
+  member this.hasRole roles = contains roles this.Roles
+
+type ViewModelRoot = { User: User; Title: string option }
+
+type ViewModel<'a> = { User: User; Model: 'a }
 
 type StreamEvent =
   | Message of Message
@@ -52,8 +68,6 @@ type LoginNotification =
 type Notification =
   | Welcome of WelcomeNotification
   | Login of LoginNotification
-
-type Email = Email of string
 
 type SendNotificationParams =
   { Notification: Notification

@@ -1,14 +1,15 @@
 ﻿module CommunicationsManagement.API.Routes
 
+open System
 open System.Net
 open System.Threading.Tasks
 open CommunicationsManagement.API
-open CommunicationsManagement.API.Models
+open Effects
+open Models
 open CommunicationsManagement.API.views
 open Microsoft.AspNetCore.Http
 open Giraffe.Core
 open Giraffe.ViewEngine
-open Effects
 open Layout
 
 open type Giraffe.HttpContextExtensions
@@ -26,19 +27,25 @@ let renderError =
   | Conflict -> (html [] [], HttpStatusCode.Conflict)
 
 let resolve
-  ports
+  (ports: IPorts)
   (ctx: HttpContext)
   (render: Render<'a>)
+  (next: HttpFunc)
+  title
   (e: Effect<'a>)
   : Task<HttpContext option> =
   task {
     let! result = e ports |> attempt
+    
+    let vmr =
+      { User = { Name = ""; Roles = Roles.Press; Email = Email "meh"; ID = Guid.Empty }
+        Title = title }
 
     let bytes, code =
       match result with
       | Ok a ->
         a
-        |> (render >> layout)
+        |> (render >> layout vmr)
         |> (fun n -> n, HttpStatusCode.OK)
       | Error e -> e |> renderError
       |> fun (n, c) -> (RenderView.AsBytes.htmlNode n, c)
@@ -49,14 +56,13 @@ let resolve
 
     do ctx.SetContentType "text/html; charset=utf-8"
     do! ctx.WriteBytesAsync bytes :> Task
-    return None
+    return! next ctx
   }
 
 let login (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect { return Some ctx }
-  |> resolve ports ctx fakeRender
-  |> fun _ -> next ctx
+  |> resolve ports ctx fakeRender next None
 
-let home (ports: IPorts) (_: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect { return Some ctx }
-  |> resolve ports ctx fakeRender
+  |> resolve ports ctx fakeRender next None
