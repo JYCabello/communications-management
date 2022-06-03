@@ -12,6 +12,7 @@
         <Compile Include="Operations.fs" />
         <Compile Include="Configuration.fs" />
         <Compile Include="EventStore.fs" />
+        <Compile Include="views\Layout.fs" />
         <Compile Include="Routes.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">
@@ -30,6 +31,7 @@
       <PackageReference Include="FsToolkit.ErrorHandling" Version="2.13.0" />
       <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="2.13.0" />
       <PackageReference Include="Giraffe" Version="6.0.0" />
+      <PackageReference Include="Giraffe.ViewEngine" Version="1.4.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 

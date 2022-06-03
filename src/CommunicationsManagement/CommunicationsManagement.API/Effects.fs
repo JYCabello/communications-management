@@ -51,3 +51,15 @@ type EffectBuilder() =
   member this.Combine(a, b) = a |> bindE (fun _ -> b)
 
 let effect = EffectBuilder()
+
+let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
+  task {
+    try
+      return! tr
+    with
+    | _ ->
+      return
+        "Something happened"
+        |> InternalServerError
+        |> Error
+  }

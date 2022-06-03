@@ -34,6 +34,7 @@ let getStreamName =
   | Toxic _ -> "toxic"
 
 type DomainError =
+  | NotAuthenticated
   | Unauthorized of protectedResourceName: string
   | NotFound of resourceName: string
   | Conflict
