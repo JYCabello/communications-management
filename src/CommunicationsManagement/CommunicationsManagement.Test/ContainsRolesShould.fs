@@ -15,4 +15,4 @@ open Models
 [<InlineData(false, Roles.Delegate, Roles.Press)>]
 [<InlineData(false, Roles.Admin, Roles.Press)>]
 let ``process roles correctly`` result searchTerm userRoles =
-  Assert.Equal (result, contains searchTerm userRoles)
+  Assert.Equal(result, contains searchTerm userRoles)
