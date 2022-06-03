@@ -12,7 +12,9 @@ let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =
   html [] [
     head [] [
       title [] [
-        vmr.Title |> (Option.defaultValue "Comunicaciones deportivas") |> str
+        vmr.Title
+        |> (Option.defaultValue "Comunicaciones deportivas")
+        |> str
       ]
     ]
     body [] [
