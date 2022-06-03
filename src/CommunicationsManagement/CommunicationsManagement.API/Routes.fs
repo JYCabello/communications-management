@@ -16,7 +16,7 @@ open type Giraffe.HttpContextExtensions
 
 type Render<'a> = 'a -> XmlNode list
 
-let fakeRender _ = []
+let fakeRender _ = [ Text "nothing special" ]
 
 let renderError =
   function
@@ -28,9 +28,10 @@ let renderError =
 
 let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (next: HttpFunc) =
   task {
-    code
-    |> LanguagePrimitives.EnumToValue
-    |> ctx.SetStatusCode
+    do
+      code
+      |> LanguagePrimitives.EnumToValue
+      |> ctx.SetStatusCode
 
     do ctx.SetContentType "text/html; charset=utf-8"
     do! ctx.WriteBytesAsync bytes :> Task
@@ -65,7 +66,7 @@ let renderEffect
 
     let vmr =
       { User =
-          { Name = ""
+          { Name = "John"
             Roles = Roles.Press
             Email = Email "meh"
             ID = Guid.Empty }
