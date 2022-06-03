@@ -13,11 +13,11 @@ type Message = { ID: int; Amount: int }
 type ToxicEvent = { Content: string; Type: string }
 
 type Roles =
-  | Admin = 1
-  | Delegate = 2
-  | Press = 4
+  | Delegate = 1
+  | Press = 2
+  | Admin = 131071
 
-let contains (searchTerm: Roles) (roles: Roles) = (searchTerm &&& roles) = searchTerm
+let contains (searchTerm: Roles) (userRoles: Roles) = (searchTerm &&& userRoles) = searchTerm
 
 type StreamEvent =
   | Message of Message

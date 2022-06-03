@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <Compile Include="TestSetup.fs" />
+        <Compile Include="ContainsRolesShould.fs" />
         <Compile Include="Login.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
