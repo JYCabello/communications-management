@@ -5,7 +5,10 @@ open Giraffe.ViewEngine
 
 let private navTemplate (vmr: ViewModelRoot) =
   nav [] [
-    a [ _href "." ] [ Text vmr.User.Name ]
+    yield!
+      vmr.User
+      |> Option.map (fun u -> a [ _href "." ] [ Text u.Name ])
+      |> Option.toList
   ]
 
 let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =

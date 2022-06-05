@@ -14,17 +14,31 @@ open Layout
 
 open type Giraffe.HttpContextExtensions
 
-type Render<'a> = 'a -> XmlNode list
+let private getSessionID (ctx: HttpContext) : Effect<Guid> =
+  effect {
+    let! id =
+      (if ctx.Request.Headers.ContainsKey("sessionID") then
+         match ctx.Request.Headers["sessionID"] |> Guid.TryParse with
+         | true, id -> Ok id
+         | false, _ -> NotAuthenticated |> Error
+       else
+         NotAuthenticated |> Error)
+      |> fromResult
 
-let fakeRender _ = [ Text "nothing special" ]
+    return id
+  }
 
-let renderError =
-  function
-  | InternalServerError _ -> (html [] [], HttpStatusCode.InternalServerError)
-  | Unauthorized _ -> (html [] [], HttpStatusCode.Unauthorized)
-  | NotAuthenticated -> (html [] [], HttpStatusCode.Unauthorized)
-  | NotFound _ -> (html [] [], HttpStatusCode.NotFound)
-  | Conflict -> (html [] [], HttpStatusCode.Conflict)
+let authenticate (ctx: HttpContext) : Effect<User> =
+  effect {
+    let! sessionID = getSessionID ctx
+    let! ports = getPorts
+    let! session = ports.query<Session> sessionID |> fromAR
+    return! ports.query<User> session.UserID
+  }
+
+type Render<'a> = ViewModel<'a> -> XmlNode list
+
+let renderText (vm: ViewModel<string>) = [ Text vm.Model ]
 
 let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (next: HttpFunc) =
   task {
@@ -40,48 +54,55 @@ let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (ne
 
 let renderOk
   (ctx: HttpContext)
-  (model: 'a)
+  (model: ViewModel<'a>)
   (view: Render<'a>)
   (next: HttpFunc)
-  (vmr: ViewModelRoot)
   : Task<HttpContext option> =
   model
-  |> (view >> layout vmr)
+  |> (view >> layout model.Root)
   |> (fun n -> RenderView.AsBytes.htmlNode n, HttpStatusCode.OK)
   |> fun (bytes, code) -> renderHtml ctx bytes code next
 
 let processError (ctx: HttpContext) (e: DomainError) (next: HttpFunc) : Task<HttpContext option> =
-  failwith "meh"
+  task {
+    let! x =
+      match e with
+      | NotAuthenticated -> redirectTo false "/login" next ctx
+      | _ -> failwith "not implemented"
+
+    return x
+  }
 
 let renderEffect
   (ports: IPorts)
   (ctx: HttpContext)
   (view: Render<'a>)
   (next: HttpFunc)
-  (title: string option)
-  (e: Effect<'a>)
+  (e: Effect<ViewModel<'a>>)
   : Task<HttpContext option> =
   task {
     let! result = e ports |> attempt
 
-    let vmr =
-      { User =
-          { Name = "John"
-            Roles = Roles.Press
-            Email = Email "meh"
-            ID = Guid.Empty }
-        Title = title }
-
     return!
       match result with
-      | Ok model -> renderOk ctx model view next vmr
+      | Ok model -> renderOk ctx model view next
       | Error error -> processError ctx error next
   }
 
 let login (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect { return Some ctx }
-  |> renderEffect ports ctx fakeRender next None
+  effect {
+    return
+      { Model = "Meh"
+        Root = { Title = None; User = None } }
+  }
+  |> renderEffect ports ctx renderText next
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect { return Some ctx }
-  |> renderEffect ports ctx fakeRender next None
+  effect {
+    let! user = authenticate ctx
+
+    return
+      { Model = "Meh"
+        Root = { Title = None; User = Some user } }
+  }
+  |> renderEffect ports ctx renderText next

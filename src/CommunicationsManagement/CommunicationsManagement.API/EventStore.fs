@@ -93,16 +93,14 @@ let subscribe cs (subscription: SubscriptionDetails) =
 
 let triggerSubscriptions (ports: IPorts) =
   let sub = subscribe ports.configuration.EventStoreConnectionString
-  
+
   let admin =
     { ID = Guid.Empty
       Email = Email ports.configuration.AdminEmail
       Roles = Roles.Admin
       Name = "Admin" }
-  
-  do
-    ports.save admin
-    |> fun t -> t.Result |> ignore
+
+  do ports.save admin |> fun t -> t.Result |> ignore
 
 
   { StreamID = "deletable"

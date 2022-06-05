@@ -33,9 +33,11 @@ type User =
 
 type Session = { ID: Guid; UserID: Guid }
 
-type ViewModelRoot = { User: User; Title: string option }
+type ViewModelRoot =
+  { User: User option
+    Title: string option }
 
-type ViewModel<'a> = { User: User; Model: 'a }
+type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
 type StreamEvent =
   | Message of Message
