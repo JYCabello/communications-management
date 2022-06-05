@@ -17,6 +17,9 @@ let private sessionStorage = ConcurrentDictionary<Guid, Session>()
 let private querySession: Guid -> Task<Option<Session>> =
   fun id -> sessionStorage |> tryGet id |> Task.FromResult
 
+let private saveSession: Session -> Task<unit> =
+  fun s -> Task.FromResult <| sessionStorage[s.ID] <- s
+
 let toResult (topt: Task<'a option>) =
   task {
     let! opt = topt
@@ -38,4 +41,15 @@ let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
           |> TaskResult.error
 
       return box value :?> 'a
+    }
+
+let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
+  fun _ a ->
+    taskResult {
+      do!
+        match typeof<'a> with
+        | t when t = typeof<Session> -> box a :?> Session |> saveSession |> Task.map Ok
+        | t ->
+          InternalServerError $"Save not implemented for type {t.FullName}"
+          |> TaskResult.error
     }

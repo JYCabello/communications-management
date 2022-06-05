@@ -6,6 +6,7 @@ open System.Net.NetworkInformation
 open System.Runtime.InteropServices
 open System.Threading
 open System.Threading.Tasks
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open Docker.DotNet
@@ -169,20 +170,20 @@ let testSetup () =
     let sitePort = getFreePort ()
     let baseUrl = $"http://localhost:{sitePort}"
 
+    let config =
+      { EventStoreConnectionString = $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
+        BaseUrl = baseUrl
+        AdminEmail = "notareal@email.com" }
 
     let ports: IPorts =
       let mainPorts = Main.ports
+
       { new IPorts with
           member this.sendEvent p = mainPorts.sendEvent p
           member this.sendNotification n = mainPorts.sendNotification n
-
-          member this.configuration =
-            { EventStoreConnectionString =
-                $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
-              BaseUrl = baseUrl
-              AdminEmail = "notareal@email.com" }
-          member this.save a = mainPorts.save a
-          member this.query id = mainPorts.query id }
+          member this.configuration = config
+          member this.save a = Storage.save config a
+          member this.query id = Storage.query config id }
 
     let! host =
       task {
