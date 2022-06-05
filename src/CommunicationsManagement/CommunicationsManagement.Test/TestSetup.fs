@@ -160,8 +160,6 @@ let testSetup () =
 
     let mutable ln: SendNotificationParams option = None
 
-
-
     let getLastNotification () =
       match ln with
       | Some n -> n
