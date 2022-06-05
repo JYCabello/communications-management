@@ -14,7 +14,7 @@ let ``logs in successfully`` () =
     Assert.Equal($"{setup.config.BaseUrl}/login", driver.Url)
 
     driver
-      .FindElement(By.Id("email-input"))
+      .FindElement(By.Name("email"))
       .SendKeys setup.config.AdminEmail
 
     driver.FindElement(By.Id("email-sumbit")).Click()

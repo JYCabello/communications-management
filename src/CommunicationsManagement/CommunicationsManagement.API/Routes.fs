@@ -95,7 +95,7 @@ let login (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext
       { Model = "Meh"
         Root = { Title = None; User = None } }
   }
-  |> renderEffect ports ctx renderText next
+  |> renderEffect ports ctx views.Login.login next
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
