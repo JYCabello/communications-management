@@ -13,14 +13,21 @@ let tryGet a (dict: ConcurrentDictionary<'a, 'b>) : 'b option =
     None
 
 let private sessionStorage = ConcurrentDictionary<Guid, Session>()
+let private userStorage = ConcurrentDictionary<Guid, User>()
 
-let private querySession: Guid -> Task<Option<Session>> =
-  fun id -> sessionStorage |> tryGet id |> Task.FromResult
+let private querySession id =
+  sessionStorage |> tryGet id |> Task.FromResult
 
-let private saveSession: Session -> Task<unit> =
-  fun s -> Task.FromResult <| sessionStorage[s.ID] <- s
+let private queryUser id =
+  userStorage |> tryGet id |> Task.FromResult
 
-let toResult (topt: Task<'a option>) =
+let private saveSession (s: Session) =
+  Task.FromResult <| sessionStorage[s.ID] <- s
+
+let private saveUser (u: User) =
+  Task.FromResult <| userStorage[u.ID] <- u
+
+let toObjResult (topt: Task<'a option>) =
   task {
     let! opt = topt
 
@@ -28,6 +35,7 @@ let toResult (topt: Task<'a option>) =
       match opt with
       | Some v -> Ok v
       | None -> NotFound typeof<'a>.Name |> Error
+      |> Result.map box
   }
 
 let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
@@ -35,12 +43,13 @@ let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
     taskResult {
       let! value =
         match typeof<'a> with
-        | t when t = typeof<Session> -> querySession id |> toResult
+        | t when t = typeof<Session> -> querySession id |> toObjResult
+        | t when t = typeof<User> -> queryUser id |> toObjResult
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
 
-      return box value :?> 'a
+      return value :?> 'a
     }
 
 let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
@@ -49,6 +58,7 @@ let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
       do!
         match typeof<'a> with
         | t when t = typeof<Session> -> box a :?> Session |> saveSession |> Task.map Ok
+        | t when t = typeof<User> -> box a :?> User |> saveUser |> Task.map Ok
         | t ->
           InternalServerError $"Save not implemented for type {t.FullName}"
           |> TaskResult.error
