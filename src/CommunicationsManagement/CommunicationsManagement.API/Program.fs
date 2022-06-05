@@ -48,7 +48,9 @@ let ports: IPorts =
   { new IPorts with
       member this.sendEvent p = () |> TaskResult.ok
       member this.sendNotification p = () |> TaskResult.ok
-      member this.configuration = Configuration.configuration }
+      member this.configuration = Configuration.configuration
+      member this.query<'a> id = Storage.query<'a> Configuration.configuration id
+      member this.save a = failwith "notimplemented"}
 
 [<EntryPoint>]
 let main _ =

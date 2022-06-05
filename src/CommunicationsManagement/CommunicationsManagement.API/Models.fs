@@ -31,6 +31,8 @@ type User =
     Roles: Roles }
   member this.hasRole roles = contains roles this.Roles
 
+type Session = { ID: Guid; UserID: Guid }
+
 type ViewModelRoot = { User: User; Title: string option }
 
 type ViewModel<'a> = { User: User; Model: 'a }

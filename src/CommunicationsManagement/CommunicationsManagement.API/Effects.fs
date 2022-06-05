@@ -1,5 +1,6 @@
 ﻿module CommunicationsManagement.API.Effects
 
+open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
@@ -8,6 +9,8 @@ type IPorts =
   abstract member sendEvent: SendEventParams -> Task<Result<unit, DomainError>>
   abstract member sendNotification: SendNotificationParams -> Task<Result<unit, DomainError>>
   abstract member configuration: Configuration
+  abstract member query<'a> : Guid -> Task<Result<'a, DomainError>>
+  abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
@@ -20,8 +23,8 @@ let bindE (f: 'a -> Effect<'b>) (e: Effect<'a>) : Effect<'b> =
       return! p |> f a
     }
 
-
-let fromResult r : Effect<'a> = fun _ -> r
+let fromAR ar : Effect<'a> = fun _ -> ar
+let fromResult r : Effect<'a> = fun _ -> r |> Task.FromResult
 let singleton a : Effect<'a> = fun _ -> a |> TaskResult.ok
 let error e : Effect<'a> = fun _ -> e |> TaskResult.error
 

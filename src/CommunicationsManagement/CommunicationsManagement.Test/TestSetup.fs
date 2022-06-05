@@ -171,15 +171,18 @@ let testSetup () =
 
 
     let ports: IPorts =
+      let mainPorts = Main.ports
       { new IPorts with
-          member this.sendEvent p = () |> TaskResult.ok
-          member this.sendNotification p = taskResult { ln <- Some p }
+          member this.sendEvent p = mainPorts.sendEvent p
+          member this.sendNotification n = mainPorts.sendNotification n
 
           member this.configuration =
             { EventStoreConnectionString =
                 $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
               BaseUrl = baseUrl
-              AdminEmail = "notareal@email.com" } }
+              AdminEmail = "notareal@email.com" }
+          member this.save a = mainPorts.save a
+          member this.query id = mainPorts.query id }
 
     let! host =
       task {

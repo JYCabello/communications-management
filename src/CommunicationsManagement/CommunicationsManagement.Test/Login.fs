@@ -11,6 +11,8 @@ let ``logs in successfully`` () =
     use! setup = testSetup ()
     let driver = setup.driver
 
+    Assert.Equal($"{setup.config.BaseUrl}/login", driver.Url)
+
     driver
       .FindElement(By.Id("email-input"))
       .SendKeys setup.config.AdminEmail
