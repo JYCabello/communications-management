@@ -92,6 +92,30 @@ type EffectBuilder() =
         return! binder rd p
       }
 
+  member inline this.While
+    (
+      [<InlineIfLambda>] guard: unit -> bool,
+      computation: Effect<unit>
+    ) : Effect<unit> =
+    if guard () then
+      let mutable whileAsync = Unchecked.defaultof<_>
+
+      whileAsync <-
+        this.Bind(
+          computation,
+          (fun () ->
+            if guard () then
+              whileAsync
+            else
+              this.Zero())
+        )
+
+      whileAsync
+    else
+      this.Zero()
+
+  member inline _.BindReturn(x: Effect<'a>, [<InlineIfLambda>] f: 'a -> 'b) : Effect<'b> = mapE f x
+
   member inline this.MergeSources(ea: Effect<'a>, eb: Effect<'b>) : Effect<'a * 'b> =
     this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
 
