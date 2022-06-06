@@ -13,7 +13,6 @@
         <Compile Include="Attempting.fs" />
         <Compile Include="ContainsRolesShould.fs" />
         <Compile Include="Login.fs" />
-        <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
         <Content Include="xunit.runner.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

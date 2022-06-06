@@ -15,10 +15,11 @@ open Routes
 let (>>=>) a b = a >=> warbler (fun _ -> b)
 
 let webApp (ports: IPorts) =
-  choose [ route "/login" >>=> login ports
-           route "/ping" >=> text "pong"
-           route "/inventory" >>=> json state
-           route "/" >>=> home ports ]
+  choose [ GET
+           >=> choose [ route "/login" >>=> login ports
+                        route "/ping" >=> text "pong"
+                        route "/inventory" >>=> json state
+                        route "/" >>=> home ports ] ]
 
 let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
 

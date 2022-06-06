@@ -4,8 +4,8 @@ open System
 open System.Net
 open System.Threading.Tasks
 open CommunicationsManagement.API
+open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
-open Effects
 open CommunicationsManagement.API.views
 open Microsoft.AspNetCore.Http
 open Giraffe.Core
@@ -16,14 +16,13 @@ open type Giraffe.HttpContextExtensions
 
 let private getSessionID (ctx: HttpContext) : Effect<Guid> =
   effect {
-    let! id =
+    let! (id: Guid) =
       (if ctx.Request.Headers.ContainsKey("sessionID") then
          match ctx.Request.Headers["sessionID"] |> Guid.TryParse with
          | true, id -> Ok id
          | false, _ -> NotAuthenticated |> Error
        else
          NotAuthenticated |> Error)
-      |> fromResult
 
     return id
   }
@@ -31,9 +30,8 @@ let private getSessionID (ctx: HttpContext) : Effect<Guid> =
 let authenticate (ctx: HttpContext) : Effect<User> =
   effect {
     let! sessionID = getSessionID ctx
-    let! ports = getPorts
-    let! session = ports.query<Session> sessionID |> fromAR
-    return! ports.query<User> session.UserID
+    let! session = fun p -> p.query<Session> sessionID 
+    return! fun p -> p.query<User> session.UserID
   }
 
 type Render<'a> = ViewModel<'a> -> XmlNode list
