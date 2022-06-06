@@ -2,7 +2,8 @@
 
 open System
 open System.Threading.Tasks
-open CommunicationsManagement.API.Models
+open CommunicationsManagement.API
+open Models
 open FsToolkit.ErrorHandling
 
 type IPorts =
@@ -46,11 +47,39 @@ let fromTaskOption rn tskOpt : Effect<'a> =
     }
 
 type EffectBuilder() =
-  member inline this.Bind(e: Effect<'a>, f: 'a -> Effect<'b>) : Effect<'b> = bindE f e
+  member inline this.Bind(e: Effect<'a>, [<InlineIfLambda>] f: 'a -> Effect<'b>) : Effect<'b> =
+    bindE f e
+
   member inline this.Return a : Effect<'a> = fun _ -> TaskResult.ok a
-  member inline this.ReturnFrom (e: Effect<'a>) : Effect<'a> = e
+  member inline this.ReturnFrom(e: Effect<'a>) : Effect<'a> = e
   member inline this.Zero() : Effect<Unit> = fun _ -> TaskResult.ok ()
-  member inline this.Combine(a, b) = a |> bindE (fun _ -> b)
+  member inline this.Combine(a: Effect<'a>, b: Effect<'b>) : Effect<'b> = a |> bindE (fun _ -> b)
+
+  member inline _.TryWith
+    (
+      e: Effect<'a>,
+      [<InlineIfLambda>] handler: Exception -> Effect<'a>
+    ) : Effect<'a> =
+    fun p ->
+      task {
+        try
+          return! e p
+        with
+        | e -> return! handler e p
+      }
+
+  member inline _.TryFinally
+    (
+      e: Effect<'a>,
+      [<InlineIfLambda>] compensation: unit -> unit
+    ) : Effect<'a> =
+    fun p ->
+      task {
+        try
+          return! e p
+        finally
+          do compensation ()
+      }
 
   member inline this.MergeSources(ea: Effect<'a>, eb: Effect<'b>) : Effect<'a * 'b> =
     this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
@@ -58,7 +87,7 @@ type EffectBuilder() =
   member inline _.Source(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
   member inline _.Source(r: Result<'a, DomainError>) : Effect<'a> = r |> fromResult
   member inline _.Source(tr: Task<Result<'a, DomainError>>) : Effect<'a> = tr |> fromTR
-  member inline _.Source(bt: IPorts -> Task<Result<'a, DomainError>>): Effect<'a> = bt
+  member inline _.Source(bt: IPorts -> Task<Result<'a, DomainError>>) : Effect<'a> = bt
 
 let effect = EffectBuilder()
 

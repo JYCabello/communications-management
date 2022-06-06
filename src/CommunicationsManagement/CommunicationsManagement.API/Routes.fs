@@ -16,21 +16,19 @@ open type Giraffe.HttpContextExtensions
 
 let private getSessionID (ctx: HttpContext) : Effect<Guid> =
   effect {
-    let! (id: Guid) =
+    return!
       (if ctx.Request.Headers.ContainsKey("sessionID") then
          match ctx.Request.Headers["sessionID"] |> Guid.TryParse with
          | true, id -> Ok id
          | false, _ -> NotAuthenticated |> Error
        else
          NotAuthenticated |> Error)
-
-    return id
   }
 
 let authenticate (ctx: HttpContext) : Effect<User> =
   effect {
     let! sessionID = getSessionID ctx
-    let! session = fun p -> p.query<Session> sessionID 
+    let! session = fun p -> p.query<Session> sessionID
     return! fun p -> p.query<User> session.UserID
   }
 
@@ -38,7 +36,7 @@ type Render<'a> = ViewModel<'a> -> XmlNode list
 
 let renderText (vm: ViewModel<string>) = [ Text vm.Model ]
 
-let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (next: HttpFunc) =
+let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (_: HttpFunc) =
   task {
     do
       code
@@ -47,7 +45,7 @@ let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (ne
 
     do ctx.SetContentType "text/html; charset=utf-8"
     do! ctx.WriteBytesAsync bytes :> Task
-    return! next ctx
+    return None
   }
 
 let renderOk
@@ -62,14 +60,9 @@ let renderOk
   |> fun (bytes, code) -> renderHtml ctx bytes code next
 
 let processError (ctx: HttpContext) (e: DomainError) (next: HttpFunc) : Task<HttpContext option> =
-  task {
-    let! x =
-      match e with
-      | NotAuthenticated -> redirectTo false "/login" next ctx
-      | _ -> failwith "not implemented"
-
-    return x
-  }
+  match e with
+  | NotAuthenticated -> redirectTo false "/login" next ctx
+  | _ -> failwith "not implemented"
 
 let renderEffect
   (ports: IPorts)
