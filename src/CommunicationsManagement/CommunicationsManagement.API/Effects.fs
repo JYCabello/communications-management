@@ -81,6 +81,17 @@ type EffectBuilder() =
           do compensation ()
       }
 
+  member inline _.Using
+    (
+      r: 'r :> IDisposable,
+      [<InlineIfLambda>] binder: 'r -> Effect<'a>
+    ) : Effect<'a> =
+    fun p ->
+      task {
+        use rd = r
+        return! binder rd p
+      }
+
   member inline this.MergeSources(ea: Effect<'a>, eb: Effect<'b>) : Effect<'a * 'b> =
     this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
 
