@@ -17,17 +17,17 @@ module Login =
       vm.Model.EmailError
       |> Option.map (fun e -> div [ _class "invalid-feedback" ] [ Text e ])
       |> Option.toList
-    
+
     let emailValidClass =
       vm.Model.EmailError
       |> Option.map (fun _ -> " is-invalid")
       |> Option.defaultValue ""
-    
+
     [ form [ _action "/login"; _method "post"; _novalidate ] [
-      div [_class "input-group"] [
-        label [_class "form-label"] [ Text "Email" ]
-        input [ _class $"form-control{emailValidClass}"; _name "email" ]
+      div [_class "input-group mb-3"] [
+        label [_class "form-label"; _for "input-email"] [ Text "Email" ]
+        input [ _class $"form-control{emailValidClass}"; _name "email"; _id "input-email" ]
         yield! emailError
       ]
-      input [ _type "submit"; _id "email-sumbit" ]
+      input [ _type "submit"; _id "email-sumbit"; _class "btn btn-primary" ]
     ] ]
