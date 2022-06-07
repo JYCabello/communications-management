@@ -19,7 +19,9 @@ let webApp (ports: IPorts) =
            >=> choose [ route "/login" >>=> login ports
                         route "/ping" >=> text "pong"
                         route "/inventory" >>=> json state
-                        route "/" >>=> home ports ] ]
+                        route "/" >>=> home ports ]
+           POST
+           >=> choose [ route "/login" >>=> loginPost ports ]]
 
 let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
 

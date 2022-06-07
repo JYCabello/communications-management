@@ -1,5 +1,6 @@
 ﻿module TestProject1CommunicationsManagement.Test.Login
 
+open System.Threading
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
 open Xunit
@@ -16,7 +17,7 @@ let ``logs in successfully`` () =
     driver
       .FindElement(By.Name("email"))
       .SendKeys setup.config.AdminEmail
-
+      
     driver.FindElement(By.Id("email-sumbit")).Click()
 
     let notification = setup.lastNotification

@@ -13,8 +13,8 @@
         <Compile Include="Operations.fs" />
         <Compile Include="Configuration.fs" />
         <Compile Include="EventStore.fs" />
-        <Compile Include="views\Layout.fs" />
-        <Compile Include="views\Login.fs" />
+        <Compile Include="Views\Layout.fs" />
+        <Compile Include="Views\Login.fs" />
         <Compile Include="Routes.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">

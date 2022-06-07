@@ -1,16 +1,15 @@
 ﻿module CommunicationsManagement.API.Routes
 
 open System
-open System.Net
 open System.Threading.Tasks
-open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
-open CommunicationsManagement.API.views
+open CommunicationsManagement.API.Views
 open Microsoft.AspNetCore.Http
 open Giraffe.Core
 open Giraffe.ViewEngine
 open Layout
+open LoginModels
 
 open type Giraffe.HttpContextExtensions
 
@@ -36,57 +35,55 @@ type Render<'a> = ViewModel<'a> -> XmlNode list
 
 let renderText (vm: ViewModel<string>) = [ Text vm.Model ]
 
-let renderHtml (ctx: HttpContext) (bytes: byte array) (code: HttpStatusCode) (_: HttpFunc) =
-  task {
-    do
-      code
-      |> LanguagePrimitives.EnumToValue
-      |> ctx.SetStatusCode
-
-    do ctx.SetContentType "text/html; charset=utf-8"
-    do! ctx.WriteBytesAsync bytes :> Task
-    return None
-  }
+let renderHtml (view: XmlNode) : HttpHandler =
+  htmlView view
 
 let renderOk
-  (ctx: HttpContext)
   (model: ViewModel<'a>)
   (view: Render<'a>)
-  (next: HttpFunc)
-  : Task<HttpContext option> =
+  : HttpHandler =
   model
   |> (view >> layout model.Root)
-  |> (fun n -> RenderView.AsBytes.htmlNode n, HttpStatusCode.OK)
-  |> fun (bytes, code) -> renderHtml ctx bytes code next
+  |> fun v -> renderHtml v
 
-let processError (ctx: HttpContext) (e: DomainError) (next: HttpFunc) : Task<HttpContext option> =
+let processError (e: DomainError) (next: HttpFunc)  (ctx: HttpContext): Task<HttpContext option> =
   match e with
   | NotAuthenticated -> redirectTo false "/login" next ctx
   | _ -> failwith "not implemented"
 
 let renderEffect
   (ports: IPorts)
-  (ctx: HttpContext)
   (view: Render<'a>)
   (next: HttpFunc)
+  (ctx: HttpContext)
   (e: Effect<ViewModel<'a>>)
   : Task<HttpContext option> =
-  task {
-    let! result = e ports |> attempt
+    let r = e ports
+    task {
+      let! result = r
+      return!
+        match result with
+          | Ok model -> renderOk model view next ctx
+          | Error error -> processError error next ctx
+    }
 
-    return!
-      match result with
-      | Ok model -> renderOk ctx model view next
-      | Error error -> processError ctx error next
-  }
+
 
 let login (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
     return
-      { Model = "Meh"
+      { Model = { Email = None; EmailError = None }
         Root = { Title = None; User = None } }
   }
-  |> renderEffect ports ctx views.Login.login next
+  |> renderEffect ports Login.view next ctx
+
+let loginPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+  effect {
+    return
+      { Model = { Email = None; EmailError = None }
+        Root = { Title = None; User = None } }
+  }
+  |> renderEffect ports Login.view next ctx
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
@@ -96,4 +93,4 @@ let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext 
       { Model = "Meh"
         Root = { Title = None; User = Some user } }
   }
-  |> renderEffect ports ctx renderText next
+  |> renderEffect ports renderText next ctx
