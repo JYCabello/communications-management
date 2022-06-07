@@ -11,6 +11,8 @@ open Giraffe.ViewEngine
 open Layout
 open Login
 
+open type Giraffe.HttpContextExtensions
+
 module Rendering =
   open type Giraffe.HttpContextExtensions
 
@@ -36,18 +38,14 @@ module Rendering =
 
   let renderText (vm: ViewModel<string>) = [ Text vm.Model ]
 
-  let renderHtml (view: XmlNode) : HttpHandler =
-    htmlView view
+  let renderHtml (view: XmlNode) : HttpHandler = htmlView view
 
-  let renderOk
-    (model: ViewModel<'a>)
-    (view: Render<'a>)
-    : HttpHandler =
+  let renderOk (model: ViewModel<'a>) (view: Render<'a>) : HttpHandler =
     model
     |> (view >> layout model.Root)
     |> fun v -> renderHtml v
 
-  let processError (e: DomainError): HttpHandler =
+  let processError (e: DomainError) : HttpHandler =
     match e with
     | NotAuthenticated -> redirectTo false "/login"
     | _ -> failwith "not implemented"
@@ -59,21 +57,24 @@ module Rendering =
     (next: HttpFunc)
     (ctx: HttpContext)
     : Task<HttpContext option> =
-      task {
-        let! result = e ports |> attempt
-        return!
-          match result with
-            | Ok model -> renderOk model view next ctx
-            | Error error -> processError error next ctx
-      }
-  
+    task {
+      let! result = e ports |> attempt
+
+      return!
+        match result with
+        | Ok model -> renderOk model view next ctx
+        | Error error -> processError error next ctx
+    }
+
   // Exists just for the cases where the context is explicit in the route definition
-  let resolveEffect2 ports view next ctx eff =
-    resolveEffect ports view eff next ctx
+  let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
 
 open Rendering
 
 module Login =
+  [<CLIMutable>]
+  type LoginDto = { Email: string Option }
+
   let get (ports: IPorts) : HttpHandler =
     effect {
       return
@@ -83,12 +84,28 @@ module Login =
     |> resolveEffect ports loginView
 
   let post (ports: IPorts) : HttpHandler =
-    effect {
-      return
-        { Model = { Email = None; EmailError = Some "error" }
-          Root = { Title = None; User = None } }
-    }
-    |> resolveEffect ports loginView
+    fun next ctx ->
+      effect {
+        let! dto =
+          ctx.TryBindFormAsync<LoginDto>()
+          |> FsToolkit.ErrorHandling.TaskResult.mapError (fun s -> BadRequest)
+          |> fromTR
+
+        let emailError =
+          match dto.Email with
+          | Some e ->
+            match e with
+            | "" -> Some "Email cannot be empty"
+            | _ -> None
+          | None -> Some "Email cannot be empty"
+
+        return
+          { Model =
+              { Email = dto.Email
+                EmailError = emailError }
+            Root = { Title = None; User = None } }
+      }
+      |> resolveEffect2 ports loginView next ctx
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {

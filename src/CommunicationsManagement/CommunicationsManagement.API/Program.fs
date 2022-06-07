@@ -21,7 +21,7 @@ let webApp (ports: IPorts) =
                         route "/inventory" >>=> json state
                         route "/" >>=> home ports ]
            POST
-           >=> choose [ route "/login" >>=> Login.post ports ]]
+           >=> choose [ route "/login" >>=> Login.post ports ] ]
 
 let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
 

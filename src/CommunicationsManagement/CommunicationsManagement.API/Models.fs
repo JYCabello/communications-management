@@ -58,6 +58,7 @@ type DomainError =
   | Unauthorized of protectedResourceName: string
   | NotFound of resourceName: string
   | Conflict
+  | BadRequest
   | InternalServerError of errorMessage: string
 
 type SendEventParams = { Event: StreamEvent }
