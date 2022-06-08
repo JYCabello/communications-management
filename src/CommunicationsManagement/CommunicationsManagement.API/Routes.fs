@@ -18,8 +18,6 @@ open type Giraffe.HttpContextExtensions
 module Rendering =
   open type Giraffe.HttpContextExtensions
 
-
-
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
       (if ctx.Request.Headers.ContainsKey("Accept-Language") then
@@ -81,12 +79,22 @@ module Rendering =
            NotAuthenticated |> Error)
     }
 
-  let authenticate (ctx: HttpContext) : Effect<User> =
+  let authenticate (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
       let! sessionID = getSessionID ctx
       let! session = fun p -> p.query<Session> sessionID
-      return! fun p -> p.query<User> session.UserID
+      let! user = fun p -> p.query<User> session.UserID
+
+      return
+        { User = Some user
+          Title = None
+          Translate = getTranslator ctx }
     }
+
+  let getAnonymousRootModel (ctx: HttpContext) : ViewModelRoot =
+    { User = None
+      Title = None
+      Translate = getTranslator ctx }
 
   type Render<'a> = ViewModel<'a> -> XmlNode list
 
@@ -99,16 +107,14 @@ module Rendering =
     |> (view >> layout model.Root)
     |> fun v -> renderHtml v
 
-  let processError
-    (e: DomainError)
-    (t: Translator)
-    (next: HttpFunc)
-    (ctx: HttpContext)
-    : Task<HttpContext option> =
+  let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+    let tr = getTranslator ctx
     match e with
     | NotAuthenticated -> redirectTo false "/login"
     | Conflict -> redirectTo false "/conflict"
-    | NotFound en -> EntityNotFound.view (getTranslator ctx) en |> htmlView
+    | NotFound en ->
+      EntityNotFound.view tr en
+      |> htmlView
     | Unauthorized _ -> failwith "not implemented"
     | InternalServerError _ -> failwith "not implemented"
     | BadRequest -> failwith "not implemented"
@@ -127,7 +133,7 @@ module Rendering =
       return!
         match result with
         | Ok model -> renderOk model view next ctx
-        | Error error -> processError error (getTranslator ctx) next ctx
+        | Error error -> processError error next ctx
     }
 
   // Exists just for the cases where the context is explicit in the route definition
@@ -144,10 +150,7 @@ module Login =
       effect {
         return
           { Model = { Email = None; EmailError = None }
-            Root =
-              { Title = None
-                User = None
-                Translate = getTranslator ctx } }
+            Root = getAnonymousRootModel ctx }
       }
       |> resolveEffect2 ports loginView next ctx
 
@@ -171,22 +174,14 @@ module Login =
           { Model =
               { Email = dto.Email
                 EmailError = emailError }
-            Root =
-              { Title = None
-                User = None
-                Translate = getTranslator ctx } }
+            Root = getAnonymousRootModel ctx }
       }
       |> resolveEffect2 ports loginView next ctx
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
-    let! user = authenticate ctx
+    let! root = authenticate ctx
 
-    return
-      { Model = "Meh"
-        Root =
-          { Title = None
-            User = Some user
-            Translate = getTranslator ctx } }
+    return { Model = "Meh"; Root = root }
   }
   |> resolveEffect2 ports renderText next ctx
