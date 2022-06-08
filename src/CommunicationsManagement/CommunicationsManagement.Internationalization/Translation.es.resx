@@ -120,4 +120,7 @@
   <data name="Email" xml:space="preserve">
     <value>Correo electrónico</value>
   </data>
+  <data name="NotFoundTextTemplate" xml:space="preserve">
+      <value>No se pudo encontrar una entidad de tipo {0}</value>
+  </data>
 </root>

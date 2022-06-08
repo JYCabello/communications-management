@@ -15,6 +15,7 @@
         <Compile Include="EventStore.fs" />
         <Compile Include="Views\Layout.fs" />
         <Compile Include="Views\Login.fs" />
+        <Compile Include="Views\EntityNotFound.fs" />
         <Compile Include="Routes.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">

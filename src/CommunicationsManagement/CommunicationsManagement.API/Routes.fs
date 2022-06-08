@@ -17,7 +17,7 @@ open type Giraffe.HttpContextExtensions
 
 module Rendering =
   open type Giraffe.HttpContextExtensions
-  
+
 
 
   let getCulture (ctx: HttpContext) : CultureInfo =
@@ -99,11 +99,16 @@ module Rendering =
     |> (view >> layout model.Root)
     |> fun v -> renderHtml v
 
-  let processError (e: DomainError) (t: Translator) (next: HttpFunc) (ctx: HttpContext): Task<HttpContext option> =
+  let processError
+    (e: DomainError)
+    (t: Translator)
+    (next: HttpFunc)
+    (ctx: HttpContext)
+    : Task<HttpContext option> =
     match e with
     | NotAuthenticated -> redirectTo false "/login"
     | Conflict -> redirectTo false "/conflict"
-    | NotFound _ -> failwith "not implemented"
+    | NotFound en -> EntityNotFound.view (getTranslator ctx) en |> htmlView
     | Unauthorized _ -> failwith "not implemented"
     | InternalServerError _ -> failwith "not implemented"
     | BadRequest -> failwith "not implemented"
@@ -118,7 +123,7 @@ module Rendering =
     : Task<HttpContext option> =
     task {
       let! result = e ports |> attempt
-      
+
       return!
         match result with
         | Ok model -> renderOk model view next ctx
