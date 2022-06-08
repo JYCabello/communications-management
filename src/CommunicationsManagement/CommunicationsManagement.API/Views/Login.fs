@@ -27,7 +27,7 @@ let loginView (vm: ViewModel<LoginModel>) =
            _novalidate ] [
       label [ _class "form-label"
               _for "input-email" ] [
-        Text(Translation.ResourceManager.GetString("Email", vm.Root.Culture))
+        Text(vm.Root.Translate "Email")
       ]
       div [ _class "input-group mb-3" ] [
         input [ _class $"form-control{emailValidClass}"

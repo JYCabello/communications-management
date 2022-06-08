@@ -35,10 +35,12 @@ type User =
 
 type Session = { ID: Guid; UserID: Guid }
 
+type Translator = string -> string
+
 type ViewModelRoot =
   { User: User option
     Title: string option
-    Culture: CultureInfo }
+    Translate: Translator }
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 

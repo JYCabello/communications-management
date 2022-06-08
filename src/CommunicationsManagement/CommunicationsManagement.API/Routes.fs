@@ -6,6 +6,7 @@ open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
+open CommunicationsManagement.Internationalization
 open Microsoft.AspNetCore.Http
 open Giraffe.Core
 open Giraffe.ViewEngine
@@ -16,6 +17,8 @@ open type Giraffe.HttpContextExtensions
 
 module Rendering =
   open type Giraffe.HttpContextExtensions
+  
+
 
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
@@ -62,6 +65,11 @@ module Rendering =
     |> Option.map CultureInfo
     |> Option.defaultWith defaultCulture
 
+  let getTranslator (ctx: HttpContext) : Translator =
+    fun key ->
+      let culture = getCulture ctx
+      Translation.ResourceManager.GetString(key, culture)
+
   let private getSessionID (ctx: HttpContext) : Effect<Guid> =
     effect {
       return!
@@ -91,7 +99,7 @@ module Rendering =
     |> (view >> layout model.Root)
     |> fun v -> renderHtml v
 
-  let processError (e: DomainError) : HttpHandler =
+  let processError (e: DomainError) (t: Translator) (next: HttpFunc) (ctx: HttpContext): Task<HttpContext option> =
     match e with
     | NotAuthenticated -> redirectTo false "/login"
     | Conflict -> redirectTo false "/conflict"
@@ -99,6 +107,7 @@ module Rendering =
     | Unauthorized _ -> failwith "not implemented"
     | InternalServerError _ -> failwith "not implemented"
     | BadRequest -> failwith "not implemented"
+    |> fun handler -> handler next ctx
 
   let resolveEffect
     (ports: IPorts)
@@ -109,11 +118,11 @@ module Rendering =
     : Task<HttpContext option> =
     task {
       let! result = e ports |> attempt
-
+      
       return!
         match result with
         | Ok model -> renderOk model view next ctx
-        | Error error -> processError error next ctx
+        | Error error -> processError error (getTranslator ctx) next ctx
     }
 
   // Exists just for the cases where the context is explicit in the route definition
@@ -133,7 +142,7 @@ module Login =
             Root =
               { Title = None
                 User = None
-                Culture = getCulture ctx } }
+                Translate = getTranslator ctx } }
       }
       |> resolveEffect2 ports loginView next ctx
 
@@ -160,7 +169,7 @@ module Login =
             Root =
               { Title = None
                 User = None
-                Culture = getCulture ctx } }
+                Translate = getTranslator ctx } }
       }
       |> resolveEffect2 ports loginView next ctx
 
@@ -173,6 +182,6 @@ let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext 
         Root =
           { Title = None
             User = Some user
-            Culture = getCulture ctx } }
+            Translate = getTranslator ctx } }
   }
   |> resolveEffect2 ports renderText next ctx
