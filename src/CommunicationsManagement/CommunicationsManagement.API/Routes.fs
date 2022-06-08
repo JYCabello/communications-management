@@ -10,7 +10,6 @@ open CommunicationsManagement.Internationalization
 open Microsoft.AspNetCore.Http
 open Giraffe.Core
 open Giraffe.ViewEngine
-open Layout
 open Login
 
 open type Giraffe.HttpContextExtensions
@@ -104,16 +103,20 @@ module Rendering =
 
   let renderOk (model: ViewModel<'a>) (view: Render<'a>) : HttpHandler =
     model
-    |> (view >> layout model.Root)
+    |> (view >> Layout.layout model.Root)
     |> fun v -> renderHtml v
 
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
+
     match e with
     | NotAuthenticated -> redirectTo false "/login"
     | Conflict -> redirectTo false "/conflict"
     | NotFound en ->
-      EntityNotFound.view tr en
+      [ String.Format("NotFoundTextTemplate", en)
+        |> tr
+        |> Text ]
+      |> Layout.error tr
       |> htmlView
     | Unauthorized _ -> failwith "not implemented"
     | InternalServerError _ -> failwith "not implemented"

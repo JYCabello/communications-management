@@ -123,4 +123,7 @@
   <data name="NotFoundTextTemplate" xml:space="preserve">
       <value>Could not find an entity of type {0}</value>
   </data>
+  <data name="AppName" xml:space="preserve">
+      <value>Sports Communications</value>
+  </data>
 </root>
