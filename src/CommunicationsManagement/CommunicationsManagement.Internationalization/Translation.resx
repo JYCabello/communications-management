@@ -132,4 +132,10 @@
   <data name="BadRequestTemplate" xml:space="preserve">
       <value>Data sent was in an invalid format</value>
   </data>
+  <data name="ConflictTemplate" xml:space="preserve">
+      <value>The system was in an invalid state for the action you were trying to perform</value>
+  </data>
+  <data name="UnauthorizedTemplate" xml:space="preserve">
+      <value>You are not authorized to access this {0}</value>
+  </data>
 </root>

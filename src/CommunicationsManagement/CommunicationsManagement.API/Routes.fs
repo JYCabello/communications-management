@@ -104,7 +104,7 @@ module Rendering =
   let renderOk (model: ViewModel<'a>) (view: Render<'a>) : HttpHandler =
     model
     |> (view >> Layout.layout model.Root)
-    |> fun v -> renderHtml v
+    |> renderHtml
 
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
@@ -112,13 +112,19 @@ module Rendering =
 
     (match e with
      | NotAuthenticated -> redirectTo false "/login"
-     | Conflict -> redirectTo false "/conflict"
+     | Conflict -> 
+       [ "ConflictTemplate" |> tr |> Text ]
+       |> errorView
      | NotFound en ->
        [ String.Format("NotFoundTextTemplate", en)
          |> tr
          |> Text ]
        |> errorView
-     | Unauthorized _ -> failwith "not implemented"
+     | Unauthorized rn ->
+       [ String.Format("UnauthorizedTemplate", rn)
+         |> tr
+         |> Text ]
+       |> errorView
      | InternalServerError e ->
        [ String.Format("InternalServerErrorTemplate", e)
          |> tr

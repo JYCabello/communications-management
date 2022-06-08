@@ -79,6 +79,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The system was in an invalid state for the action you were trying to perform.
+        /// </summary>
+        public static string ConflictTemplate {
+            get {
+                return ResourceManager.GetString("ConflictTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Email.
         /// </summary>
         public static string Email {
@@ -102,6 +111,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string NotFoundTextTemplate {
             get {
                 return ResourceManager.GetString("NotFoundTextTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are not authorized to access this {0}.
+        /// </summary>
+        public static string UnauthorizedTemplate {
+            get {
+                return ResourceManager.GetString("UnauthorizedTemplate", resourceCulture);
             }
         }
     }
