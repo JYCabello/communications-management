@@ -79,6 +79,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Something unexpected happened.
+        /// </summary>
+        public static string InternalServerErrorTemplate {
+            get {
+                return ResourceManager.GetString("InternalServerErrorTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Could not find an entity of type {0}.
         /// </summary>
         public static string NotFoundTextTemplate {

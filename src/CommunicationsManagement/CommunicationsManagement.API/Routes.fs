@@ -119,7 +119,12 @@ module Rendering =
       |> Layout.error tr
       |> htmlView
     | Unauthorized _ -> failwith "not implemented"
-    | InternalServerError _ -> failwith "not implemented"
+    | InternalServerError e -> 
+      [ String.Format("InternalServerErrorTemplate", e)
+        |> tr
+        |> Text ]
+      |> Layout.error tr
+      |> htmlView
     | BadRequest -> failwith "not implemented"
     |> fun handler -> handler next ctx
 

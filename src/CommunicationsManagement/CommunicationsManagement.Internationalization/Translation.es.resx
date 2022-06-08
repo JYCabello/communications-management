@@ -126,4 +126,7 @@
   <data name="AppName" xml:space="preserve">
       <value>Comunicaciones deportivas</value>
   </data>
+  <data name="InternalServerErrorTemplate" xml:space="preserve">
+      <value>Ocurrió un error inesperado</value>
+  </data>
 </root>
