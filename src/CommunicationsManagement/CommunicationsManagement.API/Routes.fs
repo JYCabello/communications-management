@@ -83,17 +83,28 @@ module Rendering =
       let! sessionID = getSessionID ctx
       let! session = fun p -> p.query<Session> sessionID
       let! user = fun p -> p.query<User> session.UserID
+      let tr = getTranslator ctx
 
       return
         { User = Some user
-          Title = None
-          Translate = getTranslator ctx }
+          Title = tr "AppName"
+          Translate = tr }
     }
 
   let getAnonymousRootModel (ctx: HttpContext) : ViewModelRoot =
+    let tr = getTranslator ctx
+
     { User = None
-      Title = None
-      Translate = getTranslator ctx }
+      Title = tr "AppName"
+      Translate = tr }
+
+  let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
+    fun _ ->
+      (if user.hasRole role then
+         Ok()
+       else
+         resourceName |> Unauthorized |> Error)
+      |> Task.FromResult
 
   type Render<'a> = ViewModel<'a> -> XmlNode list
 
@@ -112,9 +123,7 @@ module Rendering =
 
     (match e with
      | NotAuthenticated -> redirectTo false "/login"
-     | Conflict -> 
-       [ "ConflictTemplate" |> tr |> Text ]
-       |> errorView
+     | Conflict -> [ "ConflictTemplate" |> tr |> Text ] |> errorView
      | NotFound en ->
        [ String.Format("NotFoundTextTemplate", en)
          |> tr

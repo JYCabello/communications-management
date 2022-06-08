@@ -39,7 +39,7 @@ type Translator = string -> string
 
 type ViewModelRoot =
   { User: User option
-    Title: string option
+    Title: string
     Translate: Translator }
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
