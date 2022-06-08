@@ -1,6 +1,8 @@
 ﻿module CommunicationsManagement.API.Models
 
 open System
+open CommunicationsManagement.Internationalization
+open System.Globalization
 
 [<CLIMutable>]
 type Configuration =
@@ -35,7 +37,8 @@ type Session = { ID: Guid; UserID: Guid }
 
 type ViewModelRoot =
   { User: User option
-    Title: string option }
+    Title: string option
+    Culture: CultureInfo }
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 

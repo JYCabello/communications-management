@@ -37,4 +37,8 @@
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\CommunicationsManagement.Internationalization\CommunicationsManagement.Internationalization.csproj" />
+    </ItemGroup>
+
 </Project>

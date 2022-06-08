@@ -2,6 +2,7 @@
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
+open CommunicationsManagement.Internationalization
 
 type LoginModel =
   { Email: string option
@@ -26,7 +27,7 @@ let loginView (vm: ViewModel<LoginModel>) =
            _novalidate ] [
       label [ _class "form-label"
               _for "input-email" ] [
-        Text "Email"
+        Text(Translation.ResourceManager.GetString("Email", vm.Root.Culture))
       ]
       div [ _class "input-group mb-3" ] [
         input [ _class $"form-control{emailValidClass}"

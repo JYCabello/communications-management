@@ -1,14 +1,18 @@
 ﻿module Main
 
+open System.Collections.Generic
+open System.Globalization
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Localization
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open EventStore
+open Microsoft.Extensions.Options
 open Routes
 
 
@@ -23,9 +27,24 @@ let webApp (ports: IPorts) =
            POST
            >=> choose [ route "/login" >>=> Login.post ports ] ]
 
-let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
+let configureApp (app: IApplicationBuilder) ports =
+  app.UseGiraffe <| webApp ports
+  //let localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>()
+  app.UseRequestLocalization() |> ignore
+  ()
 
-let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
+let configureServices (services: IServiceCollection) =
+  services.AddGiraffe() |> ignore
+
+  services.Configure<RequestLocalizationOptions> (fun (opt: RequestLocalizationOptions) ->
+    let supportedCultures = [ CultureInfo("es"); CultureInfo("en") ] |> List
+    opt.DefaultRequestCulture <- RequestCulture(CultureInfo("es"), CultureInfo("es"))
+    opt.SupportedCultures <- supportedCultures
+    opt.SupportedUICultures <- supportedCultures
+    ())
+  |> ignore
+
+  ()
 
 let buildHost ports forcedPort =
   triggerSubscriptions ports

@@ -1,6 +1,8 @@
 ﻿module CommunicationsManagement.API.Routes
 
 open System
+open System.Globalization
+open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
@@ -15,6 +17,33 @@ open type Giraffe.HttpContextExtensions
 
 module Rendering =
   open type Giraffe.HttpContextExtensions
+
+  let getCulture (ctx: HttpContext) : CultureInfo =
+    let defaultCulture () =
+      (if ctx.Request.Headers.ContainsKey("Accept-Language") then
+         Some(
+           ctx
+             .Request
+             .Headers[ "Accept-Language" ]
+             .ToString()
+         )
+       else
+         None)
+      |> Option.bind (fun h ->
+        if h.StartsWith("en") then
+          CultureInfo "en" |> Some
+        else
+          None)
+      |> Option.defaultValue (CultureInfo "es")
+
+    if ctx.Request.Headers.ContainsKey("Selected-Language") then
+      ctx
+        .Request
+        .Headers[ "Selected-Language" ]
+        .ToString()
+      |> CultureInfo
+    else
+      defaultCulture ()
 
   let private getSessionID (ctx: HttpContext) : Effect<Guid> =
     effect {
@@ -48,7 +77,11 @@ module Rendering =
   let processError (e: DomainError) : HttpHandler =
     match e with
     | NotAuthenticated -> redirectTo false "/login"
-    | _ -> failwith "not implemented"
+    | Conflict -> redirectTo false "/conflict"
+    | NotFound _ -> failwith "not implemented"
+    | Unauthorized _ -> failwith "not implemented"
+    | InternalServerError _ -> failwith "not implemented"
+    | BadRequest -> failwith "not implemented"
 
   let resolveEffect
     (ports: IPorts)
@@ -76,19 +109,23 @@ module Login =
   type LoginDto = { Email: string Option }
 
   let get (ports: IPorts) : HttpHandler =
-    effect {
-      return
-        { Model = { Email = None; EmailError = None }
-          Root = { Title = None; User = None } }
-    }
-    |> resolveEffect ports loginView
+    fun next ctx ->
+      effect {
+        return
+          { Model = { Email = None; EmailError = None }
+            Root =
+              { Title = None
+                User = None
+                Culture = getCulture ctx } }
+      }
+      |> resolveEffect2 ports loginView next ctx
 
   let post (ports: IPorts) : HttpHandler =
     fun next ctx ->
       effect {
         let! dto =
           ctx.TryBindFormAsync<LoginDto>()
-          |> FsToolkit.ErrorHandling.TaskResult.mapError (fun s -> BadRequest)
+          |> FsToolkit.ErrorHandling.TaskResult.mapError (fun _ -> BadRequest)
           |> fromTR
 
         let emailError =
@@ -103,7 +140,10 @@ module Login =
           { Model =
               { Email = dto.Email
                 EmailError = emailError }
-            Root = { Title = None; User = None } }
+            Root =
+              { Title = None
+                User = None
+                Culture = getCulture ctx } }
       }
       |> resolveEffect2 ports loginView next ctx
 
@@ -113,6 +153,9 @@ let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext 
 
     return
       { Model = "Meh"
-        Root = { Title = None; User = Some user } }
+        Root =
+          { Title = None
+            User = Some user
+            Culture = getCulture ctx } }
   }
   |> resolveEffect2 ports renderText next ctx
