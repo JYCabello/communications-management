@@ -33,22 +33,30 @@ module Rendering =
         else
           None)
       |> Option.defaultValue (CultureInfo "es")
-    
+
     let validCultureNames = [ "es"; "en" ]
-    
+
     let changeHeader =
-      if ctx.Request.Query.ContainsKey("setLang")
-      then validCultureNames |> Seq.tryFind (fun c -> c = ctx.Request.Query["setLang"].ToString())
-      else None
+      if ctx.Request.Query.ContainsKey("setLang") then
+        validCultureNames
+        |> Seq.tryFind (fun c -> c = ctx.Request.Query[ "setLang" ].ToString())
+      else
+        None
 
     changeHeader
     |> Option.iter (fun c -> ctx.Response.Cookies.Append("Selected-Language", c))
-      
+
     let cookieLang =
-      if ctx.Request.Cookies.ContainsKey("Selected-Language")
-      then validCultureNames |> Seq.tryFind (fun c -> c =  ctx        .Request        .Cookies["Selected-Language"]        .ToString())
-      else None
-      
+      if ctx.Request.Cookies.ContainsKey("Selected-Language") then
+        validCultureNames
+        |> Seq.tryFind (fun c ->
+          c = ctx
+            .Request
+            .Cookies[ "Selected-Language" ]
+            .ToString())
+      else
+        None
+
     changeHeader
     |> Option.orElseWith (fun () -> cookieLang)
     |> Option.map CultureInfo
