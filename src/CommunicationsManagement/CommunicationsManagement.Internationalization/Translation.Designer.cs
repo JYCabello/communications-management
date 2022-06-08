@@ -70,6 +70,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Data sent was in an invalid format.
+        /// </summary>
+        public static string BadRequestTemplate {
+            get {
+                return ResourceManager.GetString("BadRequestTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Email.
         /// </summary>
         public static string Email {

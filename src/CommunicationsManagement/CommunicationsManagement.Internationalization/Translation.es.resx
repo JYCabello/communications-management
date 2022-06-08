@@ -129,4 +129,7 @@
   <data name="InternalServerErrorTemplate" xml:space="preserve">
       <value>Ocurrió un error inesperado</value>
   </data>
+  <data name="BadRequestTemplate" xml:space="preserve">
+      <value>Los datos enviados estaban en un formato inválido</value>
+  </data>
 </root>

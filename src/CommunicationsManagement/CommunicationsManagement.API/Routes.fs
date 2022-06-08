@@ -108,24 +108,25 @@ module Rendering =
 
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
+    let errorView = Layout.error tr >> htmlView
 
-    match e with
-    | NotAuthenticated -> redirectTo false "/login"
-    | Conflict -> redirectTo false "/conflict"
-    | NotFound en ->
-      [ String.Format("NotFoundTextTemplate", en)
-        |> tr
-        |> Text ]
-      |> Layout.error tr
-      |> htmlView
-    | Unauthorized _ -> failwith "not implemented"
-    | InternalServerError e -> 
-      [ String.Format("InternalServerErrorTemplate", e)
-        |> tr
-        |> Text ]
-      |> Layout.error tr
-      |> htmlView
-    | BadRequest -> failwith "not implemented"
+    (match e with
+     | NotAuthenticated -> redirectTo false "/login"
+     | Conflict -> redirectTo false "/conflict"
+     | NotFound en ->
+       [ String.Format("NotFoundTextTemplate", en)
+         |> tr
+         |> Text ]
+       |> errorView
+     | Unauthorized _ -> failwith "not implemented"
+     | InternalServerError e ->
+       [ String.Format("InternalServerErrorTemplate", e)
+         |> tr
+         |> Text ]
+       |> errorView
+     | BadRequest ->
+       [ "BadRequestTemplate" |> tr |> Text ]
+       |> errorView)
     |> fun handler -> handler next ctx
 
   let resolveEffect
