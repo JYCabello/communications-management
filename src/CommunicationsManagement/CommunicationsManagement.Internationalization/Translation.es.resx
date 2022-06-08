@@ -138,4 +138,7 @@
   <data name="UnauthorizedTemplate" xml:space="preserve">
       <value>No estás autorizado a acceder a este {0}</value>
   </data>
+  <data name="InvalidEmail" xml:space="preserve">
+      <value>No es una dirección de correo válida</value>
+  </data>
 </root>

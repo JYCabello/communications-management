@@ -186,19 +186,18 @@ module Login =
           |> FsToolkit.ErrorHandling.TaskResult.mapError (fun _ -> BadRequest)
           |> fromTR
 
+        let rm = getAnonymousRootModel ctx
+
         let emailError =
-          match dto.Email with
-          | Some e ->
-            match e with
-            | "" -> Some "Email cannot be empty"
-            | _ -> None
-          | None -> Some "Email cannot be empty"
+          match DataValidation.isValidEmail dto.Email with
+          | true -> None
+          | false -> "InvalidEmail" |> rm.Translate |> Some
 
         return
           { Model =
               { Email = dto.Email
                 EmailError = emailError }
-            Root = getAnonymousRootModel ctx }
+            Root = rm }
       }
       |> resolveEffect2 ports loginView next ctx
 

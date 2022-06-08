@@ -138,4 +138,7 @@
   <data name="UnauthorizedTemplate" xml:space="preserve">
       <value>You are not authorized to access this {0}</value>
   </data>
+  <data name="InvalidEmail" xml:space="preserve">
+      <value>Invalid email</value>
+  </data>
 </root>

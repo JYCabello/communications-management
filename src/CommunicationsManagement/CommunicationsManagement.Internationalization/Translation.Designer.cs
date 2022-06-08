@@ -106,6 +106,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid email.
+        /// </summary>
+        public static string InvalidEmail {
+            get {
+                return ResourceManager.GetString("InvalidEmail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Could not find an entity of type {0}.
         /// </summary>
         public static string NotFoundTextTemplate {
