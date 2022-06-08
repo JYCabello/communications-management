@@ -2,7 +2,6 @@
 
 open System
 open System.Globalization
-open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
@@ -21,12 +20,11 @@ module Rendering =
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
       (if ctx.Request.Headers.ContainsKey("Accept-Language") then
-         Some(
-           ctx
-             .Request
-             .Headers[ "Accept-Language" ]
-             .ToString()
-         )
+         ctx
+           .Request
+           .Headers[ "Accept-Language" ]
+           .ToString()
+        |> Some
        else
          None)
       |> Option.bind (fun h ->
