@@ -1,8 +1,6 @@
 ﻿module CommunicationsManagement.API.Models
 
 open System
-open CommunicationsManagement.Internationalization
-open System.Globalization
 
 [<CLIMutable>]
 type Configuration =
