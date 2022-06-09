@@ -56,8 +56,7 @@ let post (ports: IPorts) : HttpHandler =
           |> Error
 
       let! user =
-        fun p ->
-          p.find<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
+        fun p -> p.find<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
 
       let session =
         { UserID = user.ID
@@ -82,6 +81,29 @@ let post (ports: IPorts) : HttpHandler =
           Model = rm.Translate "EmailLoginDetails" }
     }
     |> resolveEffect2 ports loginMessage next ctx
-    
+
 let confirm (ports: IPorts) : HttpHandler =
-  failwith "not implemented"
+  fun next ctx ->
+    effect {
+      let! mr = getAnonymousRootModel ctx
+
+      let! code =
+        fun _ ->
+          ctx.TryGetQueryStringValue("code")
+          |> Option.bind (fun c ->
+            match Guid.TryParse c with
+            | true, guid -> Some guid
+            | false, _ -> None)
+          |> function
+            | Some c -> TaskResult.ok c
+            | None -> TaskResult.error BadRequest
+
+      do ctx.Response.Cookies.Append("sessionID", code.ToString())
+
+      // Short-circuit for redirection.
+      let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
+      do! redirectTo false baseUrl |> EarlyReturn |> Error
+
+      return { Model = (); Root = mr }
+    }
+    |> resolveEffect2 ports theVoid next ctx

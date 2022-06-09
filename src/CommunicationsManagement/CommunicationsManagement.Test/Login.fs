@@ -1,5 +1,6 @@
 ﻿module TestProject1CommunicationsManagement.Test.Login
 
+open System.Threading.Tasks
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
 open Xunit
@@ -29,8 +30,6 @@ let ``logs in successfully`` () =
 
     driver.FindElement(By.Id("home-button")).Click()
 
-    Assert.Equal(setup.config.BaseUrl, driver.Url)
-
     Assert.Equal(
       $"{setup.config.BaseUrl}/login/confirm?code={loginNotification.ActivationCode}",
       loginNotification.ActivationUrl
@@ -39,7 +38,9 @@ let ``logs in successfully`` () =
     driver.Url <- loginNotification.ActivationUrl
 
 
-    let link = driver.FindElement(By.Id("profile-link"))
-    Assert.Equal("Admin", link.Text)
-    Assert.Equal(setup.config.BaseUrl, driver.Url)
+    let link = driver.FindElement(By.Id("logout-link"))
+    Assert.Equal("Logout", link.Text)
+    Assert.Equal(setup.config.BaseUrl + "/", driver.Url)
+    do link.Click()
+    Assert.Equal($"{setup.config.BaseUrl}/login", driver.Url)
   }

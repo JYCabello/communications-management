@@ -70,8 +70,8 @@ module Rendering =
   let private getSessionID (ctx: HttpContext) : Effect<Guid> =
     effect {
       return!
-        (if ctx.Request.Headers.ContainsKey("sessionID") then
-           match ctx.Request.Headers["sessionID"] |> Guid.TryParse with
+        (if ctx.Request.Cookies.ContainsKey("sessionID") then
+           match ctx.Request.Cookies["sessionID"] |> Guid.TryParse with
            | true, id -> Ok id
            | false, _ -> NotAuthenticated |> Error
          else
@@ -179,6 +179,8 @@ module Rendering =
 
   // Exists just for the cases where the context is explicit in the route definition
   let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
+
+  let theVoid: Render<'a> = fun _ -> []
 
 open Rendering
 

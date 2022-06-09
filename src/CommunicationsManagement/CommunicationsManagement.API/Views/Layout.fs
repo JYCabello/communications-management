@@ -24,7 +24,8 @@ let private navTemplate (vmr: ViewModelRoot) =
       |> Option.map (fun u ->
         [ Text u.Name
           Text "&nbsp;"
-          a [ _href vmr.BaseUrl ] [
+          a [ _href (vmr.BaseUrl.AppendPathSegment("logout").ToString())
+              _id "logout-link" ] [
             "Logout" |> vmr.Translate |> Text
           ] ])
       |> Option.toList

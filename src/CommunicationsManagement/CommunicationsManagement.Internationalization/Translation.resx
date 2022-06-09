@@ -147,4 +147,7 @@
   <data name="EmailLoginDetails" xml:space="preserve">
       <value>An email has been sent with a link to log in</value>
   </data>
+  <data name="Logout" xml:space="preserve">
+      <value>Logout</value>
+  </data>
 </root>
