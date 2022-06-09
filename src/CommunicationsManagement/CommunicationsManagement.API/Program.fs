@@ -12,7 +12,6 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open EventStore
-open Microsoft.Extensions.Options
 open Routes
 
 
@@ -74,6 +73,7 @@ let ports: IPorts =
       member this.sendNotification p = () |> TaskResult.ok
       member this.configuration = config
       member this.query id = Storage.query config id
+      member this.find predicate = Storage.queryPredicate config predicate
       member this.save a = Storage.save config a }
 
 [<EntryPoint>]

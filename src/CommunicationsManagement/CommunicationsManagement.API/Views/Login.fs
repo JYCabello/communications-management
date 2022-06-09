@@ -41,3 +41,7 @@ let loginView (vm: ViewModel<LoginModel>) =
               _id "email-sumbit"
               _class "btn btn-primary" ]
     ] ]
+
+let loginMessage vm =
+  [ Text vm.Model
+    Layout.homeButton vm.Root.Translate ]

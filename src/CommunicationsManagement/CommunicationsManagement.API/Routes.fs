@@ -6,11 +6,12 @@ open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
+open CommunicationsManagement.API.Views.Login
 open CommunicationsManagement.Internationalization
+open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Http
 open Giraffe.Core
 open Giraffe.ViewEngine
-open Login
 
 open type Giraffe.HttpContextExtensions
 
@@ -77,6 +78,9 @@ module Rendering =
          else
            NotAuthenticated |> Error)
     }
+  
+  let getUrl (ctx: HttpContext) =
+    $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
 
   let authenticate (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
@@ -88,15 +92,16 @@ module Rendering =
       return
         { User = Some user
           Title = tr "AppName"
-          Translate = tr }
+          Translate = tr
+          CurrentUrl = getUrl ctx }
     }
 
   let getAnonymousRootModel (ctx: HttpContext) : ViewModelRoot =
     let tr = getTranslator ctx
-
     { User = None
       Title = tr "AppName"
-      Translate = tr }
+      Translate = tr
+      CurrentUrl = getUrl ctx }
 
   let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
     fun _ ->
@@ -119,7 +124,7 @@ module Rendering =
 
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
-    let errorView = Layout.error tr >> htmlView
+    let errorView = Layout.notification tr >> htmlView
 
     (match e with
      | NotAuthenticated -> redirectTo false "/login"
@@ -141,7 +146,8 @@ module Rendering =
        |> errorView
      | BadRequest ->
        [ "BadRequestTemplate" |> tr |> Text ]
-       |> errorView)
+       |> errorView
+     | EarlyReturn h -> h)
     |> fun handler -> handler next ctx
 
   let resolveEffect
@@ -167,7 +173,7 @@ open Rendering
 
 module Login =
   [<CLIMutable>]
-  type LoginDto = { Email: string Option }
+  type LoginDto = { Email: string option }
 
   let get (ports: IPorts) : HttpHandler =
     fun next ctx ->
@@ -178,12 +184,16 @@ module Login =
       }
       |> resolveEffect2 ports loginView next ctx
 
+  type LoginResult =
+    | Success
+    | Failure of LoginModel
+
   let post (ports: IPorts) : HttpHandler =
     fun next ctx ->
       effect {
         let! dto =
           ctx.TryBindFormAsync<LoginDto>()
-          |> FsToolkit.ErrorHandling.TaskResult.mapError (fun _ -> BadRequest)
+          |> TaskResult.mapError (fun _ -> BadRequest)
           |> fromTR
 
         let rm = getAnonymousRootModel ctx
@@ -193,13 +203,46 @@ module Login =
           | true -> None
           | false -> "InvalidEmail" |> rm.Translate |> Some
 
+        // Short-circuit for validation.
+        do!
+          match emailError with
+          | None -> Ok()
+          | Some error ->
+            { Model =
+                { Email = dto.Email
+                  EmailError = Some error }
+              Root = rm }
+            |> fun m -> renderOk m loginView
+            |> EarlyReturn
+            |> Error
+
+        let! user =
+          fun p ->
+            p.find<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
+
+        let session =
+          { UserID = user.ID
+            ID = Guid.NewGuid() }
+
+        do! fun p -> p.save session
+
+        let! notification =
+          fun p ->
+            { Email = user.Email
+              Notification =
+                Login
+                  { UserName = user.Name
+                    ActivationCode = session.ID
+                    ActivationUrl = $"{p.configuration.BaseUrl}/login/confirm?code={session.ID}" } }
+            |> TaskResult.ok
+
+        do! fun p -> p.sendNotification notification
+
         return
-          { Model =
-              { Email = dto.Email
-                EmailError = emailError }
-            Root = rm }
+          { Root = rm
+            Model = rm.Translate "EmailLoginDetails" }
       }
-      |> resolveEffect2 ports loginView next ctx
+      |> resolveEffect2 ports loginMessage next ctx
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {

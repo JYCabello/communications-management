@@ -97,6 +97,24 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An email has been sent with a link to log in.
+        /// </summary>
+        public static string EmailLoginDetails {
+            get {
+                return ResourceManager.GetString("EmailLoginDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Home.
+        /// </summary>
+        public static string Home {
+            get {
+                return ResourceManager.GetString("Home", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Something unexpected happened.
         /// </summary>
         public static string InternalServerErrorTemplate {

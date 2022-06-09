@@ -141,4 +141,10 @@
   <data name="InvalidEmail" xml:space="preserve">
       <value>Invalid email</value>
   </data>
+  <data name="Home" xml:space="preserve">
+      <value>Home</value>
+  </data>
+  <data name="EmailLoginDetails" xml:space="preserve">
+      <value>An email has been sent with a link to log in</value>
+  </data>
 </root>

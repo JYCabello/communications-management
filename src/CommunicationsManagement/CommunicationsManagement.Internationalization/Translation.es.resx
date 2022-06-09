@@ -141,4 +141,10 @@
   <data name="InvalidEmail" xml:space="preserve">
       <value>No es una dirección de correo válida</value>
   </data>
+  <data name="Home" xml:space="preserve">
+      <value>Inicio</value>
+  </data>
+  <data name="EmailLoginDetails" xml:space="preserve">
+      <value>Se ha enviado un correo electrónico con un enlace para acceder</value>
+  </data>
 </root>

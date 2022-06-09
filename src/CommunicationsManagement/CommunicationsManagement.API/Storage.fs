@@ -18,8 +18,20 @@ let private userStorage = ConcurrentDictionary<Guid, User>()
 let private querySession id =
   sessionStorage |> tryGet id |> Task.FromResult
 
+let private findSession q =
+  sessionStorage.ToArray()
+  |> Seq.tryFind (fun kvp -> q kvp.Value)
+  |> Option.map (fun kvp -> kvp.Value)
+  |> Task.FromResult
+
 let private queryUser id =
   userStorage |> tryGet id |> Task.FromResult
+
+let private findUser q =
+  userStorage.ToArray()
+  |> Seq.tryFind (fun kvp -> q kvp.Value)
+  |> Option.map (fun kvp -> kvp.Value)
+  |> Task.FromResult
 
 let private saveSession (s: Session) =
   Task.FromResult <| sessionStorage[s.ID] <- s
@@ -45,6 +57,26 @@ let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
         match typeof<'a> with
         | t when t = typeof<Session> -> querySession id |> toObjResult
         | t when t = typeof<User> -> queryUser id |> toObjResult
+        | t ->
+          InternalServerError $"Query not implemented for type {t.FullName}"
+          |> TaskResult.error
+
+      return value :?> 'a
+    }
+
+let queryPredicate<'a> : Configuration -> ('a -> bool) -> Task<Result<'a, DomainError>> =
+  fun _ predicate ->
+    taskResult {
+      let! value =
+        match typeof<'a> with
+        | t when t = typeof<Session> ->
+          box predicate :?> Session -> bool
+          |> findSession
+          |> toObjResult
+        | t when t = typeof<User> ->
+          box predicate :?> User -> bool
+          |> findUser
+          |> toObjResult
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error

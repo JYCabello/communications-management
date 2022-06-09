@@ -38,7 +38,8 @@ type Translator = string -> string
 type ViewModelRoot =
   { User: User option
     Title: string
-    Translate: Translator }
+    Translate: Translator
+    CurrentUrl: string }
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
@@ -63,6 +64,7 @@ type DomainError =
   | Conflict
   | BadRequest
   | InternalServerError of errorMessage: string
+  | EarlyReturn of Giraffe.Core.HttpHandler
 
 type SendEventParams = { Event: StreamEvent }
 
@@ -70,7 +72,7 @@ type WelcomeNotification = { UserName: string }
 
 type LoginNotification =
   { UserName: string
-    ActivationCode: string
+    ActivationCode: Guid
     ActivationUrl: string }
 
 type Notification =

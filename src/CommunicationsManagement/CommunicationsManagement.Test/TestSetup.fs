@@ -181,7 +181,8 @@ let testSetup () =
           member this.sendNotification n = mainPorts.sendNotification n
           member this.configuration = config
           member this.save a = Storage.save config a
-          member this.query id = Storage.query config id }
+          member this.query id = Storage.query config id
+          member this.find predicate = Storage.queryPredicate config predicate }
 
     let! host =
       task {

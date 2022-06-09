@@ -11,6 +11,7 @@ type IPorts =
   abstract member sendNotification: SendNotificationParams -> Task<Result<unit, DomainError>>
   abstract member configuration: Configuration
   abstract member query<'a> : Guid -> Task<Result<'a, DomainError>>
+  abstract member find<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
   abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>

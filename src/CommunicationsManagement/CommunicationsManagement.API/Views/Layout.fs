@@ -12,6 +12,11 @@ let private navTemplate (vmr: ViewModelRoot) =
       |> Option.toList
   ]
 
+let homeButton translate =
+  a [ _href "/"; _class "btn btn-primary" ] [
+    translate "Home" |> Text
+  ]
+
 let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =
   html [] [
     head [] [
@@ -21,7 +26,7 @@ let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =
              _integrity "sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
              _crossorigin "anonymous" ]
     ]
-    body [] [
+    body [ _class "container" ] [
       navTemplate vmr
       div [ _id "body-container" ] [
         yield! bodyContent
@@ -29,7 +34,7 @@ let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =
     ]
   ]
 
-let error translate bodyContent =
+let notification translate bodyContent =
   html [] [
     head [] [
       title [] [
@@ -40,9 +45,10 @@ let error translate bodyContent =
              _integrity "sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
              _crossorigin "anonymous" ]
     ]
-    body [] [
+    body [ _class "container" ] [
       div [ _id "body-container" ] [
         yield! bodyContent
+        homeButton translate
       ]
     ]
   ]
