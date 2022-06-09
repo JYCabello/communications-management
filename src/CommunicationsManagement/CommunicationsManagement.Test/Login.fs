@@ -28,12 +28,17 @@ let ``logs in successfully`` () =
       | Login ln -> ln
       | _ -> failwith "Should have been a login notification"
 
+    driver.FindElement(By.Id("home-button")).Click()
+    
+    Assert.Equal(setup.config.BaseUrl, driver.Url)
+
     Assert.Equal(
       $"{setup.config.BaseUrl}/login/confirm?code={loginNotification.ActivationCode}",
       loginNotification.ActivationUrl
     )
 
     driver.Url <- loginNotification.ActivationUrl
+    
 
     let link = driver.FindElement(By.Id("profile-link"))
     Assert.Equal("Admin", link.Text)

@@ -13,7 +13,7 @@ let private navTemplate (vmr: ViewModelRoot) =
   ]
 
 let homeButton translate =
-  a [ _href "/"; _class "btn btn-primary" ] [
+  a [ _href "/"; _class "btn btn-primary"; _id "home-button" ] [
     translate "Home" |> Text
   ]
 

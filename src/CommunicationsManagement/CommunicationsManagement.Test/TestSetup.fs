@@ -178,7 +178,9 @@ let testSetup () =
 
       { new IPorts with
           member this.sendEvent p = mainPorts.sendEvent p
-          member this.sendNotification n = mainPorts.sendNotification n
+          member this.sendNotification n =
+            ln <- Some n
+            TaskResult.ok ()
           member this.configuration = config
           member this.save a = Storage.save config a
           member this.query id = Storage.query config id
