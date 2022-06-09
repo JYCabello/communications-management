@@ -42,5 +42,6 @@ let ``logs in successfully`` () =
     Assert.Equal("Logout", link.Text)
     Assert.Equal(setup.config.BaseUrl + "/", driver.Url)
     do link.Click()
+    do! Task.Delay(100)
     Assert.Equal($"{setup.config.BaseUrl}/login", driver.Url)
   }

@@ -67,7 +67,7 @@ module Rendering =
       let culture = getCulture ctx
       Translation.ResourceManager.GetString(key, culture)
 
-  let private getSessionID (ctx: HttpContext) : Effect<Guid> =
+  let getSessionID (ctx: HttpContext) : Effect<Guid> =
     effect {
       return!
         (if ctx.Request.Cookies.ContainsKey("sessionID") then

@@ -39,6 +39,12 @@ let private saveSession (s: Session) =
 let private saveUser (u: User) =
   Task.FromResult <| userStorage[u.ID] <- u
 
+let private deleteSession (id: Guid) =
+  sessionStorage.TryRemove(id)
+
+let private deleteUser (id: Guid) =
+  userStorage.TryRemove(id)
+
 let toObjResult (topt: Task<'a option>) =
   task {
     let! opt = topt
@@ -93,5 +99,22 @@ let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
         | t when t = typeof<User> -> box a :?> User |> saveUser |> Task.map Ok
         | t ->
           InternalServerError $"Save not implemented for type {t.FullName}"
+          |> TaskResult.error
+    }
+
+let delete<'a> : Configuration -> Guid -> Task<Result<unit, DomainError>> =
+  fun _ id ->
+    
+    taskResult {
+      do!
+        match typeof<'a> with
+        | t when t = typeof<Session> ->
+          deleteSession id |> ignore
+          TaskResult.ok ()
+        | t when t = typeof<User> ->
+          deleteUser id |> ignore
+          TaskResult.ok ()
+        | t ->
+          InternalServerError $"Delete not implemented for type {t.FullName}"
           |> TaskResult.error
     }

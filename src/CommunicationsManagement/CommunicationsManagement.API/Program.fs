@@ -22,6 +22,7 @@ let webApp (ports: IPorts) =
   choose [ GET
            >=> choose [ route "/login" >>=> Login.get ports
                         route "/login/confirm" >>=> Login.confirm ports
+                        route "/logout" >>=> Login.logout ports
                         route "/ping" >=> text "pong"
                         route "/inventory" >>=> json state
                         route "/" >>=> home ports ]
@@ -76,7 +77,8 @@ let ports: IPorts =
       member this.configuration = config
       member this.query id = Storage.query config id
       member this.find predicate = Storage.queryPredicate config predicate
-      member this.save a = Storage.save config a }
+      member this.save a = Storage.save config a
+      member this.delete id = Storage.delete config id }
 
 [<EntryPoint>]
 let main _ =

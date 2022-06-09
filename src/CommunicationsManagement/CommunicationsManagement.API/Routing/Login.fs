@@ -107,3 +107,16 @@ let confirm (ports: IPorts) : HttpHandler =
       return { Model = (); Root = mr }
     }
     |> resolveEffect2 ports theVoid next ctx
+
+let logout (ports: IPorts) : HttpHandler =
+  fun next ctx ->
+    effect {
+      let! sessionID = getSessionID ctx
+      do! fun p -> p.delete<Session> sessionID
+      // Short-circuit for redirection.
+      let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
+      do! redirectTo false baseUrl |> EarlyReturn |> Error
+      let! mr = getAnonymousRootModel ctx
+      return { Model = (); Root = mr }
+    }
+    |> resolveEffect2 ports theVoid next ctx
