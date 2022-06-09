@@ -1,6 +1,5 @@
 ﻿module TestProject1CommunicationsManagement.Test.Login
 
-open System.Threading
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
 open Xunit
@@ -29,7 +28,7 @@ let ``logs in successfully`` () =
       | _ -> failwith "Should have been a login notification"
 
     driver.FindElement(By.Id("home-button")).Click()
-    
+
     Assert.Equal(setup.config.BaseUrl, driver.Url)
 
     Assert.Equal(
@@ -38,7 +37,7 @@ let ``logs in successfully`` () =
     )
 
     driver.Url <- loginNotification.ActivationUrl
-    
+
 
     let link = driver.FindElement(By.Id("profile-link"))
     Assert.Equal("Admin", link.Text)

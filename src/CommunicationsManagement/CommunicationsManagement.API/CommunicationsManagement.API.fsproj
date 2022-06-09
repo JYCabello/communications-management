@@ -31,6 +31,7 @@
 
     <ItemGroup>
       <PackageReference Include="EventStore.Client.Grpc.Streams" Version="22.0.0" />
+      <PackageReference Include="Flurl" Version="3.0.6" />
       <PackageReference Include="FsToolkit.ErrorHandling" Version="2.13.0" />
       <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="2.13.0" />
       <PackageReference Include="Giraffe" Version="6.0.0" />

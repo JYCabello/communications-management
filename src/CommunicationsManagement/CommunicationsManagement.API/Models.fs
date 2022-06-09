@@ -39,7 +39,8 @@ type ViewModelRoot =
   { User: User option
     Title: string
     Translate: Translator
-    CurrentUrl: string }
+    CurrentUrl: string
+    BaseUrl: string }
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 

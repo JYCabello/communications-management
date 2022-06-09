@@ -78,7 +78,7 @@ module Rendering =
          else
            NotAuthenticated |> Error)
     }
-  
+
   let getUrl (ctx: HttpContext) =
     $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
 
@@ -88,20 +88,29 @@ module Rendering =
       let! session = fun p -> p.query<Session> sessionID
       let! user = fun p -> p.query<User> session.UserID
       let tr = getTranslator ctx
+      let! config = fun p -> p.configuration |> TaskResult.ok
 
       return
         { User = Some user
           Title = tr "AppName"
           Translate = tr
-          CurrentUrl = getUrl ctx }
+          CurrentUrl = getUrl ctx
+          BaseUrl = config.BaseUrl }
     }
 
-  let getAnonymousRootModel (ctx: HttpContext) : ViewModelRoot =
-    let tr = getTranslator ctx
-    { User = None
-      Title = tr "AppName"
-      Translate = tr
-      CurrentUrl = getUrl ctx }
+  let getAnonymousRootModel (ctx: HttpContext) : Effect<ViewModelRoot> =
+    effect {
+      let tr = getTranslator ctx
+      let! config = fun p -> p.configuration |> TaskResult.ok
+
+      return
+        { User = None
+          Title = tr "AppName"
+          Translate = tr
+          CurrentUrl = getUrl ctx
+          BaseUrl = config.BaseUrl }
+    }
+
 
   let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
     fun _ ->
@@ -178,9 +187,11 @@ module Login =
   let get (ports: IPorts) : HttpHandler =
     fun next ctx ->
       effect {
+        let! vmr = getAnonymousRootModel ctx
+
         return
           { Model = { Email = None; EmailError = None }
-            Root = getAnonymousRootModel ctx }
+            Root = vmr }
       }
       |> resolveEffect2 ports loginView next ctx
 
@@ -196,7 +207,7 @@ module Login =
           |> TaskResult.mapError (fun _ -> BadRequest)
           |> fromTR
 
-        let rm = getAnonymousRootModel ctx
+        let! rm = getAnonymousRootModel ctx
 
         let emailError =
           match DataValidation.isValidEmail dto.Email with

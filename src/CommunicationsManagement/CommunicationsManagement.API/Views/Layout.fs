@@ -3,17 +3,38 @@ module CommunicationsManagement.API.Views.Layout
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
+open Flurl
 
 let private navTemplate (vmr: ViewModelRoot) =
+  let langUrls =
+    [ (vmr.CurrentUrl.SetQueryParam("setLang", "en"), "en")
+      (vmr.CurrentUrl.SetQueryParam("setLang", "es"), "es") ]
+
   nav [] [
     yield!
+      langUrls
+      |> List.collect (fun (url, lang) ->
+        [ a [ _href (url.ToString()) ] [
+            Text lang
+          ]
+          Text "&nbsp;" ])
+
+    yield!
       vmr.User
-      |> Option.map (fun u -> a [ _href "." ] [ Text u.Name ])
+      |> Option.map (fun u ->
+        [ Text u.Name
+          Text "&nbsp;"
+          a [ _href vmr.BaseUrl ] [
+            "Logout" |> vmr.Translate |> Text
+          ] ])
       |> Option.toList
+      |> List.collect id
   ]
 
 let homeButton translate =
-  a [ _href "/"; _class "btn btn-primary"; _id "home-button" ] [
+  a [ _href "/"
+      _class "btn btn-primary"
+      _id "home-button" ] [
     translate "Home" |> Text
   ]
 
