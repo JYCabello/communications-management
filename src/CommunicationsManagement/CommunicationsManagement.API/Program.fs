@@ -21,6 +21,7 @@ let (>>=>) a b = a >=> warbler (fun _ -> b)
 let webApp (ports: IPorts) =
   choose [ GET
            >=> choose [ route "/login" >>=> Login.get ports
+                        route "/login/confirm" >>=> Login.confirm ports
                         route "/ping" >=> text "pong"
                         route "/inventory" >>=> json state
                         route "/" >>=> home ports ]

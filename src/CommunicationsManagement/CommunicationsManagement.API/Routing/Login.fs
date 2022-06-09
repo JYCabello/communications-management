@@ -82,3 +82,6 @@ let post (ports: IPorts) : HttpHandler =
           Model = rm.Translate "EmailLoginDetails" }
     }
     |> resolveEffect2 ports loginMessage next ctx
+    
+let confirm (ports: IPorts) : HttpHandler =
+  failwith "not implemented"
