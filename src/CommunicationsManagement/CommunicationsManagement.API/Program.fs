@@ -1,26 +1,52 @@
 ﻿module Main
 
+open System.Collections.Generic
+open System.Globalization
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Routing
 open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Localization
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open EventStore
+open Routes
 
 
 let (>>=>) a b = a >=> warbler (fun _ -> b)
 
-let webApp (_: IPorts) =
-  choose [ route "/ping" >=> text "pong"
-           route "/inventory" >>=> json state
-           route "/" >=> htmlFile "./pages/index.html" ]
+let webApp (ports: IPorts) =
+  choose [ GET
+           >=> choose [ route "/login" >>=> Login.get ports
+                        route "/login/confirm" >>=> Login.confirm ports
+                        route "/logout" >>=> Login.logout ports
+                        route "/ping" >=> text "pong"
+                        route "/inventory" >>=> json state
+                        route "/" >>=> home ports ]
+           POST
+           >=> choose [ route "/login" >>=> Login.post ports ] ]
 
-let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
+let configureApp (app: IApplicationBuilder) ports =
+  app.UseGiraffe <| webApp ports
+  //let localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>()
+  app.UseRequestLocalization() |> ignore
+  ()
 
-let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
+let configureServices (services: IServiceCollection) =
+  services.AddGiraffe() |> ignore
+
+  services.Configure<RequestLocalizationOptions> (fun (opt: RequestLocalizationOptions) ->
+    let supportedCultures = [ CultureInfo("es"); CultureInfo("en") ] |> List
+    opt.DefaultRequestCulture <- RequestCulture(CultureInfo("es"), CultureInfo("es"))
+    opt.SupportedCultures <- supportedCultures
+    opt.SupportedUICultures <- supportedCultures
+    ())
+  |> ignore
+
+  ()
 
 let buildHost ports forcedPort =
   triggerSubscriptions ports
@@ -43,10 +69,16 @@ let buildHost ports forcedPort =
     .Build()
 
 let ports: IPorts =
+  let config = Configuration.configuration
+
   { new IPorts with
       member this.sendEvent p = () |> TaskResult.ok
-      member this.sendNotification p = () |> TaskResult.ok
-      member this.configuration = Configuration.configuration }
+      member this.sendNotification p = Notifications.send config p
+      member this.configuration = config
+      member this.query id = Storage.query config id
+      member this.find predicate = Storage.queryPredicate config predicate
+      member this.save a = Storage.save config a
+      member this.delete<'a> id = Storage.delete<'a> config id }
 
 [<EntryPoint>]
 let main _ =

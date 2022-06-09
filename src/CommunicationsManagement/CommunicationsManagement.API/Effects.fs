@@ -1,13 +1,19 @@
 ﻿module CommunicationsManagement.API.Effects
 
+open System
 open System.Threading.Tasks
-open CommunicationsManagement.API.Models
+open CommunicationsManagement.API
+open Models
 open FsToolkit.ErrorHandling
 
 type IPorts =
   abstract member sendEvent: SendEventParams -> Task<Result<unit, DomainError>>
   abstract member sendNotification: SendNotificationParams -> Task<Result<unit, DomainError>>
   abstract member configuration: Configuration
+  abstract member query<'a> : Guid -> Task<Result<'a, DomainError>>
+  abstract member find<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
+  abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
+  abstract member delete<'a> : Guid -> Task<Result<unit, DomainError>>
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
@@ -20,10 +26,11 @@ let bindE (f: 'a -> Effect<'b>) (e: Effect<'a>) : Effect<'b> =
       return! p |> f a
     }
 
-
-let fromResult r : Effect<'a> = fun _ -> r
+let fromTR ar : Effect<'a> = fun _ -> ar
+let fromResult r : Effect<'a> = fun _ -> r |> Task.FromResult
 let singleton a : Effect<'a> = fun _ -> a |> TaskResult.ok
 let error e : Effect<'a> = fun _ -> e |> TaskResult.error
+let fromTask t : Effect<'a> = fun _ -> t |> Task.map Ok
 
 let fromOption rn o : Effect<'a> =
   match o with
@@ -41,13 +48,94 @@ let fromTaskOption rn tskOpt : Effect<'a> =
         | None -> NotFound rn |> Error
     }
 
-let getPorts (p: IPorts) = p |> TaskResult.ok
-
 type EffectBuilder() =
-  member this.Bind(x: Effect<'a>, f: 'a -> Effect<'b>) : Effect<'b> = bindE f x
-  member this.Return x : Effect<'a> = fun _ -> TaskResult.ok x
-  member this.ReturnFrom x = fun (_: IPorts) -> x
-  member this.Zero() : Effect<Unit> = fun _ -> TaskResult.ok ()
-  member this.Combine(a, b) = a |> bindE (fun _ -> b)
+  member inline this.Bind(e: Effect<'a>, [<InlineIfLambda>] f: 'a -> Effect<'b>) : Effect<'b> =
+    bindE f e
+
+  member inline this.Return a : Effect<'a> = fun _ -> TaskResult.ok a
+  member inline this.ReturnFrom(e: Effect<'a>) : Effect<'a> = e
+  member inline this.Zero() : Effect<Unit> = fun _ -> TaskResult.ok ()
+  member inline this.Combine(a: Effect<'a>, b: Effect<'b>) : Effect<'b> = a |> bindE (fun _ -> b)
+
+  member inline _.TryWith
+    (
+      e: Effect<'a>,
+      [<InlineIfLambda>] handler: Exception -> Effect<'a>
+    ) : Effect<'a> =
+    fun p ->
+      task {
+        try
+          return! e p
+        with
+        | e -> return! handler e p
+      }
+
+  member inline _.TryFinally
+    (
+      e: Effect<'a>,
+      [<InlineIfLambda>] compensation: unit -> unit
+    ) : Effect<'a> =
+    fun p ->
+      task {
+        try
+          return! e p
+        finally
+          do compensation ()
+      }
+
+  member inline _.Using
+    (
+      r: 'r :> IDisposable,
+      [<InlineIfLambda>] binder: 'r -> Effect<'a>
+    ) : Effect<'a> =
+    fun p ->
+      task {
+        use rd = r
+        return! binder rd p
+      }
+
+  member inline this.While
+    (
+      [<InlineIfLambda>] guard: unit -> bool,
+      computation: Effect<unit>
+    ) : Effect<unit> =
+    if guard () then
+      let mutable whileAsync = Unchecked.defaultof<_>
+
+      whileAsync <-
+        this.Bind(
+          computation,
+          (fun () ->
+            if guard () then
+              whileAsync
+            else
+              this.Zero())
+        )
+
+      whileAsync
+    else
+      this.Zero()
+
+  member inline _.BindReturn(x: Effect<'a>, [<InlineIfLambda>] f: 'a -> 'b) : Effect<'b> = mapE f x
+
+  member inline this.MergeSources(ea: Effect<'a>, eb: Effect<'b>) : Effect<'a * 'b> =
+    this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
+
+  member inline _.Source(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
+  member inline _.Source(r: Result<'a, DomainError>) : Effect<'a> = r |> fromResult
+  member inline _.Source(tr: Task<Result<'a, DomainError>>) : Effect<'a> = tr |> fromTR
+  member inline _.Source(bt: IPorts -> Task<Result<'a, DomainError>>) : Effect<'a> = bt
 
 let effect = EffectBuilder()
+
+let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
+  task {
+    try
+      return! tr
+    with
+    | _ ->
+      return
+        "Something happened"
+        |> InternalServerError
+        |> Error
+  }

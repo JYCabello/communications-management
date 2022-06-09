@@ -2,15 +2,17 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-
         <IsPackable>false</IsPackable>
         <GenerateProgramFile>false</GenerateProgramFile>
         <RootNamespace>TestProject1CommunicationsManagement.Test</RootNamespace>
+        <WarningsAsErrors>FS0025</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
         <Compile Include="TestSetup.fs" />
-        <Compile Include="Tests.fs" />
+        <Compile Include="Attempting.fs" />
+        <Compile Include="ContainsRolesShould.fs" />
+        <Compile Include="Login.fs" />
         <Compile Include="Program.fs" />
         <Content Include="xunit.runner.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

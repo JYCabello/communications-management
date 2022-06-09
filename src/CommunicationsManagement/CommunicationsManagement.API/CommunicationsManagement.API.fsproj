@@ -8,10 +8,17 @@
 
     <ItemGroup>
         <Compile Include="Models.fs" />
+        <Compile Include="Storage.fs" />
         <Compile Include="Effects.fs" />
+        <Compile Include="Notifications.fs" />
+        <Compile Include="DataValidation.fs" />
         <Compile Include="Operations.fs" />
         <Compile Include="Configuration.fs" />
         <Compile Include="EventStore.fs" />
+        <Compile Include="Views\Layout.fs" />
+        <Compile Include="Views\Login.fs" />
+        <Compile Include="Routing\Routes.fs" />
+        <Compile Include="Routing\Login.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -19,14 +26,24 @@
         <Content Update="appsettings.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <Content Update="appsettings.development.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="EventStore.Client.Grpc.Streams" Version="22.0.0" />
+      <PackageReference Include="Flurl" Version="3.0.6" />
       <PackageReference Include="FsToolkit.ErrorHandling" Version="2.13.0" />
       <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="2.13.0" />
       <PackageReference Include="Giraffe" Version="6.0.0" />
+      <PackageReference Include="Giraffe.ViewEngine" Version="1.4.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+      <PackageReference Include="SendGrid" Version="9.28.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommunicationsManagement.Internationalization\CommunicationsManagement.Internationalization.csproj" />
     </ItemGroup>
 
 </Project>

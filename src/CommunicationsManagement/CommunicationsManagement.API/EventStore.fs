@@ -44,7 +44,7 @@ let deserialize (evnt: ResolvedEvent) =
     | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
   | t -> StreamEvent.Toxic { Type = t; Content = decoded }
 
-let private handleMessage m =
+let private handleMessage (m: Message) =
   task {
     if not <| state.ContainsKey(m.ID) then
       state[m.ID] <- m.Amount
@@ -93,6 +93,15 @@ let subscribe cs (subscription: SubscriptionDetails) =
 
 let triggerSubscriptions (ports: IPorts) =
   let sub = subscribe ports.configuration.EventStoreConnectionString
+
+  let admin =
+    { ID = Guid.Empty
+      Email = Email ports.configuration.AdminEmail
+      Roles = Roles.Admin
+      Name = "Admin" }
+
+  do ports.save admin |> fun t -> t.Result |> ignore
+
 
   { StreamID = "deletable"
     Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }

@@ -50,6 +50,10 @@ jobs:
           files: '${{env.DOTNET_ROOT}}/app/appsettings.json'
         env:
           EventStoreConnectionString: ${{ secrets.EVENTSTORECONNECTIONSTRING }}
+          BaseUrl: ${{ secrets.BASEURL }}
+          AdminEmail: ${{ secrets.ADMINEMAIL }}
+          SendGridKey: ${{ secrets.SENDGRIDKEY }}
+          MailFrom: ${{ secrets.MAILFROM }}
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2

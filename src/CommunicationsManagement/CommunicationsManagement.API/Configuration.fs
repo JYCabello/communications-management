@@ -7,7 +7,8 @@ open Microsoft.Extensions.Configuration
 let configuration =
   ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", true, true)
+    .AddJsonFile("appsettings.json", false, false)
+    .AddJsonFile("appsettings.development.json", true, false)
     .AddEnvironmentVariables()
     .Build()
     .Get<Configuration>()
