@@ -78,7 +78,7 @@ let ports: IPorts =
       member this.query id = Storage.query config id
       member this.find predicate = Storage.queryPredicate config predicate
       member this.save a = Storage.save config a
-      member this.delete id = Storage.delete config id }
+      member this.delete<'a> id = Storage.delete<'a> config id }
 
 [<EntryPoint>]
 let main _ =
