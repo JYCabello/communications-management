@@ -3,11 +3,9 @@
 open System
 open System.Globalization
 open System.Threading.Tasks
-open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
-open CommunicationsManagement.API.Views.Login
 open CommunicationsManagement.Internationalization
 open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Http
@@ -83,11 +81,15 @@ module Rendering =
   let getUrl (ctx: HttpContext) =
     $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
 
-  let authenticate (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let auth (ctx: HttpContext) : Effect<User> =
     effect {
       let! sessionID = getSessionID ctx
       let! session = fun p -> p.query<Session> sessionID
-      let! user = fun p -> p.query<User> session.UserID
+      return! fun p -> p.query<User> session.UserID
+    }
+
+  let buildModelRoot user (ctx: HttpContext) : Effect<ViewModelRoot> =
+    effect {
       let tr = getTranslator ctx
       let! config = fun p -> p.configuration |> TaskResult.ok
 
@@ -111,7 +113,6 @@ module Rendering =
           CurrentUrl = getUrl ctx
           BaseUrl = config.BaseUrl }
     }
-
 
   let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
     fun _ ->
@@ -183,7 +184,8 @@ open Rendering
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
-    let! root = authenticate ctx
+    let! user = auth ctx
+    let! root = buildModelRoot user ctx
 
     return { Model = "Meh"; Root = root }
   }
