@@ -9,7 +9,7 @@ open Flurl
 let login email (setup: Setup) =
   let driver = setup.driver
 
-  Assert.Equal(setup.config.BaseUrl.AppendPathSegment("logout"), driver.Url)
+  Assert.Equal(setup.config.BaseUrl.AppendPathSegment("login"), driver.Url)
 
   driver
     .FindElement(By.Name("email"))
