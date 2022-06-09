@@ -16,7 +16,8 @@
         <Compile Include="EventStore.fs" />
         <Compile Include="Views\Layout.fs" />
         <Compile Include="Views\Login.fs" />
-        <Compile Include="Routes.fs" />
+        <Compile Include="Routing\Routes.fs" />
+        <Compile Include="Routing\Login.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
