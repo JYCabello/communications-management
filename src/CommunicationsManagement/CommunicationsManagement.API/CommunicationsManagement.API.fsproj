@@ -10,6 +10,7 @@
         <Compile Include="Models.fs" />
         <Compile Include="Storage.fs" />
         <Compile Include="Effects.fs" />
+        <Compile Include="Notifications.fs" />
         <Compile Include="DataValidation.fs" />
         <Compile Include="Operations.fs" />
         <Compile Include="Configuration.fs" />
@@ -38,6 +39,7 @@
       <PackageReference Include="Giraffe" Version="6.0.0" />
       <PackageReference Include="Giraffe.ViewEngine" Version="1.4.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+      <PackageReference Include="SendGrid" Version="9.28.0" />
     </ItemGroup>
 
     <ItemGroup>

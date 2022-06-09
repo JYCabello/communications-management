@@ -6,7 +6,9 @@ open System
 type Configuration =
   { EventStoreConnectionString: string
     BaseUrl: string
-    AdminEmail: string }
+    AdminEmail: string
+    SendGridKey: string
+    MailFrom: string }
 
 [<CLIMutable>]
 type Message = { ID: int; Amount: int }

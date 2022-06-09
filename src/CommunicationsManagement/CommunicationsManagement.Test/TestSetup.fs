@@ -171,7 +171,9 @@ let testSetup () =
     let config =
       { EventStoreConnectionString = $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
         BaseUrl = baseUrl
-        AdminEmail = "notareal@email.com" }
+        AdminEmail = "notareal@email.com"
+        SendGridKey = ""
+        MailFrom = "" }
 
     let ports: IPorts =
       let mainPorts = Main.ports
