@@ -133,6 +133,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login requested.
+        /// </summary>
+        public static string LoginAttemptSubject {
+            get {
+                return ResourceManager.GetString("LoginAttemptSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Logout.
         /// </summary>
         public static string Logout {
@@ -156,6 +165,24 @@ namespace CommunicationsManagement.Internationalization {
         public static string UnauthorizedTemplate {
             get {
                 return ResourceManager.GetString("UnauthorizedTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Welcome, {0}..
+        /// </summary>
+        public static string WelcomeEmailBodyTemplate {
+            get {
+                return ResourceManager.GetString("WelcomeEmailBodyTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Welcome.
+        /// </summary>
+        public static string WelcomeSubject {
+            get {
+                return ResourceManager.GetString("WelcomeSubject", resourceCulture);
             }
         }
     }

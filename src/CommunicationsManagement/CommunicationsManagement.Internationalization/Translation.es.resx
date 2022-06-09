@@ -150,4 +150,13 @@
   <data name="Logout" xml:space="preserve">
       <value>Salir</value>
   </data>
+  <data name="LoginAttemptSubject" xml:space="preserve">
+      <value>Acceso solicitado</value>
+  </data>
+  <data name="WelcomeSubject" xml:space="preserve">
+      <value>Te damos la bienvenida</value>
+  </data>
+  <data name="WelcomeEmailBodyTemplate" xml:space="preserve">
+      <value>Se te ha dado de alta en Comunicaciones deportivas, te damos la bienvenida, {0}.</value>
+  </data>
 </root>
