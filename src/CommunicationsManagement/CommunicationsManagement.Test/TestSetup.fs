@@ -181,7 +181,7 @@ let testSetup () =
       { new IPorts with
           member this.sendEvent p = mainPorts.sendEvent p
 
-          member this.sendNotification n =
+          member this.sendNotification t n =
             ln <- Some n
             TaskResult.ok ()
 

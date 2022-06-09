@@ -8,7 +8,7 @@ open FsToolkit.ErrorHandling
 
 type IPorts =
   abstract member sendEvent: SendEventParams -> Task<Result<unit, DomainError>>
-  abstract member sendNotification: SendNotificationParams -> Task<Result<unit, DomainError>>
+  abstract member sendNotification: Translator -> SendNotificationParams -> Task<Result<unit, DomainError>>
   abstract member configuration: Configuration
   abstract member query<'a> : Guid -> Task<Result<'a, DomainError>>
   abstract member find<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>

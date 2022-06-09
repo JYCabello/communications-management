@@ -10,9 +10,11 @@
 
     <ItemGroup>
         <Compile Include="TestSetup.fs" />
+        <Compile Include="TestUtils.fs" />
         <Compile Include="Attempting.fs" />
         <Compile Include="ContainsRolesShould.fs" />
         <Compile Include="Login.fs" />
+        <Compile Include="UserRegistration.fs" />
         <Compile Include="Program.fs" />
         <Content Include="xunit.runner.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -21,6 +23,7 @@
 
     <ItemGroup>
         <PackageReference Include="Docker.DotNet" Version="3.125.5" />
+        <PackageReference Include="Flurl" Version="3.0.6" />
         <PackageReference Include="FsToolkit.ErrorHandling" Version="2.13.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
         <PackageReference Include="Selenium.Support" Version="4.2.0" />

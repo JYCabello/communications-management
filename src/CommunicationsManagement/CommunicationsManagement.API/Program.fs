@@ -73,7 +73,7 @@ let ports: IPorts =
 
   { new IPorts with
       member this.sendEvent p = () |> TaskResult.ok
-      member this.sendNotification p = Notifications.send config p
+      member this.sendNotification tr p = Notifications.send config p tr
       member this.configuration = config
       member this.query<'a> id = Storage.query<'a> config id
 

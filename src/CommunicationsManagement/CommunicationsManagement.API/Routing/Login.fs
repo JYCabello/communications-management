@@ -74,7 +74,7 @@ let post (ports: IPorts) : HttpHandler =
                   ActivationUrl = $"{p.configuration.BaseUrl}/login/confirm?code={session.ID}" } }
           |> TaskResult.ok
 
-      do! fun p -> p.sendNotification notification
+      do! fun p -> p.sendNotification rm.Translate notification
 
       return
         { Root = rm
