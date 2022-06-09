@@ -39,13 +39,11 @@ let private saveSession (s: Session) =
 let private saveUser (u: User) =
   Task.FromResult <| userStorage[u.ID] <- u
 
-let private deleteSession (id: Guid) =
-  sessionStorage.TryRemove(id)
+let private deleteSession (id: Guid) = sessionStorage.TryRemove(id)
 
-let private deleteUser (id: Guid) =
-  userStorage.TryRemove(id)
+let private deleteUser (id: Guid) = userStorage.TryRemove(id)
 
-let toObjResult (topt: Task<'a option>) =
+let toObjResult<'a> (topt: Task<'a option>) =
   task {
     let! opt = topt
 
@@ -61,8 +59,8 @@ let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
     taskResult {
       let! value =
         match typeof<'a> with
-        | t when t = typeof<Session> -> querySession id |> toObjResult
-        | t when t = typeof<User> -> queryUser id |> toObjResult
+        | t when t = typeof<Session> -> querySession id |> toObjResult<Session>
+        | t when t = typeof<User> -> queryUser id |> toObjResult<User>
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -78,11 +76,11 @@ let queryPredicate<'a> : Configuration -> ('a -> bool) -> Task<Result<'a, Domain
         | t when t = typeof<Session> ->
           box predicate :?> Session -> bool
           |> findSession
-          |> toObjResult
+          |> toObjResult<Session>
         | t when t = typeof<User> ->
           box predicate :?> User -> bool
           |> findUser
-          |> toObjResult
+          |> toObjResult<User>
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -104,7 +102,7 @@ let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
 
 let delete<'a> : Configuration -> Guid -> Task<Result<unit, DomainError>> =
   fun _ id ->
-    
+
     taskResult {
       do!
         match typeof<'a> with

@@ -75,9 +75,12 @@ let ports: IPorts =
       member this.sendEvent p = () |> TaskResult.ok
       member this.sendNotification p = Notifications.send config p
       member this.configuration = config
-      member this.query id = Storage.query config id
-      member this.find predicate = Storage.queryPredicate config predicate
-      member this.save a = Storage.save config a
+      member this.query<'a> id = Storage.query<'a> config id
+
+      member this.find<'a> predicate =
+        Storage.queryPredicate<'a> config predicate
+
+      member this.save<'a> a = Storage.save<'a> config a
       member this.delete<'a> id = Storage.delete<'a> config id }
 
 [<EntryPoint>]

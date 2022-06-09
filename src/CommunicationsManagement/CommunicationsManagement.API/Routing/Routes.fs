@@ -153,18 +153,15 @@ module Rendering =
      | NotAuthenticated -> redirectTo false "/login"
      | Conflict -> [ "ConflictTemplate" |> tr |> Text ] |> errorView
      | NotFound en ->
-       [ String.Format("NotFoundTextTemplate", en)
-         |> tr
+       [ String.Format(tr "NotFoundTextTemplate", en)
          |> Text ]
        |> errorView
      | Unauthorized rn ->
-       [ String.Format("UnauthorizedTemplate", rn)
-         |> tr
+       [ String.Format(tr "UnauthorizedTemplate", rn)
          |> Text ]
        |> errorView
      | InternalServerError e ->
-       [ String.Format("InternalServerErrorTemplate", e)
-         |> tr
+       [ String.Format(tr "InternalServerErrorTemplate", e)
          |> Text ]
        |> errorView
      | BadRequest ->

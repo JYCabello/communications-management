@@ -13,7 +13,13 @@ let send (c: Configuration) (p: SendNotificationParams) : Task<Result<unit, Doma
     let client = SendGridClient(key)
     let message = SendGridMessage()
     message.SetFrom(c.MailFrom)
-    message.AddTo(p.Email |> function | Email s -> s)
+
+    message.AddTo(
+      p.Email
+      |> function
+        | Email s -> s
+    )
+
     match p.Notification with
     | Login loginNotification ->
       message.SetSubject("Login attempt")
@@ -21,5 +27,6 @@ let send (c: Configuration) (p: SendNotificationParams) : Task<Result<unit, Doma
     | Welcome welcomeNotification ->
       message.SetSubject("Welcome")
       message.AddContent(MimeType.Text, $"Welcome, {welcomeNotification.UserName}")
+
     do! client.SendEmailAsync(message) :> Task
   }
