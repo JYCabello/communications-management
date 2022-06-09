@@ -84,8 +84,20 @@ module Rendering =
   let auth (ctx: HttpContext) : Effect<User> =
     effect {
       let! sessionID = getSessionID ctx
-      let! session = fun p -> p.query<Session> sessionID
-      return! fun p -> p.query<User> session.UserID
+
+      let! session =
+        fun p ->
+          p.query<Session> sessionID
+          |> TaskResult.mapError (function
+            | NotFound _ -> NotAuthenticated
+            | e -> e)
+
+      return!
+        fun p ->
+          p.query<User> session.UserID
+          |> TaskResult.mapError (function
+            | NotFound _ -> NotAuthenticated
+            | e -> e)
     }
 
   let buildModelRoot user (ctx: HttpContext) : Effect<ViewModelRoot> =
