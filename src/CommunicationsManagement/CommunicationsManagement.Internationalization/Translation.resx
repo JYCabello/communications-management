@@ -159,4 +159,7 @@
   <data name="WelcomeEmailBodyTemplate" xml:space="preserve">
       <value>Welcome, {0}.</value>
   </data>
+  <data name="Users" xml:space="preserve">
+      <value>Users</value>
+  </data>
 </root>

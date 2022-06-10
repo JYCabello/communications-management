@@ -159,4 +159,7 @@
   <data name="WelcomeEmailBodyTemplate" xml:space="preserve">
       <value>Se te ha dado de alta en Comunicaciones deportivas, te damos la bienvenida, {0}.</value>
   </data>
+  <data name="Users" xml:space="preserve">
+      <value>Usuarios</value>
+  </data>
 </root>

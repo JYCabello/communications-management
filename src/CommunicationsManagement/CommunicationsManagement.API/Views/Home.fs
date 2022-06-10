@@ -1,10 +1,28 @@
 ﻿module CommunicationsManagement.API.Views.Home
 
 open CommunicationsManagement.API.Models
-open Giraffe.ViewEngine.HtmlElements
+open Giraffe.ViewEngine
+open Flurl
 
+let private usersRow vm =
+  vm.Root.User
+  |> Option.map (fun u ->
+    match u.hasRole Roles.UserManagement with
+    | false -> []
+    | true ->
+      [ a [ _href (
+              vm
+                .Root
+                .BaseUrl
+                .AppendPathSegment("users")
+                .ToString()
+            )
+            _class "btn btn-primary" ] [
+          "Users" |> vm.Root.Translate |> Text
+        ]
 
-//let private 
+        ])
+  |> Option.toList
+  |> List.collect id
 
-let homeView (vm: ViewModel<unit>) : XmlNode list = 
-  [  ]
+let homeView (vm: ViewModel<unit>) : XmlNode list = [ yield! usersRow vm ]
