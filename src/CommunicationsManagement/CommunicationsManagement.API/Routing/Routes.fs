@@ -91,6 +91,10 @@ module Rendering =
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
+          |> TaskResult.bind (fun s ->
+            match s.ExpiresAt < DateTime.UtcNow with
+            | true -> TaskResult.ok s
+            | false -> TaskResult.error NotAuthenticated)
 
       return!
         fun p ->

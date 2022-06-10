@@ -60,7 +60,8 @@ let post (ports: IPorts) : HttpHandler =
 
       let session =
         { UserID = user.ID
-          ID = Guid.NewGuid() }
+          ID = Guid.NewGuid()
+          ExpiresAt = DateTime.UtcNow.AddDays(15) }
 
       do! fun p -> p.save session
 

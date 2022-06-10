@@ -16,6 +16,12 @@ type Message = { ID: int; Amount: int }
 [<CLIMutable>]
 type ToxicEvent = { Content: string; Type: string }
 
+[<CLIMutable>]
+type SessionCreated =
+  { SessionID: Guid
+    UserID: Guid
+    ExpiresAt: DateTime }
+
 type Roles =
   | None = 0
   | Delegate = 1
@@ -36,7 +42,10 @@ type User =
     Roles: Roles }
   member this.hasRole roles = contains roles this.Roles
 
-type Session = { ID: Guid; UserID: Guid }
+type Session =
+  { ID: Guid
+    UserID: Guid
+    ExpiresAt: DateTime }
 
 type Translator = string -> string
 
