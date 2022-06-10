@@ -17,7 +17,8 @@ let private usersRow vm =
                 .AppendPathSegment("users")
                 .ToString()
             )
-            _class "btn btn-primary" ] [
+            _class "btn btn-primary"
+            _id "users-link" ] [
           "Users" |> vm.Root.Translate |> Text
         ]
 
