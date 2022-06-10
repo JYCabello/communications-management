@@ -88,7 +88,21 @@ let subscribe cs (subscription: SubscriptionDetails) =
   subscribeTo () |> ignore
 
 let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, DomainError>> =
-  failwith "not implemented"
+  taskResult {
+    let client = getClient c.EventStoreConnectionString
+    let streamName = getStreamName e.Event
+    let eventTypeName = getEventTypeName e.Event
+
+    return!
+      match e.Event with
+      | Toxic _ -> None
+      | SessionCreated e -> e |> JsonConvert.SerializeObject |> Some
+      |> Option.map Encoding.UTF8.GetBytes
+      |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
+      |> Option.map (fun ed ->
+        client.AppendToStreamAsync(streamName, StreamState.Any, [ ed ]) :> Task)
+      |> Option.defaultValue Task.CompletedTask
+  }
 
 let triggerSubscriptions (ports: IPorts) =
   let sub = subscribe ports.configuration.EventStoreConnectionString

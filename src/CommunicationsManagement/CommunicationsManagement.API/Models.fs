@@ -64,9 +64,9 @@ let getEventTypeName =
   | SessionCreated _ -> "SessionCreated"
   | Toxic _ -> "Toxic"
 
-let getStreamID =
+let getStreamName =
   function
-  | SessionCreated _ -> "SessionCreated"
+  | SessionCreated _ -> "Sessions"
   | Toxic _ -> "toxic"
 
 type DomainError =

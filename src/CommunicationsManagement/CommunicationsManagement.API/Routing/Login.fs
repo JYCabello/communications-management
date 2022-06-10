@@ -63,7 +63,14 @@ let post (ports: IPorts) : HttpHandler =
           ID = Guid.NewGuid()
           ExpiresAt = DateTime.UtcNow.AddDays(15) }
 
-      do! fun p -> p.save session
+      do!
+        fun p ->
+          p.sendEvent
+            { Event =
+                SessionCreated
+                  { SessionID = session.ID
+                    UserID = session.UserID
+                    ExpiresAt = session.ExpiresAt } }
 
       let! notification =
         fun p ->

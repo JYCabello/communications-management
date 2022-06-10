@@ -136,9 +136,9 @@ let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> 
     try
       return! tr
     with
-    | _ ->
+    | e ->
       return
-        "Something happened"
+        $"Something happened: {e.Message}"
         |> InternalServerError
         |> Error
   }

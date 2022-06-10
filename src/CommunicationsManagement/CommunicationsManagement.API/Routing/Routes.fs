@@ -92,7 +92,7 @@ module Rendering =
             | NotFound _ -> NotAuthenticated
             | e -> e)
           |> TaskResult.bind (fun s ->
-            match s.ExpiresAt < DateTime.UtcNow with
+            match DateTime.UtcNow < s.ExpiresAt with
             | true -> TaskResult.ok s
             | false -> TaskResult.error NotAuthenticated)
 
