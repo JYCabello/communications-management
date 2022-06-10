@@ -17,14 +17,17 @@ type Message = { ID: int; Amount: int }
 type ToxicEvent = { Content: string; Type: string }
 
 type Roles =
-  | None = 1
+  | None = 0
   | Delegate = 1
   | Press = 2
+  | UserManagement = 4
   | Admin = 131071
 
 type Email = Email of string
 
-let contains (searchTerm: Roles) (userRoles: Roles) = (searchTerm &&& userRoles) = searchTerm
+let contains (searchTerm: Roles) (userRoles: Roles) =
+  (searchTerm &&& userRoles) = searchTerm
+  && (userRoles = Roles.None |> not)
 
 type User =
   { Name: string

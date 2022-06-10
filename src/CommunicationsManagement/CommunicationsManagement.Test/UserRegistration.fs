@@ -10,7 +10,7 @@ open TestUtils
 let ``registers a user`` () =
   task {
     use! setup = testSetup()
-    do login setup.config.AdminEmail setup
+    login setup.config.AdminEmail setup
     
     let driver = setup.driver
     driver.FindElement(By.Id("users-link")).Click()

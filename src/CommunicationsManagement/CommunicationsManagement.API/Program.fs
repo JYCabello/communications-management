@@ -13,7 +13,6 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 open EventStore
-open Routes
 
 
 let (>>=>) a b = a >=> warbler (fun _ -> b)
@@ -25,7 +24,7 @@ let webApp (ports: IPorts) =
                         route "/logout" >>=> Login.logout ports
                         route "/ping" >=> text "pong"
                         route "/inventory" >>=> json state
-                        route "/" >>=> home ports ]
+                        route "/" >>=> Home.home ports ]
            POST
            >=> choose [ route "/login" >>=> Login.post ports ] ]
 

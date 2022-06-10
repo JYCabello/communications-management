@@ -190,14 +190,3 @@ module Rendering =
   let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
 
   let theVoid: Render<'a> = fun _ -> []
-
-open Rendering
-
-let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-
-    return { Model = "Meh"; Root = root }
-  }
-  |> resolveEffect2 ports renderText next ctx
