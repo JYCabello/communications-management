@@ -120,7 +120,7 @@ let logout (ports: IPorts) : HttpHandler =
   fun next ctx ->
     effect {
       let! sessionID = getSessionID ctx
-      do! fun p -> p.delete<Session> sessionID
+      do! fun p -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
       // Short-circuit for redirection.
       let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
       do! redirectTo false baseUrl |> EarlyReturn |> Error

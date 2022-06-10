@@ -19,6 +19,9 @@ type SessionCreated =
     UserID: Guid
     ExpiresAt: DateTime }
 
+[<CLIMutable>]
+type SessionTerminated = { SessionID: Guid }
+
 type Roles =
   | None = 0
   | Delegate = 1
@@ -57,16 +60,19 @@ type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
 type StreamEvent =
   | SessionCreated of SessionCreated
+  | SessionTerminated of SessionTerminated
   | Toxic of ToxicEvent
 
 let getEventTypeName =
   function
   | SessionCreated _ -> "SessionCreated"
+  | SessionTerminated _ -> "SessionTerminated"
   | Toxic _ -> "Toxic"
 
 let getStreamName =
   function
   | SessionCreated _ -> "Sessions"
+  | SessionTerminated _ -> "Sessions"
   | Toxic _ -> "toxic"
 
 type DomainError =

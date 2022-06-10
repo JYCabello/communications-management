@@ -26,20 +26,18 @@ let deserialize (evnt: ResolvedEvent) =
   let decoded =
     evnt.Event.Data.ToArray()
     |> Encoding.UTF8.GetString
-
-  match evnt.Event.EventType with
-  | "SessionCreated" ->
-    try
-      decoded
-      |> JsonConvert.DeserializeObject<SessionCreated>
-      |> SessionCreated
-    with
-    | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
-  | t -> StreamEvent.Toxic { Type = t; Content = decoded }
+  try
+    match evnt.Event.EventType with
+    | "SessionCreated" ->
+      decoded |> JsonConvert.DeserializeObject<SessionCreated> |> SessionCreated
+    | "SessionTerminated" ->
+      decoded |> JsonConvert.DeserializeObject<SessionTerminated> |> SessionTerminated
+    | t -> StreamEvent.Toxic { Type = t; Content = decoded }
+  with
+  | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
 
 let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
-  match deserialize se with
-  | SessionCreated sc ->
+  let handleCreated (sc: SessionCreated) =
     task {
       do!
         ports.save<Session>
@@ -54,6 +52,23 @@ let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
 
       return ()
     }
+
+  let handleTerminated (st: SessionTerminated) =
+    task {
+      do!
+        ports.delete<Session> st.SessionID
+        |> Task.map (fun r ->
+          match r with
+          | Ok u -> u
+          | Error _ -> () // Ignore errors for now
+        )
+
+      return ()
+    }
+
+  match deserialize se with
+  | SessionCreated sc -> handleCreated sc
+  | SessionTerminated st -> handleTerminated st
   | _ -> Task.FromResult()
 
 
@@ -97,6 +112,7 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
       match e.Event with
       | Toxic _ -> None
       | SessionCreated e -> e |> JsonConvert.SerializeObject |> Some
+      | SessionTerminated e -> e |> JsonConvert.SerializeObject |> Some
       |> Option.map Encoding.UTF8.GetBytes
       |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
       |> Option.map (fun ed ->
