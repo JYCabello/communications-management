@@ -1,7 +1,7 @@
-﻿module CommunicationsManagement.API.EventStore
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.EventStore
 
 open System
-open System.Collections.Generic
 open System.Text
 open System.Threading
 open System.Threading.Tasks
@@ -14,20 +14,13 @@ open FsToolkit.ErrorHandling
 
 type SubscriptionDetails =
   { StreamID: string
-    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task }
+    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task
+    GetCheckpoint: unit -> Task<FromStream>
+    SaveCheckpoint: StreamPosition -> Task }
 
 let getClient cs =
   let settings = EventStoreClientSettings.Create cs
   new EventStoreClient(settings)
-
-let state = Dictionary<int, int>()
-
-let mutable checkpoint: StreamPosition option = None
-
-let getCheckpoint () =
-  checkpoint
-  |> Option.map FromStream.After
-  |> Option.defaultValue FromStream.Start
 
 let deserialize (evnt: ResolvedEvent) =
   let decoded =
@@ -35,33 +28,34 @@ let deserialize (evnt: ResolvedEvent) =
     |> Encoding.UTF8.GetString
 
   match evnt.Event.EventType with
-  | "Message" ->
+  | "SessionCreated" ->
     try
       decoded
-      |> JsonConvert.DeserializeObject<Message>
-      |> Message
+      |> JsonConvert.DeserializeObject<SessionCreated>
+      |> SessionCreated
     with
     | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
   | t -> StreamEvent.Toxic { Type = t; Content = decoded }
 
-let private handleMessage (m: Message) =
-  task {
-    if not <| state.ContainsKey(m.ID) then
-      state[m.ID] <- m.Amount
-    else
-      state[m.ID] <- state[m.ID] + m.Amount
-  }
+let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
+  match deserialize se with
+  | SessionCreated sc ->
+    task {
+      do!
+        ports.save<Session>
+          { ID = sc.SessionID
+            UserID = sc.UserID
+            ExpiresAt = sc.ExpiresAt }
+        |> Task.map (fun r ->
+          match r with
+          | Ok u -> u
+          | Error _ -> () // Ignore errors for now
+        )
 
-let handle =
-  function
-  | Message m -> m |> handleMessage
-  | Toxic _ -> Task.singleton ()
+      return ()
+    }
+  | _ -> Task.FromResult()
 
-let handleEvent (evnt: ResolvedEvent) =
-  task {
-    do! deserialize evnt |> handle
-    return checkpoint <- Some evnt.OriginalEventNumber
-  }
 
 let subscribe cs (subscription: SubscriptionDetails) =
   let rec subscribeTo () =
@@ -73,11 +67,13 @@ let subscribe cs (subscription: SubscriptionDetails) =
 
     task {
       try
+        let! checkpoint = subscription.GetCheckpoint()
+
         do!
           (getClient cs)
             .SubscribeToStreamAsync(
               subscription.StreamID,
-              getCheckpoint (),
+              checkpoint,
               subscription.Handler,
               false,
               reSubscribe
@@ -91,6 +87,9 @@ let subscribe cs (subscription: SubscriptionDetails) =
 
   subscribeTo () |> ignore
 
+let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, DomainError>> =
+  failwith "not implemented"
+
 let triggerSubscriptions (ports: IPorts) =
   let sub = subscribe ports.configuration.EventStoreConnectionString
 
@@ -102,7 +101,20 @@ let triggerSubscriptions (ports: IPorts) =
 
   do ports.save admin |> fun t -> t.Result |> ignore
 
+  let getCheckpoint cp () : Task<FromStream> =
+    cp
+    |> Option.map FromStream.After
+    |> Option.defaultValue FromStream.Start
+    |> Task.FromResult
 
-  { StreamID = "deletable"
-    Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }
+  let mutable sessionsCheckpoint: StreamPosition option = None
+
+  let saveSessionCheckpoint p =
+    sessionsCheckpoint <- Some p
+    Task.CompletedTask
+
+  { StreamID = "Sessions"
+    Handler = fun _ evnt _ -> task { do! handleSession evnt ports } :> Task
+    GetCheckpoint = getCheckpoint sessionsCheckpoint
+    SaveCheckpoint = saveSessionCheckpoint }
   |> sub

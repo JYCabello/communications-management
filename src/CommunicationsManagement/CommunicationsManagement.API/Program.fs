@@ -12,7 +12,6 @@ open Microsoft.AspNetCore.Localization
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
-open EventStore
 
 
 let (>>=>) a b = a >=> warbler (fun _ -> b)
@@ -23,7 +22,6 @@ let webApp (ports: IPorts) =
                         route "/login/confirm" >>=> Login.confirm ports
                         route "/logout" >>=> Login.logout ports
                         route "/ping" >=> text "pong"
-                        route "/inventory" >>=> json state
                         route "/" >>=> Home.home ports ]
            POST
            >=> choose [ route "/login" >>=> Login.post ports ] ]
@@ -48,7 +46,7 @@ let configureServices (services: IServiceCollection) =
   ()
 
 let buildHost ports forcedPort =
-  triggerSubscriptions ports
+  EventStore.triggerSubscriptions ports
 
   Host
     .CreateDefaultBuilder()
@@ -71,7 +69,7 @@ let ports: IPorts =
   let config = Configuration.configuration
 
   { new IPorts with
-      member this.sendEvent p = () |> TaskResult.ok
+      member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
       member this.configuration = config
       member this.query<'a> id = Storage.query<'a> config id

@@ -12,7 +12,6 @@
         <Compile Include="Effects.fs" />
         <Compile Include="Notifications.fs" />
         <Compile Include="DataValidation.fs" />
-        <Compile Include="Operations.fs" />
         <Compile Include="Configuration.fs" />
         <Compile Include="EventStore.fs" />
         <Compile Include="Views\Layout.fs" />

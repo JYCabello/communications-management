@@ -11,9 +11,6 @@ type Configuration =
     MailFrom: string }
 
 [<CLIMutable>]
-type Message = { ID: int; Amount: int }
-
-[<CLIMutable>]
 type ToxicEvent = { Content: string; Type: string }
 
 [<CLIMutable>]
@@ -59,17 +56,17 @@ type ViewModelRoot =
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
 type StreamEvent =
-  | Message of Message
+  | SessionCreated of SessionCreated
   | Toxic of ToxicEvent
 
 let getEventTypeName =
   function
-  | Message _ -> "Message"
+  | SessionCreated _ -> "SessionCreated"
   | Toxic _ -> "Toxic"
 
-let getStreamName =
+let getStreamID =
   function
-  | Message _ -> "deletable"
+  | SessionCreated _ -> "SessionCreated"
   | Toxic _ -> "toxic"
 
 type DomainError =
