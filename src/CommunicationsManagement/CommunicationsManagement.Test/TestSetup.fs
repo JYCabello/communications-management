@@ -153,7 +153,7 @@ let testSetup () =
     let driver =
       let driverOptions =
         let dO = FirefoxOptions()
-        dO.AddArgument "--headless"
+//        dO.AddArgument "--headless"
         dO
 
       new FirefoxDriver(driverOptions)
@@ -176,7 +176,7 @@ let testSetup () =
         MailFrom = "" }
 
     let ports: IPorts =
-      let mainPorts = Main.ports
+      let mainPorts = Main.ports config
 
       { new IPorts with
           member this.sendEvent p = mainPorts.sendEvent p

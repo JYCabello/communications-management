@@ -1,6 +1,7 @@
 ﻿module CommunicationsManagement.API.Routing.Login
 
 open System
+open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open FsToolkit.ErrorHandling
@@ -123,6 +124,7 @@ let logout (ports: IPorts) : HttpHandler =
       do! fun p -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
       // Short-circuit for redirection.
       let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
+      do! Task.Delay(25)
       do! redirectTo false baseUrl |> EarlyReturn |> Error
       let! mr = getAnonymousRootModel ctx
       return { Model = (); Root = mr }

@@ -34,6 +34,12 @@ let fromResult r : Effect<'a> = fun _ -> r |> Task.FromResult
 let singleton a : Effect<'a> = fun _ -> a |> TaskResult.ok
 let error e : Effect<'a> = fun _ -> e |> TaskResult.error
 let fromTask t : Effect<'a> = fun _ -> t |> Task.map Ok
+let fromTaskVoid (t: Task) : Effect<unit> =
+    task {
+      do! t
+      return ()
+    }
+    |> fromTask
 
 let fromOption rn o : Effect<'a> =
   match o with
@@ -125,6 +131,7 @@ type EffectBuilder() =
     this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
 
   member inline _.Source(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
+  member inline _.Source(tsk: Task) : Effect<unit> = tsk |> fromTaskVoid
   member inline _.Source(r: Result<'a, DomainError>) : Effect<'a> = r |> fromResult
   member inline _.Source(tr: Task<Result<'a, DomainError>>) : Effect<'a> = tr |> fromTR
   member inline _.Source(bt: IPorts -> Task<Result<'a, DomainError>>) : Effect<'a> = bt

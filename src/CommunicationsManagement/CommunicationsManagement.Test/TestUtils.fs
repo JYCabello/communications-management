@@ -1,5 +1,6 @@
 ﻿module TestProject1CommunicationsManagement.Test.TestUtils
 
+open System.Threading
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
 open Xunit
@@ -16,7 +17,7 @@ let login email (setup: Setup) =
     .SendKeys email
 
   driver.FindElement(By.Id("email-sumbit")).Click()
-
+  Thread.Sleep(1000)
   let notification = setup.lastNotification
   Assert.Equal(setup.config.AdminEmail |> Email, notification.Email)
 

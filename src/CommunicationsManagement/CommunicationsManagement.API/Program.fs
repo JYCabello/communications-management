@@ -65,9 +65,7 @@ let buildHost ports forcedPort =
       webHostBuilder |> ignore)
     .Build()
 
-let ports: IPorts =
-  let config = Configuration.configuration
-
+let ports config: IPorts =
   { new IPorts with
       member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
@@ -82,5 +80,5 @@ let ports: IPorts =
 
 [<EntryPoint>]
 let main _ =
-  (buildHost ports None).Run()
+  (buildHost (ports Configuration.configuration) None).Run()
   0
