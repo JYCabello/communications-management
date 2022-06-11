@@ -34,7 +34,6 @@ let post (ports: IPorts) : HttpHandler =
       let! dto =
         ctx.TryBindFormAsync<LoginDto>()
         |> TaskResult.mapError (fun _ -> BadRequest)
-        |> fromTR
 
       let! rm = getAnonymousRootModel ctx
 

@@ -153,7 +153,7 @@ let testSetup () =
     let driver =
       let driverOptions =
         let dO = FirefoxOptions()
-//        dO.AddArgument "--headless"
+        dO.AddArgument "--headless"
         dO
 
       new FirefoxDriver(driverOptions)

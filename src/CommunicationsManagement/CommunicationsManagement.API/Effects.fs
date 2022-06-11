@@ -130,7 +130,7 @@ type EffectBuilder() =
   member inline this.MergeSources(ea: Effect<'a>, eb: Effect<'b>) : Effect<'a * 'b> =
     this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
 
-  member inline _.Source(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
+  member inline _.Source<'a when 'a : not struct>(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
   member inline _.Source(tsk: Task) : Effect<unit> = tsk |> fromTaskVoid
   member inline _.Source(r: Result<'a, DomainError>) : Effect<'a> = r |> fromResult
   member inline _.Source(tr: Task<Result<'a, DomainError>>) : Effect<'a> = tr |> fromTR
