@@ -83,13 +83,22 @@ let subscribe cs (subscription: SubscriptionDetails) =
     task {
       try
         let! checkpoint = subscription.GetCheckpoint()
+        
+        let handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task =
+          fun s e c ->
+            task {
+              do! subscription.Handler s e c
+              do! subscription.SaveCheckpoint e.OriginalEventNumber
+            }
+        
+        let client = getClient cs
 
         do!
-          (getClient cs)
+          client
             .SubscribeToStreamAsync(
               subscription.StreamID,
               checkpoint,
-              subscription.Handler,
+              handler,
               false,
               reSubscribe
             )
