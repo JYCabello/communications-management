@@ -36,7 +36,10 @@ type Setup
 
 let getDockerClient () =
   let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine")
-  let defaultLinuxDockerEngineUri = Uri("unix:///var/run/docker.sock")
+  let defaultLinuxDockerEngineUri =
+    match Environment.GetEnvironmentVariable("DOCKER_HOST") with
+    | null -> Uri("unix:///var/run/docker.sock")
+    | value -> Uri(value)
 
   let engineUri =
     if RuntimeInformation.IsOSPlatform(OSPlatform.Linux) then
