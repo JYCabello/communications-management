@@ -31,7 +31,7 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
       ]
     ]
 
-  let header =
+  let generalHeader =
     let newUserUrl =
       vm
         .Root
@@ -47,7 +47,7 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
       ]
     ]
 
-  [ header
+  [ generalHeader
     div [ _class "container" ] [
       div [ _class "row p-2 bd-highlight" ] [
         div [ _class "col" ] [
