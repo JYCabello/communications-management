@@ -26,12 +26,17 @@ let deserialize (evnt: ResolvedEvent) =
   let decoded =
     evnt.Event.Data.ToArray()
     |> Encoding.UTF8.GetString
+
   try
     match evnt.Event.EventType with
     | "SessionCreated" ->
-      decoded |> JsonConvert.DeserializeObject<SessionCreated> |> SessionCreated
+      decoded
+      |> JsonConvert.DeserializeObject<SessionCreated>
+      |> SessionCreated
     | "SessionTerminated" ->
-      decoded |> JsonConvert.DeserializeObject<SessionTerminated> |> SessionTerminated
+      decoded
+      |> JsonConvert.DeserializeObject<SessionTerminated>
+      |> SessionTerminated
     | t -> StreamEvent.Toxic { Type = t; Content = decoded }
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
@@ -83,25 +88,24 @@ let subscribe cs (subscription: SubscriptionDetails) =
     task {
       try
         let! checkpoint = subscription.GetCheckpoint()
-        
+
         let handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task =
           fun s e c ->
             task {
               do! subscription.Handler s e c
               do! subscription.SaveCheckpoint e.OriginalEventNumber
             }
-        
+
         let client = getClient cs
 
         do!
-          client
-            .SubscribeToStreamAsync(
-              subscription.StreamID,
-              checkpoint,
-              handler,
-              false,
-              reSubscribe
-            )
+          client.SubscribeToStreamAsync(
+            subscription.StreamID,
+            checkpoint,
+            handler,
+            false,
+            reSubscribe
+          )
           :> Task
       with
       | _ ->

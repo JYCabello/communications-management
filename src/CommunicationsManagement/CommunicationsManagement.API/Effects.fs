@@ -2,8 +2,7 @@
 
 open System
 open System.Threading.Tasks
-open CommunicationsManagement.API
-open Models
+open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
 type IPorts =
@@ -17,6 +16,7 @@ type IPorts =
   abstract member find<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
   abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
   abstract member delete<'a> : Guid -> Task<Result<unit, DomainError>>
+  abstract member getAll<'a> : unit -> Task<Result<'a list, DomainError>>
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
@@ -34,12 +34,13 @@ let fromResult r : Effect<'a> = fun _ -> r |> Task.FromResult
 let singleton a : Effect<'a> = fun _ -> a |> TaskResult.ok
 let error e : Effect<'a> = fun _ -> e |> TaskResult.error
 let fromTask t : Effect<'a> = fun _ -> t |> Task.map Ok
+
 let fromTaskVoid (t: Task) : Effect<unit> =
-    task {
-      do! t
-      return ()
-    }
-    |> fromTask
+  task {
+    do! t
+    return ()
+  }
+  |> fromTask
 
 let fromOption rn o : Effect<'a> =
   match o with
@@ -47,15 +48,11 @@ let fromOption rn o : Effect<'a> =
   | None -> NotFound rn |> error
 
 let fromTaskOption rn tskOpt : Effect<'a> =
-  fun _ ->
-    task {
-      let! o = tskOpt
-
-      return
-        match o with
-        | Some a -> Ok a
-        | None -> NotFound rn |> Error
-    }
+  tskOpt
+  |> Task.map (function
+    | Some a -> Ok a
+    | None -> NotFound rn |> Error)
+  |> fromTR
 
 type EffectBuilder() =
   member inline this.Bind(e: Effect<'a>, [<InlineIfLambda>] f: 'a -> Effect<'b>) : Effect<'b> =
@@ -130,7 +127,7 @@ type EffectBuilder() =
   member inline this.MergeSources(ea: Effect<'a>, eb: Effect<'b>) : Effect<'a * 'b> =
     this.Bind(ea, (fun a -> eb |> mapE (fun b -> (a, b))))
 
-  member inline _.Source<'a when 'a : not struct>(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
+  member inline _.Source<'a when 'a: not struct>(tsk: Task<'a>) : Effect<'a> = tsk |> fromTask
   member inline _.Source(tsk: Task) : Effect<unit> = tsk |> fromTaskVoid
   member inline _.Source(r: Result<'a, DomainError>) : Effect<'a> = r |> fromResult
   member inline _.Source(tr: Task<Result<'a, DomainError>>) : Effect<'a> = tr |> fromTR

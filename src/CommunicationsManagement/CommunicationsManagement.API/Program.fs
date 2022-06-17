@@ -65,7 +65,7 @@ let buildHost ports forcedPort =
       webHostBuilder |> ignore)
     .Build()
 
-let ports config: IPorts =
+let ports config : IPorts =
   { new IPorts with
       member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
@@ -76,9 +76,12 @@ let ports config: IPorts =
         Storage.queryPredicate<'a> config predicate
 
       member this.save<'a> a = Storage.save<'a> config a
-      member this.delete<'a> id = Storage.delete<'a> config id }
+      member this.delete<'a> id = Storage.delete<'a> config id
+      member this.getAll<'a>() = Storage.getAll<'a> config () }
 
 [<EntryPoint>]
 let main _ =
-  (buildHost (ports Configuration.configuration) None).Run()
+  (buildHost (ports Configuration.configuration) None)
+    .Run()
+
   0

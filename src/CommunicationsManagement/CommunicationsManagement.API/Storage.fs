@@ -19,7 +19,9 @@ let private querySession id =
   sessionStorage |> tryGet id |> Task.FromResult
 
 let private getAllSessions () =
-  sessionStorage.Values |> Seq.toList |> TaskResult.ok
+  sessionStorage.Values
+  |> Seq.toList
+  |> TaskResult.ok
 
 let private findSession q =
   sessionStorage.ToArray()
