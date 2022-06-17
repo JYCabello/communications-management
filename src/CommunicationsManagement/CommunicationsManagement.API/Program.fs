@@ -5,7 +5,6 @@ open System.Globalization
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Routing
-open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Localization

@@ -17,7 +17,7 @@ let ``registers a user`` () =
     Assert.True(driver.Url.EndsWith("users"))
 
     Assert.Equal(
-      0,
+      1,
       driver
         .FindElements(
           By.ClassName("user-link")
