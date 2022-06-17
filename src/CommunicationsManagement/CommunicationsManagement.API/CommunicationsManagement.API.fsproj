@@ -18,9 +18,11 @@
         <Compile Include="Views\Layout.fs" />
         <Compile Include="Views\Login.fs" />
         <Compile Include="Views\Home.fs" />
+        <Compile Include="Views\Users.fs" />
         <Compile Include="Routing\Routes.fs" />
         <Compile Include="Routing\Login.fs" />
         <Compile Include="Routing\Home.fs" />
+        <Compile Include="Routing\Users.fs" />
         <Compile Include="Program.fs" />
         <Content Include="pages\index.html">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

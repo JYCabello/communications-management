@@ -1,5 +1,6 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Option
+
 let bindBool f =
   function
   | Some x ->

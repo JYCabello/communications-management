@@ -20,6 +20,7 @@ let webApp (ports: IPorts) =
            >=> choose [ route "/login" >>=> Login.get ports
                         route "/login/confirm" >>=> Login.confirm ports
                         route "/logout" >>=> Login.logout ports
+                        route "/users" >>=> Users.userList ports
                         route "/ping" >=> text "pong"
                         route "/" >>=> Home.home ports ]
            POST

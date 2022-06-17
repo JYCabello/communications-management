@@ -131,12 +131,14 @@ module Rendering =
     }
 
   let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
-    fun _ ->
-      (if user.hasRole role then
-         Ok()
-       else
-         resourceName |> Unauthorized |> Error)
-      |> Task.FromResult
+    effect {
+      return!
+        (if user.hasRole role then
+           Ok()
+         else
+           resourceName |> Unauthorized |> Error)
+        |> Task.FromResult
+    }
 
   type Render<'a> = ViewModel<'a> -> XmlNode list
 

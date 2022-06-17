@@ -162,4 +162,13 @@
   <data name="Users" xml:space="preserve">
       <value>Usuarios</value>
   </data>
+  <data name="User" xml:space="preserve">
+      <value>Usuario</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+      <value>Acciones</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+      <value>Detalles</value>
+  </data>
 </root>

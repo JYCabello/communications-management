@@ -61,6 +61,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Actions.
+        /// </summary>
+        public static string Actions {
+            get {
+                return ResourceManager.GetString("Actions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Sports Communications.
         /// </summary>
         public static string AppName {
@@ -84,6 +93,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string ConflictTemplate {
             get {
                 return ResourceManager.GetString("ConflictTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Details.
+        /// </summary>
+        public static string Details {
+            get {
+                return ResourceManager.GetString("Details", resourceCulture);
             }
         }
         
@@ -165,6 +183,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string UnauthorizedTemplate {
             get {
                 return ResourceManager.GetString("UnauthorizedTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User.
+        /// </summary>
+        public static string User {
+            get {
+                return ResourceManager.GetString("User", resourceCulture);
             }
         }
         
