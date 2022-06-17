@@ -7,35 +7,49 @@ open Flurl
 
 type UserListViewModel = { Users: User list }
 
-
-
 let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
-  let userRow (u: User) =
+  let url (u: User) =
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegments("users", u.ID.ToString())
+      .ToString()
+
+  let userRow u =
     div [ _class "row" ] [
-        div [ _class "col" ] [
-          u.Name |> Text
-        ]
-        div [ _class "col" ] [
-          u.Email |> function | Email e -> e |> Text
-        ]
-        div [ _class "col" ] [
-          a [ _href (
-                vm
-                  .Root
-                  .BaseUrl
-                  .AppendPathSegment("users")
-                  .AppendPathSegment(u.ID.ToString())
-                  .ToString()
-              )
-              _class "btn btn-outline-primary btn-sm user-link"
-               ] [
-            "Details" |> vm.Root.Translate |> Text
-          ]
+      div [ _class "col" ] [ u.Name |> Text ]
+      div [ _class "col" ] [
+        u.Email
+        |> function
+          | Email e -> e |> Text
+      ]
+      div [ _class "col" ] [
+        a [ _href <| url u
+            _class "btn btn-info btn-sm" ] [
+          "Details" |> vm.Root.Translate |> Text
         ]
       ]
-  
-  [ div [ _class "container" ] [
-      div [ _class "row bd-highlight" ] [
+    ]
+
+  let header =
+    let newUserUrl =
+      vm
+        .Root
+        .BaseUrl
+        .AppendPathSegments("users", "new")
+        .ToString()
+
+    div [ _class "d-flex flex-row-reverse" ] [
+      a [ _href newUserUrl
+          _class "btn btn-success btn-sm user-link"
+          _id "new-user-button" ] [
+        "New" |> vm.Root.Translate |> Text
+      ]
+    ]
+
+  [ header
+    div [ _class "container" ] [
+      div [ _class "row p-2 bd-highlight" ] [
         div [ _class "col" ] [
           "User" |> vm.Root.Translate |> Text
         ]

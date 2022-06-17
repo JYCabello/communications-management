@@ -171,4 +171,7 @@
   <data name="Details" xml:space="preserve">
       <value>Detalles</value>
   </data>
+  <data name="New" xml:space="preserve">
+      <value>Nuevo</value>
+  </data>
 </root>
