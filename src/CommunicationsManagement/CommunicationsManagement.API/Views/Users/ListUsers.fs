@@ -1,4 +1,4 @@
-﻿module CommunicationsManagement.API.Views.Users
+﻿module CommunicationsManagement.API.Views.Users.ListUsers
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine.HtmlElements
@@ -35,7 +35,7 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
     vm
       .Root
       .BaseUrl
-      .AppendPathSegments("users", "new")
+      .AppendPathSegments("users", "create")
       .ToString()
 
   [ div [ _class "d-flex flex-row-reverse" ] [

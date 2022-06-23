@@ -19,8 +19,8 @@
         <Compile Include="Views\Layout.fs" />
         <Compile Include="Views\Login.fs" />
         <Compile Include="Views\Home.fs" />
-        <Compile Include="Views\Users.fs" />
-        <Compile Include="Views\CreateUser.fs" />
+        <Compile Include="Views\Users\ListUsers.fs" />
+        <Compile Include="Views\Users\CreateUser.fs" />
         <Compile Include="Routing\Routes.fs" />
         <Compile Include="Routing\Login.fs" />
         <Compile Include="Routing\Home.fs" />

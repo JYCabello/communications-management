@@ -20,11 +20,13 @@ let webApp (ports: IPorts) =
            >=> choose [ route "/login" >>=> Login.get ports
                         route "/login/confirm" >>=> Login.confirm ports
                         route "/logout" >>=> Login.logout ports
-                        route "/users" >>=> Users.userList ports
+                        route "/users" >>=> Users.list ports
+                        route "/users/create" >>=> Users.create ports
                         route "/ping" >=> text "pong"
                         route "/" >>=> Home.home ports ]
            POST
-           >=> choose [ route "/login" >>=> Login.post ports ] ]
+           >=> choose [ route "/login" >>=> Login.post ports
+                        route "/users/create" >>=> Users.createPost ports ] ]
 
 let configureApp (app: IApplicationBuilder) ports =
   app.UseGiraffe <| webApp ports
