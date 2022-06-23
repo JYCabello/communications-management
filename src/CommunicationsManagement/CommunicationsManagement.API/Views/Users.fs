@@ -31,23 +31,20 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
       ]
     ]
 
-  let generalHeader =
-    let newUserUrl =
-      vm
-        .Root
-        .BaseUrl
-        .AppendPathSegments("users", "new")
-        .ToString()
+  let newUserUrl =
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegments("users", "new")
+      .ToString()
 
-    div [ _class "d-flex flex-row-reverse" ] [
+  [ div [ _class "d-flex flex-row-reverse" ] [
       a [ _href newUserUrl
           _class "btn btn-success btn-sm user-link"
           _id "new-user-button" ] [
         "New" |> vm.Root.Translate |> Text
       ]
     ]
-
-  [ generalHeader
     div [ _class "container" ] [
       div [ _class "row p-2 bd-highlight" ] [
         div [ _class "col" ] [
