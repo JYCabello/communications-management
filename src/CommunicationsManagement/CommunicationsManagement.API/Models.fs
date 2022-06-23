@@ -39,7 +39,8 @@ type User =
   { Name: string
     ID: Guid
     Email: Email
-    Roles: Roles }
+    Roles: Roles
+    LastLogin: DateTime option }
   member this.hasRole roles = contains roles this.Roles
 
 type Session =

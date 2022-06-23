@@ -42,38 +42,31 @@ let deserialize (evnt: ResolvedEvent) =
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
 
 let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
+  let ignoreErrors =
+    Task.map (fun r ->
+          match r with
+          | Ok u -> u
+          | Error _ -> () // Ignore errors for now
+    )
+  
   let handleCreated (sc: SessionCreated) =
-    task {
+    taskResult {
+      let! user = ports.query<User> sc.UserID
+      do! ports.save<User> { user with LastLogin = DateTime.UtcNow |> Some }
+
       do!
         ports.save<Session>
           { ID = sc.SessionID
             UserID = sc.UserID
             ExpiresAt = sc.ExpiresAt }
-        |> Task.map (fun r ->
-          match r with
-          | Ok u -> u
-          | Error _ -> () // Ignore errors for now
-        )
-
-      return ()
     }
 
   let handleTerminated (st: SessionTerminated) =
-    task {
-      do!
-        ports.delete<Session> st.SessionID
-        |> Task.map (fun r ->
-          match r with
-          | Ok u -> u
-          | Error _ -> () // Ignore errors for now
-        )
-
-      return ()
-    }
+    ports.delete<Session> st.SessionID
 
   match deserialize se with
-  | SessionCreated sc -> handleCreated sc
-  | SessionTerminated st -> handleTerminated st
+  | SessionCreated sc -> handleCreated sc |> ignoreErrors
+  | SessionTerminated st -> handleTerminated st |> ignoreErrors
   | _ -> Task.FromResult()
 
 
@@ -140,7 +133,8 @@ let triggerSubscriptions (ports: IPorts) =
     { ID = Guid.Empty
       Email = Email ports.configuration.AdminEmail
       Roles = Roles.Admin
-      Name = "Admin" }
+      Name = "Admin"
+      LastLogin = None }
 
   do ports.save admin |> fun t -> t.Result |> ignore
 
