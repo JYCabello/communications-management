@@ -44,11 +44,11 @@ let deserialize (evnt: ResolvedEvent) =
 let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let ignoreErrors =
     Task.map (fun r ->
-          match r with
-          | Ok u -> u
-          | Error _ -> () // Ignore errors for now
+      match r with
+      | Ok u -> u
+      | Error _ -> () // Ignore errors for now
     )
-  
+
   let handleCreated (sc: SessionCreated) =
     taskResult {
       let! user = ports.query<User> sc.UserID
@@ -61,8 +61,7 @@ let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
             ExpiresAt = sc.ExpiresAt }
     }
 
-  let handleTerminated (st: SessionTerminated) =
-    ports.delete<Session> st.SessionID
+  let handleTerminated (st: SessionTerminated) = ports.delete<Session> st.SessionID
 
   match deserialize se with
   | SessionCreated sc -> handleCreated sc |> ignoreErrors

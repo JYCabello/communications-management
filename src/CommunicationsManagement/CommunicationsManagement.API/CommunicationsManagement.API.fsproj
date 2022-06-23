@@ -15,10 +15,12 @@
         <Compile Include="DataValidation.fs" />
         <Compile Include="Configuration.fs" />
         <Compile Include="EventStore.fs" />
+        <Compile Include="Views\Utils.fs" />
         <Compile Include="Views\Layout.fs" />
         <Compile Include="Views\Login.fs" />
         <Compile Include="Views\Home.fs" />
         <Compile Include="Views\Users.fs" />
+        <Compile Include="Views\CreateUser.fs" />
         <Compile Include="Routing\Routes.fs" />
         <Compile Include="Routing\Login.fs" />
         <Compile Include="Routing\Home.fs" />

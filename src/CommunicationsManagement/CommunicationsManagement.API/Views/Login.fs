@@ -2,26 +2,13 @@
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open CommunicationsManagement.Internationalization
+open Utils
 
 type LoginModel =
   { Email: string option
     EmailError: string option }
 
 let loginView (vm: ViewModel<LoginModel>) =
-  let emailError =
-    vm.Model.EmailError
-    |> Option.map (fun e ->
-      div [ _class "invalid-feedback" ] [
-        Text e
-      ])
-    |> Option.toList
-
-  let emailValidClass =
-    vm.Model.EmailError
-    |> Option.map (fun _ -> " is-invalid")
-    |> Option.defaultValue ""
-
   [ form [ _action "/login"
            _method "post"
            _novalidate ] [
@@ -30,12 +17,12 @@ let loginView (vm: ViewModel<LoginModel>) =
         Text(vm.Root.Translate "Email")
       ]
       div [ _class "input-group mb-3" ] [
-        input [ _class $"form-control{emailValidClass}"
+        input [ _class $"form-control{validationClass vm.Model.EmailError}"
                 _name "email"
                 _id "input-email"
                 vm.Model.Email |> Option.defaultValue "" |> _value ]
 
-        yield! emailError
+        yield! validationError vm.Model.EmailError
       ]
       input [ _type "submit"
               _id "email-sumbit"
