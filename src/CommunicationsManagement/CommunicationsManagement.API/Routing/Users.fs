@@ -1,5 +1,6 @@
 ﻿module CommunicationsManagement.API.Routing.Users
 
+open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open FsToolkit.ErrorHandling
@@ -48,7 +49,67 @@ type CreateUserDto =
     Email: string option
     Roles: Roles option }
 
+type UserCreationValidation =
+| Valid of User
+| Invalid of UserCreationViewModel
+
 let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+  let validate (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
+    task {
+      let emailError = isValidEmail dto.Email tr 
+
+      let! emailExists =
+        match emailError with
+        | Some _ -> false |> Task.FromResult
+        | None ->
+            match dto.Email with
+            | None -> true |> Task.FromResult
+            | Some email ->
+              ports.find<User> (fun u -> u.Email = Email email)
+              |> Task.map (fun r -> r |> function | Ok _ -> true | Error _ -> false)
+      
+      let emailError' = if emailExists then "EmailAlreadyInUse" |> tr |> Some else emailError
+              
+      let nameError =
+        match String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
+        | true -> "CannotBeEmpty" |> tr |> Some
+        | false -> None
+        
+      let rolesError =
+        match dto.Roles with
+        | None -> "MustSelectOneOption" |> tr |> Some
+        | _ -> None
+
+      let hasErrors = emailError'.IsSome || nameError.IsSome || rolesError.IsSome
+
+      return
+        match hasErrors with
+        | true ->
+          Invalid
+            { Name = dto.Name
+              NameError = nameError
+              Email = dto.Email
+              EmailError = emailError'
+              Roles = dto.Roles |> Option.defaultValue Roles.None
+              RolesError = rolesError }
+        | false ->
+          Valid
+            { Name = dto.Name.Value
+              Email = dto.Email.Value |> Email
+              ID = Guid.NewGuid()
+              Roles = dto.Roles.Value
+              LastLogin = None }
+    }
+    
+  let save usr vmr : Effect<ViewModel<UserCreationViewModel>> =
+    effect {
+      do! fun p -> p.save<User> usr
+      return!
+        renderOk { Model = "Ok"; Root = vmr } successMessage
+        |> EarlyReturn
+        |> Error
+    }
+
   effect {
     let! user = auth ctx
     let! root = buildModelRoot user ctx
@@ -58,22 +119,14 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
       ctx.TryBindFormAsync<CreateUserDto>()
       |> TaskResult.mapError (fun _ -> BadRequest)
 
-    let nameError =
-      match System.String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
-      | true -> "CannotBeEmpty" |> root.Translate |> Some
-      | false -> None
+    let! validationResult = validate dto root.Translate
 
-    return
-      { Model =
-          { Name = dto.Name
-            NameError = nameError
-            Email = dto.Email
-            EmailError = isValidEmail dto.Email root.Translate
-            Roles = dto.Roles |> Option.defaultValue Roles.None
-            RolesError =
-              match dto.Roles with
-              | None -> "MustSelectOneOption" |> root.Translate |> Some
-              | _ -> None }
-        Root = root }
+    return!
+      match validationResult with
+      | Valid user -> save user root
+      | Invalid userCreationViewModel ->
+            { Model = userCreationViewModel; Root = root }
+            |> Task.FromResult
+            |> fromTask
   }
   |> resolveEffect2 ports createUserView next ctx

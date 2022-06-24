@@ -2,6 +2,7 @@
 
 open System
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Views
 open FsToolkit.ErrorHandling
 open Giraffe.ViewEngine
 open CommunicationsManagement.API.Views.Utils
@@ -77,3 +78,7 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
               _id "create-user-sumbit"
               _class "btn btn-primary" ]
     ] ]
+  
+let successMessage vm =
+  [ Text vm.Model
+    Layout.homeButton vm.Root.Translate ]
