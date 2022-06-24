@@ -48,6 +48,6 @@ let ``registers a user`` () =
 
     logout setup
 
-    lousgin "emailio@email.com" setup
+    login "emailio@email.com" setup
     Assert.Equal("Mr Don", driver.FindElement(By.Id("user-name-nav")).Text)
   }
