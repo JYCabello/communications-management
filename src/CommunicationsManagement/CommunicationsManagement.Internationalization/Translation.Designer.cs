@@ -205,6 +205,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Roles.
+        /// </summary>
+        public static string Roles {
+            get {
+                return ResourceManager.GetString("Roles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You are not authorized to access this {0}.
         /// </summary>
         public static string UnauthorizedTemplate {

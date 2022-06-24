@@ -183,4 +183,7 @@
   <data name="Delegate" xml:space="preserve">
       <value>Delegate</value>
   </data>
+  <data name="Roles" xml:space="preserve">
+      <value>Roles</value>
+  </data>
 </root>

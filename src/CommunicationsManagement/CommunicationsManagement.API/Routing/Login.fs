@@ -37,10 +37,7 @@ let post (ports: IPorts) : HttpHandler =
 
       let! rm = getAnonymousRootModel ctx
 
-      let emailError =
-        match DataValidation.isValidEmail dto.Email with
-        | true -> None
-        | false -> "InvalidEmail" |> rm.Translate |> Some
+      let emailError = DataValidation.isValidEmail dto.Email rm.Translate
 
       // Short-circuit for validation.
       do!

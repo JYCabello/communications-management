@@ -9,7 +9,7 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views.Users.ListUsers
 open CommunicationsManagement.API.Views.Users.CreateUser
 open CommunicationsManagement.API.Routing.Routes.Rendering
-
+open CommunicationsManagement.API.DataValidation
 
 let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
@@ -58,14 +58,22 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
       ctx.TryBindFormAsync<CreateUserDto>()
       |> TaskResult.mapError (fun _ -> BadRequest)
 
+    let nameError =
+      match System.String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
+      | true -> "CannotBeEmpty" |> root.Translate |> Some
+      | false -> None
+
     return
       { Model =
-          { Name = None
-            NameError = None
-            Email = None
-            EmailError = None
+          { Name = dto.Name
+            NameError = nameError
+            Email = dto.Email
+            EmailError = isValidEmail dto.Email root.Translate
             Roles = dto.Roles |> Option.defaultValue Roles.None
-            RolesError = None }
+            RolesError =
+              match dto.Roles with
+              | None -> "MustSelectOneOption" |> root.Translate |> Some
+              | _ -> None }
         Root = root }
   }
   |> resolveEffect2 ports createUserView next ctx
