@@ -78,7 +78,7 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
               _id "create-user-sumbit"
               _class "btn btn-primary" ]
     ] ]
-  
+
 let successMessage vm =
   [ Text vm.Model
     Layout.homeButton vm.Root.Translate ]

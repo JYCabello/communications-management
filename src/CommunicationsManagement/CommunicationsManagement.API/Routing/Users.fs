@@ -50,37 +50,48 @@ type CreateUserDto =
     Roles: Roles option }
 
 type UserCreationValidation =
-| Valid of User
-| Invalid of UserCreationViewModel
+  | Valid of UserCreated
+  | Invalid of UserCreationViewModel
 
 let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   let validate (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
     task {
-      let emailError = isValidEmail dto.Email tr 
+      let emailError = isValidEmail dto.Email tr
 
       let! emailExists =
         match emailError with
         | Some _ -> false |> Task.FromResult
         | None ->
-            match dto.Email with
-            | None -> true |> Task.FromResult
-            | Some email ->
-              ports.find<User> (fun u -> u.Email = Email email)
-              |> Task.map (fun r -> r |> function | Ok _ -> true | Error _ -> false)
-      
-      let emailError' = if emailExists then "EmailAlreadyInUse" |> tr |> Some else emailError
-              
+          match dto.Email with
+          | None -> true |> Task.FromResult
+          | Some email ->
+            ports.find<User> (fun u -> u.Email = Email email)
+            |> Task.map (fun r ->
+              r
+              |> function
+                | Ok _ -> true
+                | Error _ -> false)
+
+      let emailError' =
+        if emailExists then
+          "EmailAlreadyInUse" |> tr |> Some
+        else
+          emailError
+
       let nameError =
         match String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
         | true -> "CannotBeEmpty" |> tr |> Some
         | false -> None
-        
+
       let rolesError =
         match dto.Roles with
         | None -> "MustSelectOneOption" |> tr |> Some
         | _ -> None
 
-      let hasErrors = emailError'.IsSome || nameError.IsSome || rolesError.IsSome
+      let hasErrors =
+        emailError'.IsSome
+        || nameError.IsSome
+        || rolesError.IsSome
 
       return
         match hasErrors with
@@ -95,15 +106,15 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
         | false ->
           Valid
             { Name = dto.Name.Value
-              Email = dto.Email.Value |> Email
-              ID = Guid.NewGuid()
-              Roles = dto.Roles.Value
-              LastLogin = None }
+              Email = dto.Email.Value
+              UserID = Guid.NewGuid()
+              Roles = dto.Roles.Value }
     }
-    
+
   let save usr vmr : Effect<ViewModel<UserCreationViewModel>> =
     effect {
-      do! fun p -> p.save<User> usr
+      do! fun p -> p.sendEvent { Event = UserCreated usr }
+
       return!
         renderOk { Model = "Ok"; Root = vmr } successMessage
         |> EarlyReturn
@@ -125,8 +136,9 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
       match validationResult with
       | Valid user -> save user root
       | Invalid userCreationViewModel ->
-            { Model = userCreationViewModel; Root = root }
-            |> Task.FromResult
-            |> fromTask
+        { Model = userCreationViewModel
+          Root = root }
+        |> Task.FromResult
+        |> fromTask
   }
   |> resolveEffect2 ports createUserView next ctx

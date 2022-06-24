@@ -1,6 +1,5 @@
 ﻿module TestProject1CommunicationsManagement.Test.UserRegistration
 
-open System.Threading
 open OpenQA.Selenium
 open Xunit
 open TestSetup

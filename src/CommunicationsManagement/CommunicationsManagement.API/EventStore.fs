@@ -37,6 +37,10 @@ let deserialize (evnt: ResolvedEvent) =
       decoded
       |> JsonConvert.DeserializeObject<SessionTerminated>
       |> SessionTerminated
+    | "UserCreated" ->
+      decoded
+      |> JsonConvert.DeserializeObject<UserCreated>
+      |> UserCreated
     | t -> StreamEvent.Toxic { Type = t; Content = decoded }
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
@@ -117,7 +121,7 @@ let subscribe cs (subscription: SubscriptionDetails) =
           :> Task
       with
       | _ ->
-        do! Task.Delay(15)
+        do! Task.Delay(75)
         return! subscribeTo ()
     }
 

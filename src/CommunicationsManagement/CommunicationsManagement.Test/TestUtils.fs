@@ -17,9 +17,9 @@ let login email (setup: Setup) =
     .SendKeys email
 
   driver.FindElement(By.Id("email-sumbit")).Click()
-  Thread.Sleep(1000)
+  Thread.Sleep(200)
   let notification = setup.lastNotification
-  Assert.Equal(setup.config.AdminEmail |> Email, notification.Email)
+  Assert.Equal(email |> Email, notification.Email)
 
   let loginNotification =
     match notification.Notification with
