@@ -41,14 +41,14 @@ let deserialize (evnt: ResolvedEvent) =
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
 
-let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
-  let ignoreErrors =
-    Task.map (fun r ->
-      match r with
-      | Ok u -> u
-      | Error _ -> () // Ignore errors for now
-    )
+let private ignoreErrors =
+  Task.map (fun r ->
+    match r with
+    | Ok u -> u
+    | Error _ -> () // Ignore errors for now
+  )
 
+let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (sc: SessionCreated) =
     taskResult {
       let! user = ports.query<User> sc.UserID
@@ -66,6 +66,21 @@ let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   match deserialize se with
   | SessionCreated sc -> handleCreated sc |> ignoreErrors
   | SessionTerminated st -> handleTerminated st |> ignoreErrors
+  | _ -> Task.FromResult()
+
+let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
+  let handleCreated (uc: UserCreated) =
+    taskResult {
+      do! ports.save<User>
+            { Name = uc.Name
+              Email = uc.Email |> Email
+              ID = uc.UserID
+              Roles = uc.Roles
+              LastLogin = None }
+    }
+
+  match deserialize se with
+  | UserCreated uc -> handleCreated uc |> ignoreErrors
   | _ -> Task.FromResult()
 
 
@@ -101,7 +116,7 @@ let subscribe cs (subscription: SubscriptionDetails) =
           :> Task
       with
       | _ ->
-        do! Task.Delay(5000)
+        do! Task.Delay(15)
         return! subscribeTo ()
     }
 
@@ -118,6 +133,7 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
       | Toxic _ -> None
       | SessionCreated e -> e |> JsonConvert.SerializeObject |> Some
       | SessionTerminated e -> e |> JsonConvert.SerializeObject |> Some
+      | UserCreated e -> e |> JsonConvert.SerializeObject |> Some
       |> Option.map Encoding.UTF8.GetBytes
       |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
       |> Option.map (fun ed ->
@@ -126,7 +142,7 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
   }
 
 let triggerSubscriptions (ports: IPorts) =
-  let sub = subscribe ports.configuration.EventStoreConnectionString
+  let subscribe' = subscribe ports.configuration.EventStoreConnectionString
 
   let admin =
     { ID = Guid.Empty
@@ -142,6 +158,18 @@ let triggerSubscriptions (ports: IPorts) =
     |> Option.map FromStream.After
     |> Option.defaultValue FromStream.Start
     |> Task.FromResult
+    
+  let mutable usersCheckpoint: StreamPosition option = None
+
+  let saveUsersCheckpoint p =
+    usersCheckpoint <- Some p
+    Task.CompletedTask
+
+  { StreamID = "Users"
+    Handler = fun _ evnt _ -> task { do! handleUsers evnt ports } :> Task
+    GetCheckpoint = getCheckpoint usersCheckpoint
+    SaveCheckpoint = saveUsersCheckpoint }
+  |> subscribe'
 
   let mutable sessionsCheckpoint: StreamPosition option = None
 
@@ -153,4 +181,4 @@ let triggerSubscriptions (ports: IPorts) =
     Handler = fun _ evnt _ -> task { do! handleSession evnt ports } :> Task
     GetCheckpoint = getCheckpoint sessionsCheckpoint
     SaveCheckpoint = saveSessionCheckpoint }
-  |> sub
+  |> subscribe'

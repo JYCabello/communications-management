@@ -10,6 +10,16 @@ type Configuration =
     SendGridKey: string
     MailFrom: string }
 
+type Email = Email of string
+
+type Roles =
+  | None = 0
+  | Delegate = 1
+  | Press = 2
+  | UserManagement = 4
+  | Admin = 131071
+
+
 [<CLIMutable>]
 type ToxicEvent = { Content: string; Type: string }
 
@@ -22,14 +32,12 @@ type SessionCreated =
 [<CLIMutable>]
 type SessionTerminated = { SessionID: Guid }
 
-type Roles =
-  | None = 0
-  | Delegate = 1
-  | Press = 2
-  | UserManagement = 4
-  | Admin = 131071
-
-type Email = Email of string
+[<CLIMutable>]
+type UserCreated =
+  { UserID: Guid
+    Email: string
+    Name: string
+    Roles: Roles }
 
 let contains (searchTerm: Roles) (userRoles: Roles) =
   (searchTerm &&& userRoles) = searchTerm
@@ -62,18 +70,21 @@ type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 type StreamEvent =
   | SessionCreated of SessionCreated
   | SessionTerminated of SessionTerminated
+  | UserCreated of UserCreated
   | Toxic of ToxicEvent
 
 let getEventTypeName =
   function
   | SessionCreated _ -> "SessionCreated"
   | SessionTerminated _ -> "SessionTerminated"
+  | UserCreated _ -> "UserCreated"
   | Toxic _ -> "Toxic"
 
 let getStreamName =
   function
   | SessionCreated _ -> "Sessions"
   | SessionTerminated _ -> "Sessions"
+  | UserCreated _ -> "Users"
   | Toxic _ -> "toxic"
 
 type DomainError =
