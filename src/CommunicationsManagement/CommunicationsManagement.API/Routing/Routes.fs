@@ -64,8 +64,10 @@ module Rendering =
 
   let getTranslator (ctx: HttpContext) : Translator =
     fun key ->
-      let culture = getCulture ctx
-      Translation.ResourceManager.GetString(key, culture)
+      match Translation.ResourceManager.GetString(key, getCulture ctx) with
+      | null -> $"[%s{key}]"
+      | "" -> $"[%s{key}]"
+      | t -> t
 
   let getSessionID (ctx: HttpContext) : Effect<Guid> =
     effect {

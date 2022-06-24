@@ -53,9 +53,10 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
     let! user = auth ctx
     let! root = buildModelRoot user ctx
     do! requireRole user Roles.UserManagement (root.Translate "Users")
+
     let! dto =
-        ctx.TryBindFormAsync<CreateUserDto>()
-        |> TaskResult.mapError (fun _ -> BadRequest)
+      ctx.TryBindFormAsync<CreateUserDto>()
+      |> TaskResult.mapError (fun _ -> BadRequest)
 
     return
       { Model =

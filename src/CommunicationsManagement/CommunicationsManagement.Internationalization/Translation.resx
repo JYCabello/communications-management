@@ -174,4 +174,13 @@
   <data name="New" xml:space="preserve">
       <value>New</value>
   </data>
+  <data name="Press" xml:space="preserve">
+      <value>Press</value>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+      <value>User management</value>
+  </data>
+  <data name="Delegate" xml:space="preserve">
+      <value>Delegate</value>
+  </data>
 </root>

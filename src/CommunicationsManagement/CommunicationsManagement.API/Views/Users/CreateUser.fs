@@ -1,5 +1,6 @@
 ﻿module CommunicationsManagement.API.Views.Users.CreateUser
 
+open System
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
 
@@ -12,22 +13,38 @@ type UserCreationViewModel =
     RolesError: string option }
 
 let roleCheckBox userRoles role lbl =
-  div [] [
+  let inputID = Guid.NewGuid().ToString()
+
+  li [ _class "list-group-item" ] [
+    div [ _class "form-check form-switch" ] [
+      input [ _type "checkbox"
+              _name "roles"
+              _class "form-check-input"
+              _id inputID
+              if userRoles |> contains role then
+                _checked
+              role |> int |> string |> _value ]
+      label [ _class "form-check-label"
+              _for inputID ] [
         Text lbl
-        input [ _type "checkbox"
-                _name "roles"
-                if userRoles |> contains role then
-                  _checked
-                role |> int |> string |> _value ]
       ]
+    ]
+  ]
 
 let createUserView (vm: ViewModel<UserCreationViewModel>) =
+  let trx = vm.Root.Translate
+
   [ form [ _action "/users/create"
            _method "post"
            _novalidate ] [
-      roleCheckBox vm.Model.Roles Roles.Press "Press"
-      roleCheckBox vm.Model.Roles Roles.Delegate "Delegate"
-      roleCheckBox vm.Model.Roles Roles.UserManagement "UserManagement"
+      p [ _class "bold" ] [
+        "Roles" |> trx |> Text
+      ]
+      ul [ _class "list-group list-group-flush" ] [
+        roleCheckBox vm.Model.Roles Roles.Press (trx "Press")
+        roleCheckBox vm.Model.Roles Roles.Delegate (trx "Delegate")
+        roleCheckBox vm.Model.Roles Roles.UserManagement (trx "UserManagement")
+      ]
       input [ _type "submit"
               _id "email-sumbit"
               _class "btn btn-primary" ]

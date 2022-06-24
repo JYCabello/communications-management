@@ -174,4 +174,13 @@
   <data name="New" xml:space="preserve">
       <value>Nuevo</value>
   </data>
+  <data name="Press" xml:space="preserve">
+      <value>Prensa</value>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+      <value>Gestión de usuarios</value>
+  </data>
+  <data name="Delegate" xml:space="preserve">
+      <value>Delegado</value>
+  </data>
 </root>
