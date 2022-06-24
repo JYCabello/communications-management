@@ -71,12 +71,13 @@ let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
 let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (uc: UserCreated) =
     taskResult {
-      do! ports.save<User>
-            { Name = uc.Name
-              Email = uc.Email |> Email
-              ID = uc.UserID
-              Roles = uc.Roles
-              LastLogin = None }
+      do!
+        ports.save<User>
+          { Name = uc.Name
+            Email = uc.Email |> Email
+            ID = uc.UserID
+            Roles = uc.Roles
+            LastLogin = None }
     }
 
   match deserialize se with
@@ -158,7 +159,7 @@ let triggerSubscriptions (ports: IPorts) =
     |> Option.map FromStream.After
     |> Option.defaultValue FromStream.Start
     |> Task.FromResult
-    
+
   let mutable usersCheckpoint: StreamPosition option = None
 
   let saveUsersCheckpoint p =
