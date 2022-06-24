@@ -186,4 +186,16 @@
   <data name="Roles" xml:space="preserve">
       <value>Roles</value>
   </data>
+  <data name="CreateUser" xml:space="preserve">
+      <value>Create user</value>
+  </data>
+  <data name="CannotBeEmpty" xml:space="preserve">
+      <value>Cannot be empty</value>
+  </data>
+  <data name="MustSelectOneOption" xml:space="preserve">
+      <value>You must select at least one option</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+      <value>Name</value>
+  </data>
 </root>

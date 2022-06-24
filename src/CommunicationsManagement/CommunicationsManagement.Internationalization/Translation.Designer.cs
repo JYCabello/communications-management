@@ -88,11 +88,29 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot be empty.
+        /// </summary>
+        public static string CannotBeEmpty {
+            get {
+                return ResourceManager.GetString("CannotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The system was in an invalid state for the action you were trying to perform.
         /// </summary>
         public static string ConflictTemplate {
             get {
                 return ResourceManager.GetString("ConflictTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create user.
+        /// </summary>
+        public static string CreateUser {
+            get {
+                return ResourceManager.GetString("CreateUser", resourceCulture);
             }
         }
         
@@ -174,6 +192,24 @@ namespace CommunicationsManagement.Internationalization {
         public static string Logout {
             get {
                 return ResourceManager.GetString("Logout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You must select at least one option.
+        /// </summary>
+        public static string MustSelectOneOption {
+            get {
+                return ResourceManager.GetString("MustSelectOneOption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Name {
+            get {
+                return ResourceManager.GetString("Name", resourceCulture);
             }
         }
         

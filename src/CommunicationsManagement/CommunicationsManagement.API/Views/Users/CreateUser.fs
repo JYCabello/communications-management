@@ -15,8 +15,6 @@ type UserCreationViewModel =
     RolesError: string option }
 
 
-
-
 let createUserView (vm: ViewModel<UserCreationViewModel>) =
   let trx = vm.Root.Translate
   let m = vm.Model
@@ -76,6 +74,6 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
         ]
       ]
       input [ _type "submit"
-              _id "email-sumbit"
+              _id "create-user-sumbit"
               _class "btn btn-primary" ]
     ] ]

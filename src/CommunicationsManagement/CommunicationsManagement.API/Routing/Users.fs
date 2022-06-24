@@ -36,7 +36,7 @@ let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContex
             NameError = None
             Email = None
             EmailError = None
-            Roles = Roles.Press
+            Roles = Roles.None
             RolesError = None }
         Root = root }
   }
