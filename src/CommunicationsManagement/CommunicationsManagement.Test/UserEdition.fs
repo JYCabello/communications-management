@@ -11,9 +11,7 @@ let ``user is edited`` () =
   task {
     use! setup = testSetup ()
 
-    createAndLogin "john@john.com" "John" (Roles.UserManagement ||| Roles.Press) setup
-
-    logout setup
+    let testUser = createAndLogin (Roles.UserManagement ||| Roles.Press) setup
 
     login setup.config.AdminEmail setup
 

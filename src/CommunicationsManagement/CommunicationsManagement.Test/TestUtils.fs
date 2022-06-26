@@ -8,7 +8,12 @@ open Xunit
 open TestSetup
 open Flurl
 
+let logout (setup: Setup) =
+  setup.driver.Url <- setup.config.BaseUrl.AppendPathSegment("logout")
+
 let login email (setup: Setup) =
+  logout setup
+
   let driver = setup.driver
 
   Assert.Equal(setup.config.BaseUrl.AppendPathSegment("login"), driver.Url)
@@ -40,10 +45,13 @@ let login email (setup: Setup) =
   Assert.Equal("Logout", link.Text)
   Assert.Equal(setup.config.BaseUrl + "/", driver.Url)
 
-let logout (setup: Setup) =
-  setup.driver.Url <- setup.config.BaseUrl.AppendPathSegment("logout")
+type TestUserCreation =
+  { Email: string
+    Name: string }
 
-let createAndLogin (email: string) (userName: string) (roles: Roles) (setup: Setup) =
+let createAndLogin (roles: Roles) (setup: Setup) =
+  let testUser =
+    { Email =  $"{Guid.NewGuid()}@testemail.com"; Name = Guid.NewGuid().ToString() }
   login setup.config.AdminEmail setup
   let driver = setup.driver
   driver.FindElement(By.Id("users-link")).Click()
@@ -64,11 +72,11 @@ let createAndLogin (email: string) (userName: string) (roles: Roles) (setup: Set
 
   driver
     .FindElement(By.Id("input-name"))
-    .SendKeys(userName)
+    .SendKeys(testUser.Name)
 
   driver
     .FindElement(By.Id("input-email"))
-    .SendKeys(email)
+    .SendKeys(testUser.Email)
 
   for role in
     Enum.GetValues<Roles>()
@@ -81,6 +89,4 @@ let createAndLogin (email: string) (userName: string) (roles: Roles) (setup: Set
     .FindElement(By.Id("create-user-sumbit"))
     .Click()
 
-  logout setup
-
-  login email setup
+  login testUser.Email setup
