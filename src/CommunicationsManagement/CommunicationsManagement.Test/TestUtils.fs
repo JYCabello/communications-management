@@ -1,5 +1,6 @@
 ﻿module TestProject1CommunicationsManagement.Test.TestUtils
 
+open System
 open System.Threading
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
@@ -41,3 +42,45 @@ let login email (setup: Setup) =
 
 let logout (setup: Setup) =
   setup.driver.Url <- setup.config.BaseUrl.AppendPathSegment("logout")
+
+let createAndLogin (email: string) (userName: string) (roles: Roles) (setup: Setup) =
+  login setup.config.AdminEmail setup
+  let driver = setup.driver
+  driver.FindElement(By.Id("users-link")).Click()
+  Assert.True(driver.Url.EndsWith("users"))
+
+  Assert.Equal(
+    1,
+    driver
+      .FindElements(
+        By.ClassName("user-link")
+      )
+      .Count
+  )
+
+  driver
+    .FindElement(By.Id("new-user-button"))
+    .Click()
+
+  driver
+    .FindElement(By.Id("input-name"))
+    .SendKeys(userName)
+
+  driver
+    .FindElement(By.Id("input-email"))
+    .SendKeys(email)
+
+  for role in
+    Enum.GetValues<Roles>()
+    |> Seq.filter (fun r -> contains r roles) do
+    driver.FindElements(By.Name("roles"))
+    |> Seq.tryFind (fun e -> e.GetAttribute("value") = (role |> int |> string))
+    |> Option.iter (fun e -> e.Click())
+
+  driver
+    .FindElement(By.Id("create-user-sumbit"))
+    .Click()
+
+  logout setup
+
+  login email setup

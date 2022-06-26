@@ -33,7 +33,14 @@ let private queryUser id =
   userStorage |> tryGet id |> Task.FromResult
 
 let private getAllUsers () =
-  userStorage.Values |> Seq.toList |> TaskResult.ok
+  userStorage.Values
+  |> Seq.sortByDescending
+      (fun u ->
+        match u.LastLogin with
+        | None -> DateTime.MinValue
+        | Some ll -> ll)
+  |> Seq.toList
+  |> TaskResult.ok
 
 let private findUser q =
   userStorage.ToArray()
@@ -120,7 +127,6 @@ let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
 
 let delete<'a> : Configuration -> Guid -> Task<Result<unit, DomainError>> =
   fun _ id ->
-
     taskResult {
       do!
         match typeof<'a> with

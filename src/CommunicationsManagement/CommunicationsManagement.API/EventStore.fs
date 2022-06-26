@@ -56,7 +56,7 @@ let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (sc: SessionCreated) =
     taskResult {
       let! user = ports.query<User> sc.UserID
-      do! ports.save<User> { user with LastLogin = DateTime.UtcNow |> Some }
+      do! ports.save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
 
       do!
         ports.save<Session>
