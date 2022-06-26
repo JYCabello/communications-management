@@ -34,11 +34,10 @@ let private queryUser id =
 
 let private getAllUsers () =
   userStorage.Values
-  |> Seq.sortByDescending
-      (fun u ->
-        match u.LastLogin with
-        | None -> DateTime.MinValue
-        | Some ll -> ll)
+  |> Seq.sortByDescending (fun u ->
+    match u.LastLogin with
+    | None -> DateTime.MinValue
+    | Some ll -> ll)
   |> Seq.toList
   |> TaskResult.ok
 

@@ -45,13 +45,13 @@ let login email (setup: Setup) =
   Assert.Equal("Logout", link.Text)
   Assert.Equal(setup.config.BaseUrl + "/", driver.Url)
 
-type TestUserCreation =
-  { Email: string
-    Name: string }
+type TestUserCreation = { Email: string; Name: string }
 
 let createAndLogin (roles: Roles) (setup: Setup) =
   let testUser =
-    { Email =  $"{Guid.NewGuid()}@testemail.com"; Name = Guid.NewGuid().ToString() }
+    { Email = $"{Guid.NewGuid()}@testemail.com"
+      Name = Guid.NewGuid().ToString() }
+
   login setup.config.AdminEmail setup
   let driver = setup.driver
   driver.FindElement(By.Id("users-link")).Click()
