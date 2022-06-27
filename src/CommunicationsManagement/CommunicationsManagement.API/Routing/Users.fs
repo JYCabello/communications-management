@@ -158,3 +158,75 @@ let details
     return { Model = user; Root = root }
   }
   |> resolveEffect2 ports UserDetails.details next ctx
+
+let addRole
+  (userId: Guid)
+  (role: int)
+  (ports: IPorts)
+  (next: HttpFunc)
+  (ctx: HttpContext)
+  : HttpFuncResult =
+  effect {
+    let! currentUser = auth ctx
+    let! root = buildModelRoot currentUser ctx
+    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
+    let! user = fun p -> p.query<User> userId
+
+    let! role =
+      Enum.GetValues<Roles>()
+      |> Seq.tryFind (fun r -> (r |> int) = role)
+      |> (function
+          | Some r -> Ok r
+          | None -> BadRequest |> Error)
+
+    do!
+      fun p -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
+
+    return user
+  }
+  |> (fun e -> e ports)
+  |> fun tr ->
+       task {
+         let! r = tr
+
+         return!
+           match r with
+           | Ok user -> redirectTo false "/" next ctx
+           | Error error -> processError error next ctx
+       }
+
+let removeRole
+  (userId: Guid)
+  (role: int)
+  (ports: IPorts)
+  (next: HttpFunc)
+  (ctx: HttpContext)
+  : HttpFuncResult =
+  effect {
+    let! currentUser = auth ctx
+    let! root = buildModelRoot currentUser ctx
+    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
+    let! user = fun p -> p.query<User> userId
+
+    let! role =
+      Enum.GetValues<Roles>()
+      |> Seq.tryFind (fun r -> (r |> int) = role)
+      |> (function
+          | Some r -> Ok r
+          | None -> BadRequest |> Error)
+
+    do!
+      fun p -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
+
+    return user
+  }
+  |> (fun e -> e ports)
+  |> fun tr ->
+       task {
+         let! r = tr
+
+         return!
+           match r with
+           | Ok user -> redirectTo false "/" next ctx
+           | Error error -> processError error next ctx
+       }

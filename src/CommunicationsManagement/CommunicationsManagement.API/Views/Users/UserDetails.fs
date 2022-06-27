@@ -2,7 +2,6 @@
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open CommunicationsManagement.API.Views.Utils
 open Flurl
 
 let details (vm: ViewModel<User>) =

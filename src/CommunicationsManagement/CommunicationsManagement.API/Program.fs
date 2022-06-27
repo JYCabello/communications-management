@@ -23,6 +23,12 @@ let webApp (ports: IPorts) =
                         route "/users" >>=> Users.list ports
                         route "/users/create" >>=> Users.create ports
                         routeCif "/users/%O" (fun id -> Users.details id ports)
+                        routeCif
+                          "/users/%O/roles/add/%i"
+                          (fun (userId, role) -> Users.addRole userId role ports)
+                        routeCif
+                          "/users/%O/roles/remove/%i"
+                          (fun (userId, role) -> Users.removeRole userId role ports)
                         route "/ping" >=> text "pong"
                         route "/" >>=> Home.home ports ]
            POST
