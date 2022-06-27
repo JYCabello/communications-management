@@ -40,7 +40,7 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
         yield! validationError error
       ] ]
 
-  let roleCheckBox userRoles role lbl =
+  let roleCheckBox role lbl =
     let inputID = Guid.NewGuid().ToString()
 
     li [ _class "list-group-item" ] [
@@ -49,7 +49,7 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
                 _name "roles"
                 _class $"form-check-input %s{validationClass m.RolesError}"
                 _id inputID
-                if userRoles |> contains role then
+                if m.Roles |> contains role then
                   _checked
                 role |> int |> string |> _value ]
         label [ _class "form-check-label"
@@ -69,9 +69,9 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
       div [ _class "input-group mb-3" ] [
         labelFor "Roles" None
         ul [ _class "list-group list-group-flush" ] [
-          roleCheckBox m.Roles Roles.Press (trx "Press")
-          roleCheckBox m.Roles Roles.Delegate (trx "Delegate")
-          roleCheckBox m.Roles Roles.UserManagement (trx "UserManagement")
+          roleCheckBox Roles.Press (trx "Press")
+          roleCheckBox Roles.Delegate (trx "Delegate")
+          roleCheckBox Roles.UserManagement (trx "UserManagement")
         ]
       ]
       input [ _type "submit"
