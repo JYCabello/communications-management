@@ -49,22 +49,20 @@ let details (vm: ViewModel<User>) =
         .ToString()
 
     li [ _class "list-group-item" ] [
-      div [] [
-        i18tag |> trx |> Text
-      ]
+      div [] [ i18tag |> trx |> Text ]
 
       match m.hasRole role with
       | true ->
         a [ _href removeRoleUrl
             _id $"remove-role-{role |> int}"
             _class "btn btn-danger btn-sm" ] [
-            "Remove" |> trx |> Text
+          "Remove" |> trx |> Text
         ]
-      | false -> 
+      | false ->
         a [ _href addRoleUrl
             _id $"add-role-{role |> int}"
             _class "btn btn-success btn-sm" ] [
-            "Add" |> trx |> Text
+          "Add" |> trx |> Text
         ]
     ]
 

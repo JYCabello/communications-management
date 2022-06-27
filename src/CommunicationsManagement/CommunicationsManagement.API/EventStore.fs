@@ -41,6 +41,14 @@ let deserialize (evnt: ResolvedEvent) =
       decoded
       |> JsonConvert.DeserializeObject<UserCreated>
       |> UserCreated
+    | "RoleAdded" ->
+      decoded
+      |> JsonConvert.DeserializeObject<RoleAdded>
+      |> RoleAdded
+    | "RoleRemoved" ->
+      decoded
+      |> JsonConvert.DeserializeObject<RoleRemoved>
+      |> RoleRemoved
     | t -> StreamEvent.Toxic { Type = t; Content = decoded }
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
@@ -84,9 +92,24 @@ let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
             LastLogin = None }
     }
 
+  let handleRoleAdded (ra: RoleAdded) =
+    taskResult {
+      let! user = ports.query<User> ra.UserID
+      do! ports.save<User> { user with Roles = user.Roles + ra.RoleToAdd }
+    }
+
+  let handleRoleRemoved (rr: RoleRemoved) =
+    taskResult {
+      let! user = ports.query<User> rr.UserID
+      do! ports.save<User> { user with Roles = user.Roles - rr.RoleRemoved }
+    }
+
   match deserialize se with
-  | UserCreated uc -> handleCreated uc |> ignoreErrors
-  | _ -> Task.FromResult()
+  | UserCreated uc -> handleCreated uc
+  | RoleAdded ra -> handleRoleAdded ra
+  | RoleRemoved rr -> handleRoleRemoved rr
+  | _ -> TaskResult.ok ()
+  |> ignoreErrors
 
 
 let subscribe cs (subscription: SubscriptionDetails) =
@@ -139,6 +162,8 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
       | SessionCreated e -> e |> JsonConvert.SerializeObject |> Some
       | SessionTerminated e -> e |> JsonConvert.SerializeObject |> Some
       | UserCreated e -> e |> JsonConvert.SerializeObject |> Some
+      | RoleAdded e -> e |> JsonConvert.SerializeObject |> Some
+      | RoleRemoved e -> e |> JsonConvert.SerializeObject |> Some
       |> Option.map Encoding.UTF8.GetBytes
       |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
       |> Option.map (fun ed ->
