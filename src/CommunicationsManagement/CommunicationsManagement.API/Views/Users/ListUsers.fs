@@ -15,17 +15,19 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
       .AppendPathSegments("users", u.ID.ToString())
       .ToString()
 
-  let userRow u =
+  let userRow (u: User) =
+    let email =
+      u.Email
+      |> function
+        | Email e -> e
+
     div [ _class "row" ] [
       div [ _class "col" ] [ u.Name |> Text ]
-      div [ _class "col" ] [
-        u.Email
-        |> function
-          | Email e -> e |> Text
-      ]
+      div [ _class "col" ] [ email |> Text ]
       div [ _class "col" ] [
         a [ _href <| url u
-            _class "btn btn-info btn-sm" ] [
+            _class "btn btn-info btn-sm"
+            _data "user-details" email ] [
           "Details" |> vm.Root.Translate |> Text
         ]
       ]

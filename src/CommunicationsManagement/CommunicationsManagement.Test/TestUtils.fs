@@ -90,3 +90,4 @@ let createAndLogin (roles: Roles) (setup: Setup) =
     .Click()
 
   login testUser.Email setup
+  testUser
