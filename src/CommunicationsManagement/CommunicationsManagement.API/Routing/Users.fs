@@ -142,3 +142,6 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
         |> fromTask
   }
   |> resolveEffect2 ports createUserView next ctx
+
+let details (id: Guid) (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+  failwith "not implemented"

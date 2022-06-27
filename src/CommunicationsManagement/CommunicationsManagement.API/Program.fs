@@ -22,6 +22,7 @@ let webApp (ports: IPorts) =
                         route "/logout" >>=> Login.logout ports
                         route "/users" >>=> Users.list ports
                         route "/users/create" >>=> Users.create ports
+                        routeCif "/users/details/%O" (fun id -> Users.details id ports)
                         route "/ping" >=> text "pong"
                         route "/" >>=> Home.home ports ]
            POST
