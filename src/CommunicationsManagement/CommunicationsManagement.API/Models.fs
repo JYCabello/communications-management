@@ -19,26 +19,6 @@ type Roles =
   | UserManagement = 4
   | Admin = 131071
 
-
-[<CLIMutable>]
-type ToxicEvent = { Content: string; Type: string }
-
-[<CLIMutable>]
-type SessionCreated =
-  { SessionID: Guid
-    UserID: Guid
-    ExpiresAt: DateTime }
-
-[<CLIMutable>]
-type SessionTerminated = { SessionID: Guid }
-
-[<CLIMutable>]
-type UserCreated =
-  { UserID: Guid
-    Email: string
-    Name: string
-    Roles: Roles }
-
 let contains (searchTerm: Roles) (userRoles: Roles) =
   (searchTerm &&& userRoles) = searchTerm
   && (userRoles = Roles.None |> not)
@@ -67,10 +47,37 @@ type ViewModelRoot =
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
+[<CLIMutable>]
+type ToxicEvent = { Content: string; Type: string }
+
+[<CLIMutable>]
+type SessionCreated =
+  { SessionID: Guid
+    UserID: Guid
+    ExpiresAt: DateTime }
+
+[<CLIMutable>]
+type SessionTerminated = { SessionID: Guid }
+
+[<CLIMutable>]
+type UserCreated =
+  { UserID: Guid
+    Email: string
+    Name: string
+    Roles: Roles }
+
+[<CLIMutable>]
+type RoleAdded = { UserID: Guid; RoleToAdd: Roles }
+
+[<CLIMutable>]
+type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
+
 type StreamEvent =
   | SessionCreated of SessionCreated
   | SessionTerminated of SessionTerminated
   | UserCreated of UserCreated
+  | RoleAdded of RoleAdded
+  | RoleRemoved of RoleRemoved
   | Toxic of ToxicEvent
 
 let getEventTypeName =
@@ -78,6 +85,8 @@ let getEventTypeName =
   | SessionCreated _ -> "SessionCreated"
   | SessionTerminated _ -> "SessionTerminated"
   | UserCreated _ -> "UserCreated"
+  | RoleAdded _ -> "RoleAdded"
+  | RoleRemoved _ -> "RoleRemoved"
   | Toxic _ -> "Toxic"
 
 let getStreamName =
@@ -85,6 +94,8 @@ let getStreamName =
   | SessionCreated _ -> "Sessions"
   | SessionTerminated _ -> "Sessions"
   | UserCreated _ -> "Users"
+  | RoleAdded _ -> "Users"
+  | RoleRemoved _ -> "Users"
   | Toxic _ -> "toxic"
 
 type DomainError =
