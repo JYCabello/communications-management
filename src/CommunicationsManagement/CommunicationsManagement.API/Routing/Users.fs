@@ -3,6 +3,7 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Http
 open Giraffe
@@ -143,5 +144,17 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
   }
   |> resolveEffect2 ports createUserView next ctx
 
-let details (id: Guid) (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  failwith "not implemented"
+let details
+  (id: Guid)
+  (ports: IPorts)
+  (next: HttpFunc)
+  (ctx: HttpContext)
+  : Task<HttpContext option> =
+  effect {
+    let! currentUser = auth ctx
+    let! root = buildModelRoot currentUser ctx
+    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
+    let! user = fun p -> p.query<User> id
+    return { Model = user; Root = root }
+  }
+  |> resolveEffect2 ports UserDetails.details next ctx

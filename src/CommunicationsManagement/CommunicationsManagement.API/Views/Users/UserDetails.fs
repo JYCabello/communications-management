@@ -2,4 +2,4 @@
 
 open CommunicationsManagement.API.Models
 
-let details (vm :ViewModel<User>) (tr: Translator) = []
+let details (vm: ViewModel<User>) = []

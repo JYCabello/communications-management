@@ -25,11 +25,20 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
       div [ _class "col" ] [ u.Name |> Text ]
       div [ _class "col" ] [ email |> Text ]
       div [ _class "col" ] [
-        a [ _href <| url u
-            _class "btn btn-info btn-sm"
-            _data "user-details" email ] [
-          "Details" |> vm.Root.Translate |> Text
-        ]
+        match u.LastLogin with
+        | None -> "Never" |> vm.Root.Translate |> Text
+        | Some ll -> ll.ToString("yyyy-MM-dd hh:mm:ss") |> Text
+      ]
+      div [ _class "col" ] [
+        yield!
+          match u.Roles with
+          | Roles.Admin -> []
+          | _ ->
+            [ a [ _href <| url u
+                  _class "btn btn-info btn-sm"
+                  _data "user-details" email ] [
+                "Details" |> vm.Root.Translate |> Text
+              ] ]
       ]
     ]
 
@@ -54,6 +63,9 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
         ]
         div [ _class "col" ] [
           "Email" |> vm.Root.Translate |> Text
+        ]
+        div [ _class "col" ] [
+          "LastLogin" |> vm.Root.Translate |> Text
         ]
         div [ _class "col" ] [
           "Actions" |> vm.Root.Translate |> Text
