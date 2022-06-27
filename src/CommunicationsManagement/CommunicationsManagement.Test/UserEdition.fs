@@ -36,7 +36,7 @@ let ``role is removed and added`` () =
     driver.FindElement(By.Id("users-link")).Click()
 
     driver
-      .FindElement(By.CssSelector($"[data-user-details=\"{testUser.Email}\"]"))
+      .FindElement(By.CssSelector($"a[data-user-details=\"{testUser.Email}\"]"))
       .Click()
 
     driver
