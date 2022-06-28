@@ -13,8 +13,6 @@
         <Compile Include="TestUtils.fs" />
         <Compile Include="Attempting.fs" />
         <Compile Include="ContainsRolesShould.fs" />
-        <Compile Include="Login.fs" />
-        <Compile Include="UserRegistration.fs" />
         <Compile Include="UserEdition.fs" />
         <Compile Include="Program.fs" />
         <Content Include="xunit.runner.json">
