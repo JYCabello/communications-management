@@ -1,18 +1,24 @@
 ﻿module CommunicationsManagement.API.DataValidation
 
 open System.Net.Mail
+open CommunicationsManagement.API.Models
 
-let isValidEmail (email: string option) : bool =
+let isValidEmail (email: string option) (tr: Translator) : string option =
+  let errorMessage = "InvalidEmail" |> tr |> Some
+
   match email with
-  | None -> false
+  | None -> errorMessage
   | Some e ->
     let trimmedEmail = e.Trim()
 
     match trimmedEmail.EndsWith(".") with
-    | true -> false
+    | true -> errorMessage
     | false ->
       try
         let a = MailAddress(e)
-        a.Address = trimmedEmail
+
+        match a.Address = trimmedEmail with
+        | true -> None
+        | false -> errorMessage
       with
-      | _ -> false
+      | _ -> errorMessage

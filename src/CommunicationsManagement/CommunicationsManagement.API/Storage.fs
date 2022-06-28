@@ -18,6 +18,11 @@ let private userStorage = ConcurrentDictionary<Guid, User>()
 let private querySession id =
   sessionStorage |> tryGet id |> Task.FromResult
 
+let private getAllSessions () =
+  sessionStorage.Values
+  |> Seq.toList
+  |> TaskResult.ok
+
 let private findSession q =
   sessionStorage.ToArray()
   |> Seq.tryFind (fun kvp -> q kvp.Value)
@@ -26,6 +31,15 @@ let private findSession q =
 
 let private queryUser id =
   userStorage |> tryGet id |> Task.FromResult
+
+let private getAllUsers () =
+  userStorage.Values
+  |> Seq.sortByDescending (fun u ->
+    match u.LastLogin with
+    | None -> DateTime.MinValue
+    | Some ll -> ll)
+  |> Seq.toList
+  |> TaskResult.ok
 
 let private findUser q =
   userStorage.ToArray()
@@ -39,35 +53,43 @@ let private saveSession (s: Session) =
 let private saveUser (u: User) =
   Task.FromResult <| userStorage[u.ID] <- u
 
-let private deleteSession (id: Guid) =
-  sessionStorage.TryRemove(id)
+let private deleteSession (id: Guid) = sessionStorage.TryRemove(id)
 
-let private deleteUser (id: Guid) =
-  userStorage.TryRemove(id)
+let private deleteUser (id: Guid) = userStorage.TryRemove(id)
 
-let toObjResult (topt: Task<'a option>) =
-  task {
-    let! opt = topt
-
-    return
-      match opt with
-      | Some v -> Ok v
-      | None -> NotFound typeof<'a>.Name |> Error
-      |> Result.map box
-  }
+let optionToObjResult<'a> (topt: Task<'a option>) =
+  topt
+  |> Task.map (function
+    | Some v -> Ok v
+    | None -> NotFound typeof<'a>.Name |> Error)
+  |> TaskResult.map box
 
 let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
   fun _ id ->
     taskResult {
       let! value =
         match typeof<'a> with
-        | t when t = typeof<Session> -> querySession id |> toObjResult
-        | t when t = typeof<User> -> queryUser id |> toObjResult
+        | t when t = typeof<Session> -> querySession id |> optionToObjResult<Session>
+        | t when t = typeof<User> -> queryUser id |> optionToObjResult<User>
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
 
       return value :?> 'a
+    }
+
+let getAll<'a> : Configuration -> unit -> Task<Result<'a list, DomainError>> =
+  fun _ () ->
+    taskResult {
+      let! value =
+        match typeof<'a> with
+        | t when t = typeof<Session> -> getAllSessions () |> TaskResult.map box
+        | t when t = typeof<User> -> getAllUsers () |> TaskResult.map box
+        | t ->
+          InternalServerError $"Query not implemented for type {t.FullName}"
+          |> TaskResult.error
+
+      return value :?> 'a list
     }
 
 let queryPredicate<'a> : Configuration -> ('a -> bool) -> Task<Result<'a, DomainError>> =
@@ -78,11 +100,11 @@ let queryPredicate<'a> : Configuration -> ('a -> bool) -> Task<Result<'a, Domain
         | t when t = typeof<Session> ->
           box predicate :?> Session -> bool
           |> findSession
-          |> toObjResult
+          |> optionToObjResult<Session>
         | t when t = typeof<User> ->
           box predicate :?> User -> bool
           |> findUser
-          |> toObjResult
+          |> optionToObjResult<User>
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -104,7 +126,6 @@ let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
 
 let delete<'a> : Configuration -> Guid -> Task<Result<unit, DomainError>> =
   fun _ id ->
-    
     taskResult {
       do!
         match typeof<'a> with

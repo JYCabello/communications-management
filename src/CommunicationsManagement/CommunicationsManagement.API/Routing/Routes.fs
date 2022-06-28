@@ -64,8 +64,10 @@ module Rendering =
 
   let getTranslator (ctx: HttpContext) : Translator =
     fun key ->
-      let culture = getCulture ctx
-      Translation.ResourceManager.GetString(key, culture)
+      match Translation.ResourceManager.GetString(key, getCulture ctx) with
+      | null -> $"[%s{key}]"
+      | "" -> $"[%s{key}]"
+      | t -> t
 
   let getSessionID (ctx: HttpContext) : Effect<Guid> =
     effect {
@@ -91,6 +93,10 @@ module Rendering =
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
+          |> TaskResult.bind (fun s ->
+            match DateTime.UtcNow < s.ExpiresAt with
+            | true -> TaskResult.ok s
+            | false -> TaskResult.error NotAuthenticated)
 
       return!
         fun p ->
@@ -127,12 +133,14 @@ module Rendering =
     }
 
   let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
-    fun _ ->
-      (if user.hasRole role then
-         Ok()
-       else
-         resourceName |> Unauthorized |> Error)
-      |> Task.FromResult
+    effect {
+      return!
+        (if user.hasRole role then
+           Ok()
+         else
+           resourceName |> Unauthorized |> Error)
+        |> Task.FromResult
+    }
 
   type Render<'a> = ViewModel<'a> -> XmlNode list
 
@@ -153,18 +161,15 @@ module Rendering =
      | NotAuthenticated -> redirectTo false "/login"
      | Conflict -> [ "ConflictTemplate" |> tr |> Text ] |> errorView
      | NotFound en ->
-       [ String.Format("NotFoundTextTemplate", en)
-         |> tr
+       [ String.Format(tr "NotFoundTextTemplate", en)
          |> Text ]
        |> errorView
      | Unauthorized rn ->
-       [ String.Format("UnauthorizedTemplate", rn)
-         |> tr
+       [ String.Format(tr "UnauthorizedTemplate", rn)
          |> Text ]
        |> errorView
      | InternalServerError e ->
-       [ String.Format("InternalServerErrorTemplate", e)
-         |> tr
+       [ String.Format(tr "InternalServerErrorTemplate", e)
          |> Text ]
        |> errorView
      | BadRequest ->
@@ -192,15 +197,14 @@ module Rendering =
   // Exists just for the cases where the context is explicit in the route definition
   let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
 
+  let resolveRedirect p (getUrl: IPorts -> 'a -> string) next ctx (e: Effect<'a>) : HttpFuncResult =
+    task {
+      let! r = e p
+
+      return!
+        match r |> Result.map (getUrl p) with
+        | Ok url -> redirectTo false url next ctx
+        | Error error -> processError error next ctx
+    }
+
   let theVoid: Render<'a> = fun _ -> []
-
-open Rendering
-
-let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-
-    return { Model = "Meh"; Root = root }
-  }
-  |> resolveEffect2 ports renderText next ctx

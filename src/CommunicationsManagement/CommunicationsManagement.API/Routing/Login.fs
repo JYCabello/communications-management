@@ -1,6 +1,7 @@
 ﻿module CommunicationsManagement.API.Routing.Login
 
 open System
+open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open FsToolkit.ErrorHandling
@@ -33,14 +34,10 @@ let post (ports: IPorts) : HttpHandler =
       let! dto =
         ctx.TryBindFormAsync<LoginDto>()
         |> TaskResult.mapError (fun _ -> BadRequest)
-        |> fromTR
 
       let! rm = getAnonymousRootModel ctx
 
-      let emailError =
-        match DataValidation.isValidEmail dto.Email with
-        | true -> None
-        | false -> "InvalidEmail" |> rm.Translate |> Some
+      let emailError = DataValidation.isValidEmail dto.Email rm.Translate
 
       // Short-circuit for validation.
       do!
@@ -60,9 +57,17 @@ let post (ports: IPorts) : HttpHandler =
 
       let session =
         { UserID = user.ID
-          ID = Guid.NewGuid() }
+          ID = Guid.NewGuid()
+          ExpiresAt = DateTime.UtcNow.AddDays(15) }
 
-      do! fun p -> p.save session
+      do!
+        fun p ->
+          p.sendEvent
+            { Event =
+                SessionCreated
+                  { SessionID = session.ID
+                    UserID = session.UserID
+                    ExpiresAt = session.ExpiresAt } }
 
       let! notification =
         fun p ->
@@ -74,7 +79,7 @@ let post (ports: IPorts) : HttpHandler =
                   ActivationUrl = $"{p.configuration.BaseUrl}/login/confirm?code={session.ID}" } }
           |> TaskResult.ok
 
-      do! fun p -> p.sendNotification notification
+      do! fun p -> p.sendNotification rm.Translate notification
 
       return
         { Root = rm
@@ -112,9 +117,10 @@ let logout (ports: IPorts) : HttpHandler =
   fun next ctx ->
     effect {
       let! sessionID = getSessionID ctx
-      do! fun p -> p.delete<Session> sessionID
+      do! fun p -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
       // Short-circuit for redirection.
       let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
+      do! Task.Delay(25)
       do! redirectTo false baseUrl |> EarlyReturn |> Error
       let! mr = getAnonymousRootModel ctx
       return { Model = (); Root = mr }

@@ -150,4 +150,52 @@
   <data name="Logout" xml:space="preserve">
       <value>Salir</value>
   </data>
+  <data name="LoginAttemptSubject" xml:space="preserve">
+      <value>Acceso solicitado</value>
+  </data>
+  <data name="WelcomeSubject" xml:space="preserve">
+      <value>Te damos la bienvenida</value>
+  </data>
+  <data name="WelcomeEmailBodyTemplate" xml:space="preserve">
+      <value>Se te ha dado de alta en Comunicaciones deportivas, te damos la bienvenida, {0}.</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+      <value>Usuarios</value>
+  </data>
+  <data name="User" xml:space="preserve">
+      <value>Usuario</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+      <value>Acciones</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+      <value>Detalles</value>
+  </data>
+  <data name="New" xml:space="preserve">
+      <value>Nuevo</value>
+  </data>
+  <data name="Press" xml:space="preserve">
+      <value>Prensa</value>
+  </data>
+  <data name="UserManagement" xml:space="preserve">
+      <value>Gestión de usuarios</value>
+  </data>
+  <data name="Delegate" xml:space="preserve">
+      <value>Delegado</value>
+  </data>
+  <data name="Roles" xml:space="preserve">
+      <value>Roles</value>
+  </data>
+  <data name="CreateUser" xml:space="preserve">
+      <value>Crear usuario</value>
+  </data>
+  <data name="CannotBeEmpty" xml:space="preserve">
+      <value>Debe introducir un valor</value>
+  </data>
+  <data name="MustSelectOneOption" xml:space="preserve">
+      <value>Debe elegir al menos una opción</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+      <value>Nombre</value>
+  </data>
 </root>

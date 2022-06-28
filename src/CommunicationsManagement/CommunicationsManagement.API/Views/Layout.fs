@@ -22,7 +22,9 @@ let private navTemplate (vmr: ViewModelRoot) =
     yield!
       vmr.User
       |> Option.map (fun u ->
-        [ Text u.Name
+        [ span [ _id "user-name-nav" ] [
+            Text u.Name
+          ]
           Text "&nbsp;"
           a [ _href (vmr.BaseUrl.AppendPathSegment("logout").ToString())
               _id "logout-link" ] [

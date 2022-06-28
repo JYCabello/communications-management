@@ -10,30 +10,31 @@ type Configuration =
     SendGridKey: string
     MailFrom: string }
 
-[<CLIMutable>]
-type Message = { ID: int; Amount: int }
-
-[<CLIMutable>]
-type ToxicEvent = { Content: string; Type: string }
-
-type Roles =
-  | None = 1
-  | Delegate = 1
-  | Press = 2
-  | Admin = 131071
-
 type Email = Email of string
 
-let contains (searchTerm: Roles) (userRoles: Roles) = (searchTerm &&& userRoles) = searchTerm
+type Roles =
+  | None = 0
+  | Delegate = 1
+  | Press = 2
+  | UserManagement = 4
+  | Admin = 131071
+
+let contains (searchTerm: Roles) (userRoles: Roles) =
+  (searchTerm &&& userRoles) = searchTerm
+  && (userRoles = Roles.None |> not)
 
 type User =
   { Name: string
     ID: Guid
     Email: Email
-    Roles: Roles }
+    Roles: Roles
+    LastLogin: DateTime option }
   member this.hasRole roles = contains roles this.Roles
 
-type Session = { ID: Guid; UserID: Guid }
+type Session =
+  { ID: Guid
+    UserID: Guid
+    ExpiresAt: DateTime }
 
 type Translator = string -> string
 
@@ -46,18 +47,55 @@ type ViewModelRoot =
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
+[<CLIMutable>]
+type ToxicEvent = { Content: string; Type: string }
+
+[<CLIMutable>]
+type SessionCreated =
+  { SessionID: Guid
+    UserID: Guid
+    ExpiresAt: DateTime }
+
+[<CLIMutable>]
+type SessionTerminated = { SessionID: Guid }
+
+[<CLIMutable>]
+type UserCreated =
+  { UserID: Guid
+    Email: string
+    Name: string
+    Roles: Roles }
+
+[<CLIMutable>]
+type RoleAdded = { UserID: Guid; RoleToAdd: Roles }
+
+[<CLIMutable>]
+type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
+
 type StreamEvent =
-  | Message of Message
+  | SessionCreated of SessionCreated
+  | SessionTerminated of SessionTerminated
+  | UserCreated of UserCreated
+  | RoleAdded of RoleAdded
+  | RoleRemoved of RoleRemoved
   | Toxic of ToxicEvent
 
 let getEventTypeName =
   function
-  | Message _ -> "Message"
+  | SessionCreated _ -> "SessionCreated"
+  | SessionTerminated _ -> "SessionTerminated"
+  | UserCreated _ -> "UserCreated"
+  | RoleAdded _ -> "RoleAdded"
+  | RoleRemoved _ -> "RoleRemoved"
   | Toxic _ -> "Toxic"
 
 let getStreamName =
   function
-  | Message _ -> "deletable"
+  | SessionCreated _ -> "Sessions"
+  | SessionTerminated _ -> "Sessions"
+  | UserCreated _ -> "Users"
+  | RoleAdded _ -> "Users"
+  | RoleRemoved _ -> "Users"
   | Toxic _ -> "toxic"
 
 type DomainError =

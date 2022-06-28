@@ -6,7 +6,6 @@ open System.Net.NetworkInformation
 open System.Runtime.InteropServices
 open System.Threading
 open System.Threading.Tasks
-open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open Docker.DotNet
@@ -36,7 +35,11 @@ type Setup
 
 let getDockerClient () =
   let defaultWindowsDockerEngineUri = Uri("npipe://./pipe/docker_engine")
-  let defaultLinuxDockerEngineUri = Uri("unix:///var/run/docker.sock")
+
+  let defaultLinuxDockerEngineUri =
+    match Environment.GetEnvironmentVariable("DOCKER_HOST") with
+    | null -> Uri("unix:///var/run/docker.sock")
+    | value -> Uri(value)
 
   let engineUri =
     if RuntimeInformation.IsOSPlatform(OSPlatform.Linux) then
@@ -176,20 +179,21 @@ let testSetup () =
         MailFrom = "" }
 
     let ports: IPorts =
-      let mainPorts = Main.ports
+      let mainPorts = Main.ports config
 
       { new IPorts with
           member this.sendEvent p = mainPorts.sendEvent p
 
-          member this.sendNotification n =
+          member this.sendNotification t n =
             ln <- Some n
             TaskResult.ok ()
 
-          member this.configuration = config
-          member this.save a = Storage.save config a
-          member this.query id = Storage.query config id
-          member this.find predicate = Storage.queryPredicate config predicate
-          member this.delete<'a> id = Storage.delete<'a> config id }
+          member this.configuration = mainPorts.configuration
+          member this.save a = mainPorts.save a
+          member this.query id = mainPorts.query id
+          member this.find predicate = mainPorts.find predicate
+          member this.delete<'a> id = mainPorts.delete<'a> id
+          member this.getAll<'a>() = mainPorts.getAll<'a> () }
 
     let! host =
       task {

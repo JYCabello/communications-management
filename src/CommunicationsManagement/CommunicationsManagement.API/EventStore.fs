@@ -1,7 +1,7 @@
-﻿module CommunicationsManagement.API.EventStore
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.EventStore
 
 open System
-open System.Collections.Generic
 open System.Text
 open System.Threading
 open System.Threading.Tasks
@@ -14,54 +14,103 @@ open FsToolkit.ErrorHandling
 
 type SubscriptionDetails =
   { StreamID: string
-    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task }
+    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task
+    GetCheckpoint: unit -> Task<FromStream>
+    SaveCheckpoint: StreamPosition -> Task }
 
 let getClient cs =
   let settings = EventStoreClientSettings.Create cs
   new EventStoreClient(settings)
-
-let state = Dictionary<int, int>()
-
-let mutable checkpoint: StreamPosition option = None
-
-let getCheckpoint () =
-  checkpoint
-  |> Option.map FromStream.After
-  |> Option.defaultValue FromStream.Start
 
 let deserialize (evnt: ResolvedEvent) =
   let decoded =
     evnt.Event.Data.ToArray()
     |> Encoding.UTF8.GetString
 
-  match evnt.Event.EventType with
-  | "Message" ->
-    try
+  try
+    match evnt.Event.EventType with
+    | "SessionCreated" ->
       decoded
-      |> JsonConvert.DeserializeObject<Message>
-      |> Message
-    with
-    | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
-  | t -> StreamEvent.Toxic { Type = t; Content = decoded }
+      |> JsonConvert.DeserializeObject<SessionCreated>
+      |> SessionCreated
+    | "SessionTerminated" ->
+      decoded
+      |> JsonConvert.DeserializeObject<SessionTerminated>
+      |> SessionTerminated
+    | "UserCreated" ->
+      decoded
+      |> JsonConvert.DeserializeObject<UserCreated>
+      |> UserCreated
+    | "RoleAdded" ->
+      decoded
+      |> JsonConvert.DeserializeObject<RoleAdded>
+      |> RoleAdded
+    | "RoleRemoved" ->
+      decoded
+      |> JsonConvert.DeserializeObject<RoleRemoved>
+      |> RoleRemoved
+    | t -> StreamEvent.Toxic { Type = t; Content = decoded }
+  with
+  | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
 
-let private handleMessage (m: Message) =
-  task {
-    if not <| state.ContainsKey(m.ID) then
-      state[m.ID] <- m.Amount
-    else
-      state[m.ID] <- state[m.ID] + m.Amount
-  }
+let private ignoreErrors =
+  Task.map (fun r ->
+    match r with
+    | Ok u -> u
+    | Error _ -> () // Ignore errors for now
+  )
 
-let handle =
-  function
-  | Message m -> m |> handleMessage
-  | Toxic _ -> Task.singleton ()
+let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
+  let handleCreated (sc: SessionCreated) =
+    taskResult {
+      let! user = ports.query<User> sc.UserID
+      do! ports.save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
 
-let handleEvent (evnt: ResolvedEvent) =
-  task {
-    do! deserialize evnt |> handle
-    return checkpoint <- Some evnt.OriginalEventNumber
-  }
+      do!
+        ports.save<Session>
+          { ID = sc.SessionID
+            UserID = sc.UserID
+            ExpiresAt = sc.ExpiresAt }
+    }
+
+  let handleTerminated (st: SessionTerminated) = ports.delete<Session> st.SessionID
+
+  match deserialize se with
+  | SessionCreated sc -> handleCreated sc |> ignoreErrors
+  | SessionTerminated st -> handleTerminated st |> ignoreErrors
+  | _ -> Task.FromResult()
+
+let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
+  let handleCreated (uc: UserCreated) =
+    taskResult {
+      do!
+        ports.save<User>
+          { Name = uc.Name
+            Email = uc.Email |> Email
+            ID = uc.UserID
+            Roles = uc.Roles
+            LastLogin = None }
+    }
+
+  let handleRoleAdded (ra: RoleAdded) =
+    taskResult {
+      let! user = ports.query<User> ra.UserID
+      do! ports.save<User> { user with Roles = user.Roles + ra.RoleToAdd }
+    }
+
+  let handleRoleRemoved (rr: RoleRemoved) =
+    taskResult {
+      let! user = ports.query<User> rr.UserID
+      do! ports.save<User> { user with Roles = user.Roles - rr.RoleRemoved }
+    }
+
+  match deserialize se with
+  | UserCreated uc -> handleCreated uc
+  | RoleAdded ra -> handleRoleAdded ra
+  | RoleRemoved rr -> handleRoleRemoved rr
+  | _ -> TaskResult.ok ()
+  |> ignoreErrors
+
 
 let subscribe cs (subscription: SubscriptionDetails) =
   let rec subscribeTo () =
@@ -73,36 +122,93 @@ let subscribe cs (subscription: SubscriptionDetails) =
 
     task {
       try
+        let! checkpoint = subscription.GetCheckpoint()
+
+        let handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task =
+          fun s e c ->
+            task {
+              do! subscription.Handler s e c
+              do! subscription.SaveCheckpoint e.OriginalEventNumber
+            }
+
+        let client = getClient cs
+
         do!
-          (getClient cs)
-            .SubscribeToStreamAsync(
-              subscription.StreamID,
-              getCheckpoint (),
-              subscription.Handler,
-              false,
-              reSubscribe
-            )
+          client.SubscribeToStreamAsync(
+            subscription.StreamID,
+            checkpoint,
+            handler,
+            false,
+            reSubscribe
+          )
           :> Task
       with
       | _ ->
-        do! Task.Delay(5000)
+        do! Task.Delay(75)
         return! subscribeTo ()
     }
 
   subscribeTo () |> ignore
 
+let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, DomainError>> =
+  taskResult {
+    let client = getClient c.EventStoreConnectionString
+    let streamName = getStreamName e.Event
+    let eventTypeName = getEventTypeName e.Event
+
+    return!
+      match e.Event with
+      | Toxic _ -> None
+      | SessionCreated e -> e |> JsonConvert.SerializeObject |> Some
+      | SessionTerminated e -> e |> JsonConvert.SerializeObject |> Some
+      | UserCreated e -> e |> JsonConvert.SerializeObject |> Some
+      | RoleAdded e -> e |> JsonConvert.SerializeObject |> Some
+      | RoleRemoved e -> e |> JsonConvert.SerializeObject |> Some
+      |> Option.map Encoding.UTF8.GetBytes
+      |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
+      |> Option.map (fun ed ->
+        client.AppendToStreamAsync(streamName, StreamState.Any, [ ed ]) :> Task)
+      |> Option.defaultValue Task.CompletedTask
+  }
+
 let triggerSubscriptions (ports: IPorts) =
-  let sub = subscribe ports.configuration.EventStoreConnectionString
+  let subscribe' = subscribe ports.configuration.EventStoreConnectionString
 
   let admin =
     { ID = Guid.Empty
       Email = Email ports.configuration.AdminEmail
       Roles = Roles.Admin
-      Name = "Admin" }
+      Name = "Admin"
+      LastLogin = None }
 
   do ports.save admin |> fun t -> t.Result |> ignore
 
+  let getCheckpoint cp () : Task<FromStream> =
+    cp
+    |> Option.map FromStream.After
+    |> Option.defaultValue FromStream.Start
+    |> Task.FromResult
 
-  { StreamID = "deletable"
-    Handler = fun _ evnt _ -> task { do! handleEvent evnt } :> Task }
-  |> sub
+  let mutable usersCheckpoint: StreamPosition option = None
+
+  let saveUsersCheckpoint p =
+    usersCheckpoint <- Some p
+    Task.CompletedTask
+
+  { StreamID = "Users"
+    Handler = fun _ evnt _ -> task { do! handleUsers evnt ports } :> Task
+    GetCheckpoint = getCheckpoint usersCheckpoint
+    SaveCheckpoint = saveUsersCheckpoint }
+  |> subscribe'
+
+  let mutable sessionsCheckpoint: StreamPosition option = None
+
+  let saveSessionCheckpoint p =
+    sessionsCheckpoint <- Some p
+    Task.CompletedTask
+
+  { StreamID = "Sessions"
+    Handler = fun _ evnt _ -> task { do! handleSession evnt ports } :> Task
+    GetCheckpoint = getCheckpoint sessionsCheckpoint
+    SaveCheckpoint = saveSessionCheckpoint }
+  |> subscribe'
