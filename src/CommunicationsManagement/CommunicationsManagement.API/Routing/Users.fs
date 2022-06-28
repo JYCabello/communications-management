@@ -12,6 +12,7 @@ open CommunicationsManagement.API.Views.Users.ListUsers
 open CommunicationsManagement.API.Views.Users.CreateUser
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
+open Flurl
 
 let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
@@ -159,6 +160,13 @@ let details
   }
   |> resolveEffect2 ports UserDetails.details next ctx
 
+let userUrl (p: IPorts) (u: User) =
+  p
+    .configuration
+    .BaseUrl
+    .AppendPathSegments("users", u.ID)
+    .ToString()
+
 let addRole
   (userId: Guid)
   (role: int)
@@ -176,24 +184,14 @@ let addRole
       Enum.GetValues<Roles>()
       |> Seq.tryFind (fun r -> (r |> int) = role)
       |> (function
-          | Some r -> Ok r
-          | None -> BadRequest |> Error)
+      | Some r -> Ok r
+      | None -> BadRequest |> Error)
 
-    do!
-      fun p -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
+    do! fun p -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
 
     return user
   }
-  |> (fun e -> e ports)
-  |> fun tr ->
-       task {
-         let! r = tr
-
-         return!
-           match r with
-           | Ok user -> redirectTo false "/" next ctx
-           | Error error -> processError error next ctx
-       }
+  |> resolveRedirect ports userUrl next ctx
 
 let removeRole
   (userId: Guid)
@@ -212,21 +210,11 @@ let removeRole
       Enum.GetValues<Roles>()
       |> Seq.tryFind (fun r -> (r |> int) = role)
       |> (function
-          | Some r -> Ok r
-          | None -> BadRequest |> Error)
+      | Some r -> Ok r
+      | None -> BadRequest |> Error)
 
-    do!
-      fun p -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
+    do! fun p -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
 
     return user
   }
-  |> (fun e -> e ports)
-  |> fun tr ->
-       task {
-         let! r = tr
-
-         return!
-           match r with
-           | Ok user -> redirectTo false "/" next ctx
-           | Error error -> processError error next ctx
-       }
+  |> resolveRedirect ports userUrl next ctx

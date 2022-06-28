@@ -197,4 +197,14 @@ module Rendering =
   // Exists just for the cases where the context is explicit in the route definition
   let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
 
+  let resolveRedirect p (getUrl: IPorts -> 'a -> string) next ctx (e: Effect<'a>) : HttpFuncResult =
+    task {
+      let! r = e p
+
+      return!
+        match r |> Result.map (getUrl p) with
+        | Ok url -> redirectTo false url next ctx
+        | Error error -> processError error next ctx
+    }
+
   let theVoid: Render<'a> = fun _ -> []
