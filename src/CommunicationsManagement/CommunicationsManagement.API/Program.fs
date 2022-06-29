@@ -1,14 +1,11 @@
 ﻿module Main
 
-open System.Collections.Generic
-open System.Globalization
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Routing
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Localization
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
@@ -36,10 +33,10 @@ let webApp (ports: IPorts) =
                           Users.addRole userId role)
                         routeCifE "/users/%O/roles/remove/%i" (fun (userId, role) ->
                           Users.removeRole userId role)
-                        route "/" >>=> Home.home ports ]
+                        route "/" >>==> Home.home ]
            POST
            >=> choose [ route "/login" >>==> Login.post
-                        route "/users/create" >>=> Users.createPost ports ] ]
+                        route "/users/create" >>==> Users.createPost ] ]
 
 let configureApp (app: IApplicationBuilder) ports =
   app.UseGiraffe <| webApp ports

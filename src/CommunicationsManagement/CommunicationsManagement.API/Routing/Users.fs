@@ -54,7 +54,7 @@ type UserCreationValidation =
   | Valid of UserCreated
   | Invalid of UserCreationViewModel
 
-let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+let createPost =
   let validate (p: IPorts) (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
     task {
       let emailError = isValidEmail dto.Email tr
@@ -112,19 +112,16 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
               Roles = dto.Roles.Value }
     }
 
-  let save usr vmr : Effect<ViewModel<UserCreationViewModel>> =
-    effect {
-      do! fun p -> p.sendEvent { Event = UserCreated usr }
+  let save usr vmr : EffectRoute<HttpHandler> =
+    effectRoute {
+      do! emit { Event = UserCreated usr }
 
-      return!
-        renderOk { Model = "Ok"; Root = vmr } successMessage
-        |> EarlyReturn
-        |> Error
+      return! renderOk { Model = "Ok"; Root = vmr } successMessage
     }
 
   effectRoute {
     let! root = buildModelRoot
-    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
+    do! requireRole Roles.UserManagement (root.Translate "Users")
 
     let! (dto: CreateUserDto) = bindForm
 
@@ -136,12 +133,12 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
       match validationResult with
       | Valid user -> save user root
       | Invalid userCreationViewModel ->
-        { Model = userCreationViewModel
-          Root = root }
-        |> Task.FromResult
-        |> fromTask
+        renderOk2
+          createUserView
+          { Model = userCreationViewModel
+            Root = root }
+        |> toEffectRoute
   }
-  |> resolveER createUserView ports next ctx
 
 let details id =
   effectRoute {

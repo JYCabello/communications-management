@@ -231,6 +231,8 @@ module EffectfulRoutes =
         return! ber p next ctx
       }
 
+  let toEffectRoute h : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok h
+
   let solve p n c er : Task<Result<'a, DomainError>> = er p n c
 
   type EffectRouteBuilder() =
@@ -253,8 +255,8 @@ module EffectfulRoutes =
     member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
       fun p _ c -> c |> ce |> (fun e -> e p)
 
-    member inline this.Source(ce: HttpHandler) : EffectRoute<HttpHandler> =
-      fun _ _ _ -> TaskResult.ok ce
+    member inline this.Source(h: HttpHandler) : EffectRoute<HttpHandler> =
+      fun _ _ _ -> TaskResult.ok h
 
     member inline this.Source(ce: HttpContext -> Task<Result<'a, DomainError>>) : EffectRoute<'a> =
       fun _ _ c -> c |> ce
