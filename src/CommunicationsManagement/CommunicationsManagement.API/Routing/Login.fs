@@ -30,64 +30,57 @@ type LoginResult =
   | Success
   | Failure of LoginModel
 
-let post (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! dto =
-        ctx.TryBindFormAsync<LoginDto>()
-        |> TaskResult.mapError (fun _ -> BadRequest)
+let post : EffectRoute<HttpHandler> =
+  effectRoute {
+    let! (dto: LoginDto) = bindForm
+    let! rm = getAnonymousRootModel
+    let emailError = DataValidation.isValidEmail dto.Email rm.Translate
 
-      let! rm = getAnonymousRootModel ctx
+    // Short-circuit for validation.
+    do!
+      match emailError with
+      | None -> Ok()
+      | Some error ->
+        { Model =
+            { Email = dto.Email
+              EmailError = Some error }
+          Root = rm }
+        |> fun m -> renderOk m loginView
+        |> EarlyReturn
+        |> Error
 
-      let emailError = DataValidation.isValidEmail dto.Email rm.Translate
+    let! user =
+      fun (p: IPorts) ->
+        p.query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
 
-      // Short-circuit for validation.
-      do!
-        match emailError with
-        | None -> Ok()
-        | Some error ->
-          { Model =
-              { Email = dto.Email
-                EmailError = Some error }
-            Root = rm }
-          |> fun m -> renderOk m loginView
-          |> EarlyReturn
-          |> Error
+    let session =
+      { UserID = user.ID
+        ID = Guid.NewGuid()
+        ExpiresAt = DateTime.UtcNow.AddDays(15) }
 
-      let! user =
-        fun p -> p.find<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
+    do!
+      emit
+        { Event =
+            SessionCreated
+              { SessionID = session.ID
+                UserID = session.UserID
+                ExpiresAt = session.ExpiresAt } }
 
-      let session =
-        { UserID = user.ID
-          ID = Guid.NewGuid()
-          ExpiresAt = DateTime.UtcNow.AddDays(15) }
+    do!
+      notify
+        { Email = user.Email
+          Notification =
+            Login
+              { UserName = user.Name
+                ActivationCode = session.ID
+                ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
 
-      do!
-        fun p ->
-          p.sendEvent
-            { Event =
-                SessionCreated
-                  { SessionID = session.ID
-                    UserID = session.UserID
-                    ExpiresAt = session.ExpiresAt } }
-
-      let! notification =
-        fun p ->
-          { Email = user.Email
-            Notification =
-              Login
-                { UserName = user.Name
-                  ActivationCode = session.ID
-                  ActivationUrl = $"{p.configuration.BaseUrl}/login/confirm?code={session.ID}" } }
-          |> TaskResult.ok
-
-      do! fun p -> p.sendNotification rm.Translate notification
-
-      return
+    return
+      renderOk2
+        loginMessage
         { Root = rm
           Model = rm.Translate "EmailLoginDetails" }
-    }
-    |> resolveEffect2 ports loginMessage next ctx
+  }
 
 let confirm =
   effectRoute {
@@ -100,7 +93,7 @@ let confirm =
 let logout =
   effectRoute {
     let! sessionID = getSessionID
-    do! fun (p: IPorts) -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
+    do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! mr = getAnonymousRootModel
     do! Task.Delay(25)
     return! redirectTo false mr.BaseUrl

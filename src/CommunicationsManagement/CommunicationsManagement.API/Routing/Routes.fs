@@ -89,7 +89,7 @@ module Rendering =
 
       let! session =
         fun p ->
-          p.query<Session> sessionID
+          p.find<Session> sessionID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
@@ -100,7 +100,7 @@ module Rendering =
 
       return!
         fun p ->
-          p.query<User> session.UserID
+          p.find<User> session.UserID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
@@ -332,3 +332,12 @@ module EffectfulRoutes =
   let setCookie name value (c: HttpContext) =
     c.Response.Cookies.Append(name, value.ToString())
     |> TaskResult.ok
+
+  let emit e (p: IPorts) =
+    p.sendEvent e
+  
+  let notify n : EffectRoute<unit> =
+    effectRoute {
+      let! rm = getAnonymousRootModel
+      do! (fun (p: IPorts) -> p.sendNotification rm.Translate n)
+    }

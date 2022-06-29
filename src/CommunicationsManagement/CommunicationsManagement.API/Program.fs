@@ -33,7 +33,7 @@ let webApp (ports: IPorts) =
                           Users.removeRole userId role ports)
                         route "/" >>=> Home.home ports ]
            POST
-           >=> choose [ route "/login" >>=> Login.post ports
+           >=> choose [ route "/login" >>==> Login.post
                         route "/users/create" >>=> Users.createPost ports ] ]
 
 let configureApp (app: IApplicationBuilder) ports =
@@ -68,9 +68,9 @@ let ports config : IPorts =
       member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
       member this.configuration = config
-      member this.query<'a> id = Storage.query<'a> config id
+      member this.find<'a> id = Storage.query<'a> config id
 
-      member this.find<'a> predicate =
+      member this.query<'a> predicate =
         Storage.queryPredicate<'a> config predicate
 
       member this.save<'a> a = Storage.save<'a> config a

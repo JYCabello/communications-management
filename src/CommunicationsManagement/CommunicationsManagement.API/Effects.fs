@@ -12,8 +12,8 @@ type IPorts =
     Translator -> SendNotificationParams -> Task<Result<unit, DomainError>>
 
   abstract member configuration: Configuration
-  abstract member query<'a> : Guid -> Task<Result<'a, DomainError>>
-  abstract member find<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
+  abstract member find<'a> : Guid -> Task<Result<'a, DomainError>>
+  abstract member query<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
   abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
   abstract member delete<'a> : Guid -> Task<Result<unit, DomainError>>
   abstract member getAll<'a> : unit -> Task<Result<'a list, DomainError>>

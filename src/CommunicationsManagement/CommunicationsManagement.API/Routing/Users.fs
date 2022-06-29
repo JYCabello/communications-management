@@ -66,7 +66,7 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
           match dto.Email with
           | None -> true |> Task.FromResult
           | Some email ->
-            p.find<User> (fun u -> u.Email = Email email)
+            p.query<User> (fun u -> u.Email = Email email)
             |> Task.map (fun r ->
               r
               |> function
@@ -152,7 +152,7 @@ let details
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
-    let! user = fun (p: IPorts) -> p.query<User> id
+    let! user = fun (p: IPorts) -> p.find<User> id
     return { Model = user; Root = root }
   }
   |> resolveER UserDetails.details ports next ctx
@@ -174,7 +174,7 @@ let addRole
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
-    let! user = fun (p: IPorts) -> p.query<User> userId
+    let! user = fun (p: IPorts) -> p.find<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
@@ -199,7 +199,7 @@ let removeRole
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
-    let! user = fun (p: IPorts) -> p.query<User> userId
+    let! user = fun (p: IPorts) -> p.find<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
