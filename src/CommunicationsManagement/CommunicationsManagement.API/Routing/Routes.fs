@@ -278,12 +278,11 @@ module EffectfulRoutes =
 
     effectRoute {
       let! user = auth
-      let! vmr = getAnonymousRootModel 
+      let! vmr = getAnonymousRootModel
 
       return!
-          (if user.hasRole role then
-             Ok ()
-           else
-             tag |> vmr.Translate |> Unauthorized |> Error)
-          |> Task.FromResult
+        (match user.hasRole role with
+         | true -> Ok()
+         | false -> tag |> vmr.Translate |> Unauthorized |> Error)
+        |> Task.FromResult
     }

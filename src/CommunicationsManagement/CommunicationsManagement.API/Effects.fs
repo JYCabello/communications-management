@@ -149,6 +149,7 @@ let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> 
 
 let emit e =
   effect { do! fun (p: IPorts) -> p.sendEvent e }
+
 let getAll<'a> : Effect<'a list> =
   effect { return! fun (p: IPorts) -> p.getAll<'a> () }
 
