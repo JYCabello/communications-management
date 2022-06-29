@@ -20,6 +20,7 @@ let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext 
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
     let! users = fun (p: IPorts) -> p.getAll<User> ()
+
     return
       { Model = { Users = users }
         Root = root }
@@ -27,9 +28,9 @@ let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext 
   |> resolveER usersListView ports next ctx
 
 let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect {
-    let! root = buildModelRoot ctx
-    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement (root.Translate "Users")
 
     return
       { Model =
@@ -41,7 +42,7 @@ let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContex
             RolesError = None }
         Root = root }
   }
-  |> resolveEffect2 ports createUserView next ctx
+  |> resolveER createUserView ports next ctx
 
 [<CLIMutable>]
 type CreateUserDto =
@@ -121,13 +122,14 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
         |> Error
     }
 
-  effect {
-    let! root = buildModelRoot ctx
+  effectRoute {
+    let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users") ctx
 
     let! dto =
-      ctx.TryBindFormAsync<CreateUserDto>()
-      |> TaskResult.mapError (fun _ -> BadRequest)
+      fun (c: HttpContext) ->
+        c.TryBindFormAsync<CreateUserDto>()
+        |> TaskResult.mapError (fun _ -> BadRequest)
 
     let! validationResult = validate dto root.Translate
 
@@ -140,7 +142,7 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
         |> Task.FromResult
         |> fromTask
   }
-  |> resolveEffect2 ports createUserView next ctx
+  |> resolveER createUserView ports next ctx
 
 let details
   (id: Guid)
@@ -148,13 +150,13 @@ let details
   (next: HttpFunc)
   (ctx: HttpContext)
   : Task<HttpContext option> =
-  effect {
-    let! root = buildModelRoot ctx
-    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
-    let! user = fun p -> p.query<User> id
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement (root.Translate "Users")
+    let! user = fun (p: IPorts) -> p.query<User> id
     return { Model = user; Root = root }
   }
-  |> resolveEffect2 ports UserDetails.details next ctx
+  |> resolveER UserDetails.details ports next ctx
 
 let userUrl (p: IPorts) (u: User) =
   p
@@ -170,10 +172,10 @@ let addRole
   (next: HttpFunc)
   (ctx: HttpContext)
   : HttpFuncResult =
-  effect {
-    let! root = buildModelRoot ctx
-    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
-    let! user = fun p -> p.query<User> userId
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement (root.Translate "Users")
+    let! user = fun (p: IPorts) -> p.query<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
@@ -182,11 +184,11 @@ let addRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! fun p -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
+    do! fun (p: IPorts) -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
 
     return user
   }
-  |> resolveRedirect ports userUrl next ctx
+  |> resolveERRedirect userUrl ports next ctx
 
 let removeRole
   (userId: Guid)
@@ -195,10 +197,10 @@ let removeRole
   (next: HttpFunc)
   (ctx: HttpContext)
   : HttpFuncResult =
-  effect {
-    let! root = buildModelRoot ctx
-    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
-    let! user = fun p -> p.query<User> userId
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement (root.Translate "Users")
+    let! user = fun (p: IPorts) -> p.query<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
@@ -207,8 +209,8 @@ let removeRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! fun p -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
+    do! fun (p: IPorts) -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
 
     return user
   }
-  |> resolveRedirect ports userUrl next ctx
+  |> resolveERRedirect userUrl ports next ctx

@@ -136,6 +136,7 @@ module Rendering =
   let requireRole (role: Roles) (resourceName: string) ctx : Effect<unit> =
     effect {
       let! user = auth ctx
+
       return!
         (if user.hasRole role then
            Ok()
@@ -198,8 +199,6 @@ module Rendering =
 
   // Exists just for the cases where the context is explicit in the route definition
   let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
-  
-    
 
   let resolveRedirect p (getUrl: IPorts -> 'a -> string) next ctx (e: Effect<'a>) : HttpFuncResult =
     task {
@@ -226,9 +225,8 @@ module EffectfulRoutes =
         let ber = f a |> mapER id
         return! ber p next ctx
       }
-   
-  let solve p n c er : Task<Result<'a, DomainError>> =
-    er p n c
+
+  let solve p n c er : Task<Result<'a, DomainError>> = er p n c
 
   type EffectRouteBuilder() =
     member inline this.Bind
@@ -237,23 +235,31 @@ module EffectfulRoutes =
         [<InlineIfLambda>] f: 'a -> EffectRoute<'b>
       ) : EffectRoute<'b> =
       bindER f e
-    
+
     member inline this.Return a : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok a
     member inline this.ReturnFrom(e: EffectRoute<'a>) : EffectRoute<'a> = e
     member inline this.Zero() : EffectRoute<Unit> = fun _ _ _ -> TaskResult.ok ()
+
     member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
       a |> bindER (fun _ -> b)
-    
+
     member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
       fun p _ c -> c |> ce |> (fun e -> e p)
-    
-    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> =
-      fun p _ _ -> e p
+
+    member inline this.Source(ce: HttpContext -> Task<Result<'a, DomainError>>) : EffectRoute<'a> =
+      fun _ _ c -> c |> ce
+
+    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> = fun p _ _ -> e p
+
+    member inline this.Source(a: Task<'a>) : EffectRoute<'a> = fun _ _ _ -> a |> Task.map Ok
+
+    member inline this.Source(a: Result<'a, DomainError>) : EffectRoute<'a> =
+      fun _ _ _ -> a |> Task.singleton
 
   let effectRoute = EffectRouteBuilder()
-  
+
   open Rendering
-  
+
   let resolveTR view next ctx tr =
     task {
       let! r = tr
@@ -263,7 +269,17 @@ module EffectfulRoutes =
         | Ok model -> renderOk model view next ctx
         | Error error -> processError error next ctx
     }
-    
+
   let resolveER view ports next ctx er =
-    solve ports next ctx er
-    |> resolveTR view next ctx
+    solve ports next ctx er |> resolveTR view next ctx
+
+  let resolveERRedirect getUrl p n c e : HttpFuncResult =
+    task {
+      let! r = e p n c
+
+      return!
+        match r |> Result.map (getUrl p) with
+        | Ok url -> redirectTo false url
+        | Error error -> processError error
+        |> (fun r -> r n c)
+    }
