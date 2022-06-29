@@ -333,11 +333,11 @@ module EffectfulRoutes =
     c.Response.Cookies.Append(name, value.ToString())
     |> TaskResult.ok
 
-  let emit e (p: IPorts) =
-    p.sendEvent e
-  
+  let emit e =
+    effectRoute { do! fun (p: IPorts) -> p.sendEvent e }
+
   let notify n : EffectRoute<unit> =
     effectRoute {
       let! rm = getAnonymousRootModel
-      do! (fun (p: IPorts) -> p.sendNotification rm.Translate n)
+      do! fun (p: IPorts) -> p.sendNotification rm.Translate n
     }

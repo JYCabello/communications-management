@@ -30,7 +30,7 @@ type LoginResult =
   | Success
   | Failure of LoginModel
 
-let post : EffectRoute<HttpHandler> =
+let post: EffectRoute<HttpHandler> =
   effectRoute {
     let! (dto: LoginDto) = bindForm
     let! rm = getAnonymousRootModel
