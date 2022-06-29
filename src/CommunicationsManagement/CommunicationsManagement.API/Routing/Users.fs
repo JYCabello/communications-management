@@ -55,7 +55,7 @@ type UserCreationValidation =
   | Invalid of UserCreationViewModel
 
 let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  let validate (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
+  let validate (p: IPorts) (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
     task {
       let emailError = isValidEmail dto.Email tr
 
@@ -66,7 +66,7 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
           match dto.Email with
           | None -> true |> Task.FromResult
           | Some email ->
-            ports.find<User> (fun u -> u.Email = Email email)
+            p.find<User> (fun u -> u.Email = Email email)
             |> Task.map (fun r ->
               r
               |> function
@@ -126,12 +126,11 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users") ctx
 
-    let! dto =
-      fun (c: HttpContext) ->
-        c.TryBindFormAsync<CreateUserDto>()
-        |> TaskResult.mapError (fun _ -> BadRequest)
+    let! (dto: CreateUserDto) = bindForm
 
-    let! validationResult = validate dto root.Translate
+    let! p = getPorts
+
+    let! validationResult = validate p dto root.Translate
 
     return!
       match validationResult with

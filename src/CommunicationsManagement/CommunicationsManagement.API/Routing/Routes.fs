@@ -242,6 +242,8 @@ module EffectfulRoutes =
 
     member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
       a |> bindER (fun _ -> b)
+      
+    member inline this.Source(er: EffectRoute<'a>) : EffectRoute<'a> = er
 
     member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
       fun p _ c -> c |> ce |> (fun e -> e p)
@@ -257,6 +259,9 @@ module EffectfulRoutes =
       fun _ _ _ -> a |> Task.singleton
 
   let effectRoute = EffectRouteBuilder()
+  
+  let getPorts : EffectRoute<IPorts> =
+    fun p _ _ -> TaskResult.ok p
 
   open Rendering
 
@@ -283,3 +288,7 @@ module EffectfulRoutes =
         | Error error -> processError error
         |> (fun r -> r n c)
     }
+   
+  let bindForm (c : HttpContext) =
+    c.TryBindFormAsync<'a>()
+    |> TaskResult.mapError (fun _ -> BadRequest)
