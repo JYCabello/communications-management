@@ -89,23 +89,13 @@ let post (ports: IPorts) : HttpHandler =
     }
     |> resolveEffect2 ports loginMessage next ctx
 
-let confirm (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effectRoute {
-      let! mr = getAnonymousRootModel
-      let! code = queryGuid "code"
-
-      do ctx.Response.Cookies.Append("sessionID", code.ToString())
-
-      // Short-circuit for redirection.
-      do!
-        redirectTo false mr.BaseUrl
-        |> EarlyReturn
-        |> Error
-
-      return { Model = (); Root = mr }
-    }
-    |> resolveER theVoid ports next ctx
+let confirm =
+  effectRoute {
+    let! mr = getAnonymousRootModel
+    let! code = queryGuid "code"
+    do! setCookie "sessionID" code
+    return! redirectTo false mr.BaseUrl
+  }
 
 let logout (ports: IPorts) : HttpHandler =
   fun next ctx ->

@@ -20,7 +20,7 @@ let webApp (ports: IPorts) =
 
   choose [ GET
            >=> choose [ route "/login" >>==> Login.get
-                        route "/login/confirm" >>=> Login.confirm ports
+                        route "/login/confirm" >>==> Login.confirm
                         route "/logout" >>=> Login.logout ports
                         route "/users" >>=> Users.list ports
                         route "/users/create" >>=> Users.create ports

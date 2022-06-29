@@ -321,3 +321,7 @@ module EffectfulRoutes =
     |> function
       | Some c -> TaskResult.ok c
       | None -> TaskResult.error BadRequest
+
+  let setCookie name value (c: HttpContext) =
+    c.Response.Cookies.Append(name, value.ToString())
+    |> TaskResult.ok
