@@ -29,7 +29,6 @@ let webApp (ports: IPorts) =
                           Users.addRole userId role ports)
                         routeCif "/users/%O/roles/remove/%i" (fun (userId, role) ->
                           Users.removeRole userId role ports)
-                        route "/ping" >=> text "pong"
                         route "/" >>=> Home.home ports ]
            POST
            >=> choose [ route "/login" >>=> Login.post ports
