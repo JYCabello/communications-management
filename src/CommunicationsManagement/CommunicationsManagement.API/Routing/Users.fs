@@ -157,20 +157,12 @@ let details
   }
   |> resolveER UserDetails.details ports next ctx
 
-let userUrl (p: IPorts) (u: User) =
-  p
-    .configuration
-    .BaseUrl
+let userUrl (baseUrl: string) (u: User) =
+  baseUrl
     .AppendPathSegments("users", u.ID)
     .ToString()
 
-let addRole
-  (userId: Guid)
-  (role: int)
-  (ports: IPorts)
-  (next: HttpFunc)
-  (ctx: HttpContext)
-  : HttpFuncResult =
+let addRole userId role =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
@@ -183,19 +175,11 @@ let addRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! fun (p: IPorts) -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
-
-    return user
+    do! emit { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
+    return userUrl root.BaseUrl user |> redirectTo false
   }
-  |> resolveERRedirect userUrl ports next ctx
 
-let removeRole
-  (userId: Guid)
-  (role: int)
-  (ports: IPorts)
-  (next: HttpFunc)
-  (ctx: HttpContext)
-  : HttpFuncResult =
+let removeRole userId role =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
@@ -208,10 +192,7 @@ let removeRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do!
-      fun (p: IPorts) ->
-        p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
+    do! emit { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
 
-    return user
+    return userUrl root.BaseUrl user |> redirectTo false
   }
-  |> resolveERRedirect userUrl ports next ctx
