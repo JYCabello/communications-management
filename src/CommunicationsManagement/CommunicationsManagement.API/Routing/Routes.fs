@@ -177,37 +177,6 @@ module Rendering =
      | EarlyReturn h -> h)
     |> fun handler -> handler next ctx
 
-  let resolveEffect
-    (ports: IPorts)
-    (view: Render<'a>)
-    (e: Effect<ViewModel<'a>>)
-    (next: HttpFunc)
-    (ctx: HttpContext)
-    : Task<HttpContext option> =
-    task {
-      let! result = e ports |> attempt
-
-      return!
-        match result with
-        | Ok model -> renderOk view model next ctx
-        | Error error -> processError error next ctx
-    }
-
-  // Exists just for the cases where the context is explicit in the route definition
-  let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
-
-  let resolveRedirect p (getUrl: IPorts -> 'a -> string) next ctx (e: Effect<'a>) : HttpFuncResult =
-    task {
-      let! r = e p
-
-      return!
-        match r |> Result.map (getUrl p) with
-        | Ok url -> redirectTo false url next ctx
-        | Error error -> processError error next ctx
-    }
-
-  let theVoid: Render<'a> = fun _ -> []
-
 module EffectfulRoutes =
   type EffectRoute<'a> = IPorts -> HttpFunc -> HttpContext -> Task<Result<'a, DomainError>>
 
