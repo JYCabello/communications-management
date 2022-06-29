@@ -124,7 +124,7 @@ let createPost =
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
 
-    let! (dto: CreateUserDto) = bindForm
+    let! dto = bindForm<CreateUserDto>
 
     let! p = getPorts
 

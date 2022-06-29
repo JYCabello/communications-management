@@ -146,3 +146,11 @@ let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> 
         |> InternalServerError
         |> Error
   }
+
+let emit e =
+  effect { do! fun (p: IPorts) -> p.sendEvent e }
+let getAll<'a> : Effect<'a list> =
+  effect { return! fun (p: IPorts) -> p.getAll<'a> () }
+
+let query<'a> q : Effect<'a> =
+  effect { return! fun (p: IPorts) -> p.query q }

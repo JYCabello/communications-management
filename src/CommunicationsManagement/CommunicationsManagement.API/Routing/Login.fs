@@ -10,6 +10,7 @@ open Giraffe
 open Models
 open Views.Login
 open EffectfulRoutes
+open Effects
 
 [<CLIMutable>]
 type LoginDto = { Email: string option }
@@ -75,7 +76,7 @@ let post: EffectRoute<HttpHandler> =
     }
 
   effectRoute {
-    let! (dto: LoginDto) = bindForm
+    let! dto = bindForm<LoginDto>
     let! rm = getAnonymousRootModel
 
     return!

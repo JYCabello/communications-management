@@ -253,7 +253,7 @@ module EffectfulRoutes =
           |> (fun r -> r n c)
       }
 
-  let bindForm (c: HttpContext) =
+  let bindForm<'a> (c: HttpContext) =
     c.TryBindFormAsync<'a>()
     |> TaskResult.mapError (fun _ -> BadRequest)
 
@@ -271,17 +271,8 @@ module EffectfulRoutes =
     c.Response.Cookies.Append(name, value.ToString())
     |> TaskResult.ok
 
-  let emit e =
-    effectRoute { do! fun (p: IPorts) -> p.sendEvent e }
-
   let notify n : EffectRoute<unit> =
     effectRoute {
       let! rm = getAnonymousRootModel
       do! fun (p: IPorts) -> p.sendNotification rm.Translate n
     }
-
-  let getAll<'a> : EffectRoute<'a list> =
-    effectRoute { return! fun (p: IPorts) -> p.getAll<'a> () }
-
-  let query<'a> q : EffectRoute<'a> =
-    effectRoute { return! fun (p: IPorts) -> p.query q }
