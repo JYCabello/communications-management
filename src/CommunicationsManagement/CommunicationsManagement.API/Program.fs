@@ -13,26 +13,26 @@ open Giraffe
 
 let webApp (ports: IPorts) =
   let solve er = solveHandler ports er
-  let (>>==>) a b = a >=> warbler (fun _ -> solve b)
+  let (>==>) a b = a >=> warbler (fun _ -> solve b)
 
   let routeCifE path routeHandler =
     routeCif path (fun t -> routeHandler t |> solve)
 
   choose [ GET
-           >=> choose [ route "/login" >>==> Login.get
-                        route "/login/confirm" >>==> Login.confirm
-                        route "/logout" >>==> Login.logout
-                        route "/users" >>==> Users.list
-                        route "/users/create" >>==> Users.create
+           >=> choose [ route "/login" >==> Login.get
+                        route "/login/confirm" >==> Login.confirm
+                        route "/logout" >==> Login.logout
+                        route "/users" >==> Users.list
+                        route "/users/create" >==> Users.create
                         routeCifE "/users/%O" Users.details
                         routeCifE "/users/%O/roles/add/%i" (fun (userId, role) ->
                           Users.addRole userId role)
                         routeCifE "/users/%O/roles/remove/%i" (fun (userId, role) ->
                           Users.removeRole userId role)
-                        route "/" >>==> Home.home ]
+                        route "/" >==> Home.home ]
            POST
-           >=> choose [ route "/login" >>==> Login.post
-                        route "/users/create" >>==> Users.createPost ] ]
+           >=> choose [ route "/login" >==> Login.post
+                        route "/users/create" >==> Users.createPost ] ]
 
 let configureApp (app: IApplicationBuilder) ports =
   app.UseGiraffe <| webApp ports
