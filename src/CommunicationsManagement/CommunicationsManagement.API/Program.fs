@@ -14,7 +14,9 @@ open Giraffe
 let webApp (ports: IPorts) =
   let solve er = solveHandler ports er
   let (>>==>) a b = a >=> warbler (fun _ -> solve b)
-  let routeCifE path routeHandler = routeCif path (fun t -> routeHandler t |> solve)
+
+  let routeCifE path routeHandler =
+    routeCif path (fun t -> routeHandler t |> solve)
 
   choose [ GET
            >=> choose [ route "/login" >>==> Login.get

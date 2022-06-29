@@ -198,7 +198,7 @@ module Rendering =
 
       return!
         match result with
-        | Ok model -> renderOk model view next ctx
+        | Ok model -> renderOk2 view model next ctx
         | Error error -> processError error next ctx
     }
 
@@ -281,30 +281,6 @@ module EffectfulRoutes =
 
   open Rendering
 
-  let resolveTR view next ctx tr =
-    task {
-      let! r = tr
-
-      return!
-        match r with
-        | Ok model -> renderOk model view next ctx
-        | Error error -> processError error next ctx
-    }
-
-  let resolveER view ports next ctx er =
-    solve ports next ctx er |> resolveTR view next ctx
-
-  let resolveERRedirect getUrl p n c e : HttpFuncResult =
-    task {
-      let! r = e p n c
-
-      return!
-        match r |> Result.map (getUrl p) with
-        | Ok url -> redirectTo false url
-        | Error error -> processError error
-        |> (fun r -> r n c)
-    }
-
   let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
     fun n c ->
       task {
@@ -346,3 +322,6 @@ module EffectfulRoutes =
 
   let getAll<'a> : EffectRoute<'a list> =
     effectRoute { return! fun (p: IPorts) -> p.getAll<'a> () }
+
+  let query<'a> q : EffectRoute<'a> =
+    effectRoute { return! fun (p: IPorts) -> p.query q }

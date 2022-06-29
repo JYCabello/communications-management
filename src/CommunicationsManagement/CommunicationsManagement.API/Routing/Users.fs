@@ -15,7 +15,7 @@ open CommunicationsManagement.API.DataValidation
 open Flurl
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 
-let list : EffectRoute<HttpHandler> =
+let list: EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
@@ -28,7 +28,7 @@ let list : EffectRoute<HttpHandler> =
           Root = root }
   }
 
-let create : EffectRoute<HttpHandler> =
+let create: EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
@@ -117,8 +117,7 @@ let createPost =
   let save usr vmr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-
-      return! renderOk { Model = "Ok"; Root = vmr } successMessage
+      return! renderOk2 successMessage { Model = "Ok"; Root = vmr }
     }
 
   effectRoute {

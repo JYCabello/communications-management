@@ -3,7 +3,6 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API
-open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Routing.Routes
 open FsToolkit.ErrorHandling
 open Routes.Rendering
@@ -31,55 +30,58 @@ type LoginResult =
   | Failure of LoginModel
 
 let post: EffectRoute<HttpHandler> =
+  let create dto rm =
+    effectRoute {
+      let! user = query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
+
+      let session =
+        { UserID = user.ID
+          ID = Guid.NewGuid()
+          ExpiresAt = DateTime.UtcNow.AddDays(15) }
+
+      do!
+        emit
+          { Event =
+              SessionCreated
+                { SessionID = session.ID
+                  UserID = session.UserID
+                  ExpiresAt = session.ExpiresAt } }
+
+      do!
+        notify
+          { Email = user.Email
+            Notification =
+              Login
+                { UserName = user.Name
+                  ActivationCode = session.ID
+                  ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
+
+      return
+        renderOk2
+          loginMessage
+          { Root = rm
+            Model = rm.Translate "EmailLoginDetails" }
+    }
+
+  let renderErrors rm error dto =
+    effectRoute {
+      return
+        renderOk2
+          loginView
+          { Model =
+              { Email = dto.Email
+                EmailError = Some error }
+            Root = rm }
+    }
+
   effectRoute {
     let! (dto: LoginDto) = bindForm
     let! rm = getAnonymousRootModel
-    let emailError = DataValidation.isValidEmail dto.Email rm.Translate
 
-    // Short-circuit for validation.
-    do!
-      match emailError with
-      | None -> Ok()
-      | Some error ->
-        { Model =
-            { Email = dto.Email
-              EmailError = Some error }
-          Root = rm }
-        |> fun m -> renderOk m loginView
-        |> EarlyReturn
-        |> Error
-
-    let! user =
-      fun (p: IPorts) ->
-        p.query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
-
-    let session =
-      { UserID = user.ID
-        ID = Guid.NewGuid()
-        ExpiresAt = DateTime.UtcNow.AddDays(15) }
-
-    do!
-      emit
-        { Event =
-            SessionCreated
-              { SessionID = session.ID
-                UserID = session.UserID
-                ExpiresAt = session.ExpiresAt } }
-
-    do!
-      notify
-        { Email = user.Email
-          Notification =
-            Login
-              { UserName = user.Name
-                ActivationCode = session.ID
-                ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
-
-    return
-      renderOk2
-        loginMessage
-        { Root = rm
-          Model = rm.Translate "EmailLoginDetails" }
+    return!
+      match DataValidation.isValidEmail dto.Email rm.Translate with
+      | None -> create dto rm
+      | Some error -> renderErrors rm error dto
   }
 
 let confirm =
