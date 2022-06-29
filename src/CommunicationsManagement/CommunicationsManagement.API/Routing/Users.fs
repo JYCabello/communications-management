@@ -28,22 +28,23 @@ let list : EffectRoute<HttpHandler> =
           Root = root }
   }
 
-let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+let create : EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
 
     return
-      { Model =
-          { Name = None
-            NameError = None
-            Email = None
-            EmailError = None
-            Roles = Roles.None
-            RolesError = None }
-        Root = root }
+      renderOk2
+        createUserView
+        { Model =
+            { Name = None
+              NameError = None
+              Email = None
+              EmailError = None
+              Roles = Roles.None
+              RolesError = None }
+          Root = root }
   }
-  |> resolveER createUserView ports next ctx
 
 [<CLIMutable>]
 type CreateUserDto =
