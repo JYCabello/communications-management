@@ -15,17 +15,18 @@ open CommunicationsManagement.API.DataValidation
 open Flurl
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 
-let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
+let list : EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
-    let! users = fun (p: IPorts) -> p.getAll<User> ()
+    let! users = getAll<User>
 
     return
-      { Model = { Users = users }
-        Root = root }
+      renderOk2
+        usersListView
+        { Model = { Users = users }
+          Root = root }
   }
-  |> resolveER usersListView ports next ctx
 
 let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effectRoute {

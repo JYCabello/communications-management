@@ -343,3 +343,6 @@ module EffectfulRoutes =
       let! rm = getAnonymousRootModel
       do! fun (p: IPorts) -> p.sendNotification rm.Translate n
     }
+
+  let getAll<'a> : EffectRoute<'a list> =
+    effectRoute { return! fun (p: IPorts) -> p.getAll<'a> () }

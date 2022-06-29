@@ -26,7 +26,7 @@ let webApp (ports: IPorts) =
            >=> choose [ route "/login" >>==> Login.get
                         route "/login/confirm" >>==> Login.confirm
                         route "/logout" >>==> Login.logout
-                        route "/users" >>=> Users.list ports
+                        route "/users" >>==> Users.list
                         route "/users/create" >>=> Users.create ports
                         routeCifE "/users/%O" Users.details
                         routeCifE "/users/%O/roles/add/%i" (fun (userId, role) ->
