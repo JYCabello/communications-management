@@ -292,3 +292,13 @@ module EffectfulRoutes =
   let bindForm (c : HttpContext) =
     c.TryBindFormAsync<'a>()
     |> TaskResult.mapError (fun _ -> BadRequest)
+  
+  let queryGuid name (c: HttpContext) =
+    c.TryGetQueryStringValue(name)
+      |> Option.bind (fun c ->
+        match Guid.TryParse c with
+        | true, guid -> Some guid
+        | false, _ -> None)
+      |> function
+        | Some c -> TaskResult.ok c
+        | None -> TaskResult.error BadRequest

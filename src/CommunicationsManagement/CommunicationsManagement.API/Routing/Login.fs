@@ -4,11 +4,13 @@ open System
 open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Routing.Routes
 open FsToolkit.ErrorHandling
 open Routes.Rendering
 open Giraffe
 open Models
 open Views.Login
+open EffectfulRoutes
 
 [<CLIMutable>]
 type LoginDto = { Email: string option }
@@ -89,29 +91,18 @@ let post (ports: IPorts) : HttpHandler =
 
 let confirm (ports: IPorts) : HttpHandler =
   fun next ctx ->
-    effect {
-      let! mr = getAnonymousRootModel ctx
-
-      let! code =
-        fun _ ->
-          ctx.TryGetQueryStringValue("code")
-          |> Option.bind (fun c ->
-            match Guid.TryParse c with
-            | true, guid -> Some guid
-            | false, _ -> None)
-          |> function
-            | Some c -> TaskResult.ok c
-            | None -> TaskResult.error BadRequest
+    effectRoute {
+      let! mr = getAnonymousRootModel
+      let! code = queryGuid "code"
 
       do ctx.Response.Cookies.Append("sessionID", code.ToString())
 
       // Short-circuit for redirection.
-      let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
-      do! redirectTo false baseUrl |> EarlyReturn |> Error
+      do! redirectTo false mr.BaseUrl |> EarlyReturn |> Error
 
       return { Model = (); Root = mr }
     }
-    |> resolveEffect2 ports theVoid next ctx
+    |> resolveER theVoid ports next ctx
 
 let logout (ports: IPorts) : HttpHandler =
   fun next ctx ->
