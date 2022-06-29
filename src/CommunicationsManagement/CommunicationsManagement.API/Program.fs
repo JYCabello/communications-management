@@ -16,7 +16,9 @@ open Giraffe
 
 let webApp (ports: IPorts) =
   let (>>=>) a b = a >=> warbler (fun _ -> b)
-  let (>>==>) a b = a >=> warbler (fun _ -> solveHandler ports b)
+
+  let (>>==>) a b =
+    a >=> warbler (fun _ -> solveHandler ports b)
 
   choose [ GET
            >=> choose [ route "/login" >>==> Login.get
@@ -38,20 +40,8 @@ let configureApp (app: IApplicationBuilder) ports =
   app.UseGiraffe <| webApp ports
   //let localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>()
   app.UseRequestLocalization() |> ignore
-  ()
 
-let configureServices (services: IServiceCollection) =
-  services.AddGiraffe() |> ignore
-
-  services.Configure<RequestLocalizationOptions> (fun (opt: RequestLocalizationOptions) ->
-    let supportedCultures = [ CultureInfo("es"); CultureInfo("en") ] |> List
-    opt.DefaultRequestCulture <- RequestCulture(CultureInfo("es"), CultureInfo("es"))
-    opt.SupportedCultures <- supportedCultures
-    opt.SupportedUICultures <- supportedCultures
-    ())
-  |> ignore
-
-  ()
+let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
 let buildHost ports forcedPort =
   EventStore.triggerSubscriptions ports
