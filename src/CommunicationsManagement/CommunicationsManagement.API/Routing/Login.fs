@@ -80,7 +80,7 @@ let post: EffectRoute<HttpHandler> =
     let! rm = getAnonymousRootModel
 
     return!
-      match DataValidation.isValidEmail dto.Email rm.Translate with
+      match DataValidation.validateEmail dto.Email rm.Translate with
       | None -> create dto rm
       | Some error -> renderErrors rm error dto
   }

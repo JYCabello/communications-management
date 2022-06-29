@@ -58,7 +58,7 @@ type UserCreationValidation =
 let createPost =
   let validate (p: IPorts) (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
     task {
-      let emailError = isValidEmail dto.Email tr
+      let emailError = validateEmail dto.Email tr
 
       let! emailExists =
         match emailError with
