@@ -147,19 +147,10 @@ module Rendering =
 
   type Render<'a> = ViewModel<'a> -> XmlNode list
 
-  let renderText (vm: ViewModel<string>) = [ Text vm.Model ]
-
-  let renderHtml (view: XmlNode) : HttpHandler = htmlView view
-
-  let renderOk (model: ViewModel<'a>) (view: Render<'a>) : HttpHandler =
+  let renderOk (view: Render<'a>) (model: ViewModel<'a>) : HttpHandler =
     model
     |> (view >> Layout.layout model.Root)
-    |> renderHtml
-
-  let renderOk2 (view: Render<'a>) (model: ViewModel<'a>) : HttpHandler =
-    model
-    |> (view >> Layout.layout model.Root)
-    |> renderHtml
+    |> htmlView
 
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
@@ -198,7 +189,7 @@ module Rendering =
 
       return!
         match result with
-        | Ok model -> renderOk2 view model next ctx
+        | Ok model -> renderOk view model next ctx
         | Error error -> processError error next ctx
     }
 

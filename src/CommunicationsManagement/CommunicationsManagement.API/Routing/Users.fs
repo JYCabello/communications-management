@@ -22,7 +22,7 @@ let list: EffectRoute<HttpHandler> =
     let! users = getAll<User>
 
     return
-      renderOk2
+      renderOk
         usersListView
         { Model = { Users = users }
           Root = root }
@@ -34,7 +34,7 @@ let create: EffectRoute<HttpHandler> =
     do! requireRole Roles.UserManagement (root.Translate "Users")
 
     return
-      renderOk2
+      renderOk
         createUserView
         { Model =
             { Name = None
@@ -117,7 +117,7 @@ let createPost =
   let save usr vmr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-      return! renderOk2 successMessage { Model = "Ok"; Root = vmr }
+      return! renderOk successMessage { Model = "Ok"; Root = vmr }
     }
 
   effectRoute {
@@ -134,7 +134,7 @@ let createPost =
       match validationResult with
       | Valid user -> save user root
       | Invalid userCreationViewModel ->
-        renderOk2
+        renderOk
           createUserView
           { Model = userCreationViewModel
             Root = root }
@@ -146,7 +146,7 @@ let details id =
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
     let! user = fun (p: IPorts) -> p.find<User> id
-    return renderOk2 UserDetails.details { Model = user; Root = root }
+    return renderOk UserDetails.details { Model = user; Root = root }
   }
 
 let userUrl (baseUrl: string) (u: User) =

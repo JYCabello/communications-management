@@ -19,7 +19,7 @@ let get =
     let! vmr = getAnonymousRootModel
 
     return!
-      renderOk2
+      renderOk
         loginView
         { Model = { Email = None; EmailError = None }
           Root = vmr }
@@ -57,7 +57,7 @@ let post: EffectRoute<HttpHandler> =
                   ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
 
       return
-        renderOk2
+        renderOk
           loginMessage
           { Root = rm
             Model = rm.Translate "EmailLoginDetails" }
@@ -66,7 +66,7 @@ let post: EffectRoute<HttpHandler> =
   let renderErrors rm error dto =
     effectRoute {
       return
-        renderOk2
+        renderOk
           loginView
           { Model =
               { Email = dto.Email

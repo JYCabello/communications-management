@@ -12,5 +12,5 @@ open Views.Home
 let home: EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
-    return renderOk2 homeView { Model = (); Root = root }
+    return renderOk homeView { Model = (); Root = root }
   }
