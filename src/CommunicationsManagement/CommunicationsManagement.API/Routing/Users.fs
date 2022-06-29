@@ -13,25 +13,23 @@ open CommunicationsManagement.API.Views.Users.CreateUser
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open Flurl
+open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 
 let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-    do! requireRole user Roles.UserManagement (root.Translate "Users")
-    let! users = fun p -> p.getAll<User> ()
-
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement (root.Translate "Users")
+    let! users = fun (p: IPorts) -> p.getAll<User> ()
     return
       { Model = { Users = users }
         Root = root }
   }
-  |> resolveEffect2 ports usersListView next ctx
+  |> resolveER usersListView ports next ctx
 
 let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-    do! requireRole user Roles.UserManagement (root.Translate "Users")
+    let! root = buildModelRoot ctx
+    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
 
     return
       { Model =
@@ -124,9 +122,8 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
     }
 
   effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-    do! requireRole user Roles.UserManagement (root.Translate "Users")
+    let! root = buildModelRoot ctx
+    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
 
     let! dto =
       ctx.TryBindFormAsync<CreateUserDto>()
@@ -152,9 +149,8 @@ let details
   (ctx: HttpContext)
   : Task<HttpContext option> =
   effect {
-    let! currentUser = auth ctx
-    let! root = buildModelRoot currentUser ctx
-    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
+    let! root = buildModelRoot ctx
+    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
     let! user = fun p -> p.query<User> id
     return { Model = user; Root = root }
   }
@@ -175,9 +171,8 @@ let addRole
   (ctx: HttpContext)
   : HttpFuncResult =
   effect {
-    let! currentUser = auth ctx
-    let! root = buildModelRoot currentUser ctx
-    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
+    let! root = buildModelRoot ctx
+    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
     let! user = fun p -> p.query<User> userId
 
     let! role =
@@ -201,9 +196,8 @@ let removeRole
   (ctx: HttpContext)
   : HttpFuncResult =
   effect {
-    let! currentUser = auth ctx
-    let! root = buildModelRoot currentUser ctx
-    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
+    let! root = buildModelRoot ctx
+    do! requireRole Roles.UserManagement (root.Translate "Users") ctx
     let! user = fun p -> p.query<User> userId
 
     let! role =

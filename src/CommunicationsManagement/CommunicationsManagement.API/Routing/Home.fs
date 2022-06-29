@@ -12,8 +12,7 @@ open Views.Home
 
 let home (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
   effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
+    let! root = buildModelRoot ctx
 
     return { Model = (); Root = root }
   }

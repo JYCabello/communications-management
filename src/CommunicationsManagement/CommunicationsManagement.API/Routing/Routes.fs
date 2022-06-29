@@ -8,14 +8,14 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
 open CommunicationsManagement.Internationalization
 open FsToolkit.ErrorHandling
+open Giraffe
 open Microsoft.AspNetCore.Http
-open Giraffe.Core
 open Giraffe.ViewEngine
 
-open type Giraffe.HttpContextExtensions
+open type HttpContextExtensions
 
 module Rendering =
-  open type Giraffe.HttpContextExtensions
+  open type HttpContextExtensions
 
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
@@ -106,8 +106,9 @@ module Rendering =
             | e -> e)
     }
 
-  let buildModelRoot user (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let buildModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
+      let! user = auth ctx
       let tr = getTranslator ctx
       let! config = fun p -> p.configuration |> TaskResult.ok
 
@@ -132,8 +133,9 @@ module Rendering =
           BaseUrl = config.BaseUrl }
     }
 
-  let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
+  let requireRole (role: Roles) (resourceName: string) ctx : Effect<unit> =
     effect {
+      let! user = auth ctx
       return!
         (if user.hasRole role then
            Ok()
@@ -196,6 +198,8 @@ module Rendering =
 
   // Exists just for the cases where the context is explicit in the route definition
   let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
+  
+    
 
   let resolveRedirect p (getUrl: IPorts -> 'a -> string) next ctx (e: Effect<'a>) : HttpFuncResult =
     task {
@@ -208,3 +212,58 @@ module Rendering =
     }
 
   let theVoid: Render<'a> = fun _ -> []
+
+module EffectfulRoutes =
+  type EffectRoute<'a> = IPorts -> HttpFunc -> HttpContext -> Task<Result<'a, DomainError>>
+
+  let mapER (f: 'a -> 'b) (e: EffectRoute<'a>) : EffectRoute<'b> =
+    fun p next ctx -> e p next ctx |> TaskResult.map f
+
+  let bindER (f: 'a -> EffectRoute<'b>) (e: EffectRoute<'a>) : EffectRoute<'b> =
+    fun p next ctx ->
+      taskResult {
+        let! a = e p next ctx
+        let ber = f a |> mapER id
+        return! ber p next ctx
+      }
+   
+  let solve p n c er : Task<Result<'a, DomainError>> =
+    er p n c
+
+  type EffectRouteBuilder() =
+    member inline this.Bind
+      (
+        e: EffectRoute<'a>,
+        [<InlineIfLambda>] f: 'a -> EffectRoute<'b>
+      ) : EffectRoute<'b> =
+      bindER f e
+    
+    member inline this.Return a : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok a
+    member inline this.ReturnFrom(e: EffectRoute<'a>) : EffectRoute<'a> = e
+    member inline this.Zero() : EffectRoute<Unit> = fun _ _ _ -> TaskResult.ok ()
+    member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
+      a |> bindER (fun _ -> b)
+    
+    member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
+      fun p _ c -> c |> ce |> (fun e -> e p)
+    
+    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> =
+      fun p _ _ -> e p
+
+  let effectRoute = EffectRouteBuilder()
+  
+  open Rendering
+  
+  let resolveTR view next ctx tr =
+    task {
+      let! r = tr
+
+      return!
+        match r with
+        | Ok model -> renderOk model view next ctx
+        | Error error -> processError error next ctx
+    }
+    
+  let resolveER view ports next ctx er =
+    solve ports next ctx er
+    |> resolveTR view next ctx
