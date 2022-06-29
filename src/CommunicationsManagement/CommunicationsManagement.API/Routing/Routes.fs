@@ -133,18 +133,6 @@ module Rendering =
           BaseUrl = config.BaseUrl }
     }
 
-  let requireRole (role: Roles) (resourceName: string) ctx : Effect<unit> =
-    effect {
-      let! user = auth ctx
-
-      return!
-        (if user.hasRole role then
-           Ok()
-         else
-           resourceName |> Unauthorized |> Error)
-        |> Task.FromResult
-    }
-
   type Render<'a> = ViewModel<'a> -> XmlNode list
 
   let renderOk (view: Render<'a>) (model: ViewModel<'a>) : HttpHandler =
@@ -223,7 +211,10 @@ module EffectfulRoutes =
 
     member inline this.Source(e: Effect<'a>) : EffectRoute<'a> = fun p _ _ -> e p
 
-    member inline this.Source(a: Task<'a>) : EffectRoute<'a> = fun _ _ _ -> a |> Task.map Ok
+    member inline this.Source<'a when 'a: not struct>(a: Task<'a>) : EffectRoute<'a> =
+      fun _ _ _ -> a |> Task.map Ok
+
+    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> = fun _ _ _ -> a
 
     member inline this.Source(t: Task) : EffectRoute<unit> =
       fun _ _ _ ->
@@ -275,4 +266,24 @@ module EffectfulRoutes =
     effectRoute {
       let! rm = getAnonymousRootModel
       do! fun (p: IPorts) -> p.sendNotification rm.Translate n
+    }
+
+  let requireRole (role: Roles) : EffectRoute<unit> =
+    let tag =
+      match role with
+      | Roles.Delegate -> "Delegate"
+      | Roles.Press -> "Press"
+      | Roles.UserManagement -> "UserManagement"
+      | _ -> "Unknown"
+
+    effectRoute {
+      let! user = auth
+      let! vmr = getAnonymousRootModel 
+
+      return!
+          (if user.hasRole role then
+             Ok ()
+           else
+             tag |> vmr.Translate |> Unauthorized |> Error)
+          |> Task.FromResult
     }
