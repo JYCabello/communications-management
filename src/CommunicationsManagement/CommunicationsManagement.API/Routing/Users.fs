@@ -143,19 +143,13 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
   }
   |> resolveER createUserView ports next ctx
 
-let details
-  (id: Guid)
-  (ports: IPorts)
-  (next: HttpFunc)
-  (ctx: HttpContext)
-  : Task<HttpContext option> =
+let details id =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement (root.Translate "Users")
     let! user = fun (p: IPorts) -> p.find<User> id
-    return { Model = user; Root = root }
+    return renderOk2 UserDetails.details { Model = user; Root = root }
   }
-  |> resolveER UserDetails.details ports next ctx
 
 let userUrl (baseUrl: string) (u: User) =
   baseUrl

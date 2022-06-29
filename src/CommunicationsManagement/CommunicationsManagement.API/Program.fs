@@ -31,7 +31,7 @@ let webApp (ports: IPorts) =
                         route "/logout" >>==> Login.logout
                         route "/users" >>=> Users.list ports
                         route "/users/create" >>=> Users.create ports
-                        routeCif "/users/%O" (fun id -> Users.details id ports)
+                        routeCifE "/users/%O" Users.details
                         routeCifE "/users/%O/roles/add/%i" (fun (userId, role) ->
                           Users.addRole userId role)
                         routeCifE "/users/%O/roles/remove/%i" (fun (userId, role) ->
