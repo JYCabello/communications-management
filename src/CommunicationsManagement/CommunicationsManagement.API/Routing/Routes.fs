@@ -263,6 +263,12 @@ module EffectfulRoutes =
 
     member inline this.Source(a: Task<'a>) : EffectRoute<'a> = fun _ _ _ -> a |> Task.map Ok
 
+    member inline this.Source(t: Task) : EffectRoute<unit> = fun _ _ _ ->
+      task {
+        do! t
+        return! TaskResult.ok ()
+      }
+
     member inline this.Source(a: Result<'a, DomainError>) : EffectRoute<'a> =
       fun _ _ _ -> a |> Task.singleton
 

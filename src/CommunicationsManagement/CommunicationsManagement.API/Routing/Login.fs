@@ -97,16 +97,11 @@ let confirm =
     return! redirectTo false mr.BaseUrl
   }
 
-let logout (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! sessionID = getSessionID ctx
-      do! fun p -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
-      // Short-circuit for redirection.
-      let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
-      do! Task.Delay(25)
-      do! redirectTo false baseUrl |> EarlyReturn |> Error
-      let! mr = getAnonymousRootModel ctx
-      return { Model = (); Root = mr }
-    }
-    |> resolveEffect2 ports theVoid next ctx
+let logout =
+  effectRoute {
+    let! sessionID = getSessionID
+    do! fun (p: IPorts) -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
+    let! mr = getAnonymousRootModel
+    do! Task.Delay(25)
+    return! redirectTo false mr.BaseUrl
+  }
