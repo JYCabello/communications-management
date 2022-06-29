@@ -156,6 +156,11 @@ module Rendering =
     |> (view >> Layout.layout model.Root)
     |> renderHtml
 
+  let renderOk2 (view: Render<'a>) (model: ViewModel<'a>) : HttpHandler =
+    model
+    |> (view >> Layout.layout model.Root)
+    |> renderHtml
+
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
     let errorView = Layout.notification tr >> htmlView
@@ -242,11 +247,14 @@ module EffectfulRoutes =
 
     member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
       a |> bindER (fun _ -> b)
-      
+
     member inline this.Source(er: EffectRoute<'a>) : EffectRoute<'a> = er
 
     member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
       fun p _ c -> c |> ce |> (fun e -> e p)
+
+    member inline this.Source(ce: HttpHandler) : EffectRoute<HttpHandler> =
+      fun _ _ _ -> TaskResult.ok ce
 
     member inline this.Source(ce: HttpContext -> Task<Result<'a, DomainError>>) : EffectRoute<'a> =
       fun _ _ c -> c |> ce
@@ -259,9 +267,8 @@ module EffectfulRoutes =
       fun _ _ _ -> a |> Task.singleton
 
   let effectRoute = EffectRouteBuilder()
-  
-  let getPorts : EffectRoute<IPorts> =
-    fun p _ _ -> TaskResult.ok p
+
+  let getPorts: EffectRoute<IPorts> = fun p _ _ -> TaskResult.ok p
 
   open Rendering
 
@@ -288,17 +295,29 @@ module EffectfulRoutes =
         | Error error -> processError error
         |> (fun r -> r n c)
     }
-   
-  let bindForm (c : HttpContext) =
+
+  let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
+    fun n c ->
+      task {
+        let! tr = er p n c
+
+        return!
+          match tr with
+          | Ok h -> h
+          | Error e -> processError e
+          |> (fun r -> r n c)
+      }
+
+  let bindForm (c: HttpContext) =
     c.TryBindFormAsync<'a>()
     |> TaskResult.mapError (fun _ -> BadRequest)
-  
+
   let queryGuid name (c: HttpContext) =
     c.TryGetQueryStringValue(name)
-      |> Option.bind (fun c ->
-        match Guid.TryParse c with
-        | true, guid -> Some guid
-        | false, _ -> None)
-      |> function
-        | Some c -> TaskResult.ok c
-        | None -> TaskResult.error BadRequest
+    |> Option.bind (fun c ->
+      match Guid.TryParse c with
+      | true, guid -> Some guid
+      | false, _ -> None)
+    |> function
+      | Some c -> TaskResult.ok c
+      | None -> TaskResult.error BadRequest

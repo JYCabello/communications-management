@@ -15,16 +15,16 @@ open EffectfulRoutes
 [<CLIMutable>]
 type LoginDto = { Email: string option }
 
-let get (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! vmr = getAnonymousRootModel ctx
+let get =
+  effectRoute {
+    let! vmr = getAnonymousRootModel
 
-      return
+    return!
+      renderOk2
+        loginView
         { Model = { Email = None; EmailError = None }
           Root = vmr }
-    }
-    |> resolveEffect2 ports loginView next ctx
+  }
 
 type LoginResult =
   | Success
@@ -98,7 +98,10 @@ let confirm (ports: IPorts) : HttpHandler =
       do ctx.Response.Cookies.Append("sessionID", code.ToString())
 
       // Short-circuit for redirection.
-      do! redirectTo false mr.BaseUrl |> EarlyReturn |> Error
+      do!
+        redirectTo false mr.BaseUrl
+        |> EarlyReturn
+        |> Error
 
       return { Model = (); Root = mr }
     }

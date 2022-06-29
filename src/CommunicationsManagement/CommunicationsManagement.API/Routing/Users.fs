@@ -208,7 +208,9 @@ let removeRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! fun (p: IPorts) -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
+    do!
+      fun (p: IPorts) ->
+        p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
 
     return user
   }

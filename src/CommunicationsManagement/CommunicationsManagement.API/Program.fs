@@ -5,6 +5,7 @@ open System.Globalization
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Routing
+open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Localization
@@ -13,11 +14,12 @@ open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 
-let (>>=>) a b = a >=> warbler (fun _ -> b)
-
 let webApp (ports: IPorts) =
+  let (>>=>) a b = a >=> warbler (fun _ -> b)
+  let (>>==>) a b = a >=> warbler (fun _ -> solveHandler ports b)
+
   choose [ GET
-           >=> choose [ route "/login" >>=> Login.get ports
+           >=> choose [ route "/login" >>==> Login.get
                         route "/login/confirm" >>=> Login.confirm ports
                         route "/logout" >>=> Login.logout ports
                         route "/users" >>=> Users.list ports
