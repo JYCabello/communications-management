@@ -1,4 +1,5 @@
-﻿module CommunicationsManagement.API.Views.Login
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Views.Login
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine

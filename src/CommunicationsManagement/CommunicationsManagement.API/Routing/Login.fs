@@ -11,7 +11,6 @@ open FsToolkit.ErrorHandling
 open Routes.Rendering
 open Giraffe
 open Models
-open Views.Login
 open EffectfulRoutes
 open Effects
 
@@ -24,14 +23,14 @@ let get =
 
     return!
       renderOk
-        loginView
+        Views.Login.loginView
         { Model = { Email = None; EmailError = None }
           Root = vmr }
   }
 
 type LoginResult =
   | Success
-  | Failure of LoginModel
+  | Failure of Views.Login.LoginModel
 
 let post: EffectRoute<HttpHandler> =
   let create dto rm =
@@ -62,7 +61,7 @@ let post: EffectRoute<HttpHandler> =
 
       return
         renderOk
-          loginMessage
+          Views.Login.loginMessage
           { Root = rm
             Model = rm.Translate "EmailLoginDetails" }
     }
@@ -71,7 +70,7 @@ let post: EffectRoute<HttpHandler> =
     effectRoute {
       return
         renderOk
-          loginView
+          Views.Login.loginView
           { Model =
               { Email = dto.Email
                 EmailError = Some error }
