@@ -4,7 +4,6 @@ open System
 open System.Collections.Concurrent
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
-
 open FsToolkit.ErrorHandling
 
 
