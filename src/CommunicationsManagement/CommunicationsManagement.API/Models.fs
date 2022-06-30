@@ -46,6 +46,11 @@ type Session =
     UserID: Guid
     ExpiresAt: DateTime }
 
+type Channel =
+  { ID: Guid
+    Name: string
+    IsEnabled: bool }
+
 type Translator = string -> string
 
 type ViewModelRoot =

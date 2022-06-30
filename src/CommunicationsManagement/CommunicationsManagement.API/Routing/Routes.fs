@@ -232,7 +232,7 @@ module EffectfulRoutes =
   let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
     fun n c ->
       task {
-        let! tr = er p n c
+        let! tr = er p n c |> attempt
 
         return!
           match tr with

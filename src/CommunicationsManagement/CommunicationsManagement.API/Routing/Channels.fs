@@ -4,5 +4,4 @@ module CommunicationsManagement.API.Routing.Channels
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open Giraffe
 
-let list : EffectRoute<HttpHandler> =
-  failwith "not implemented"
+let list: EffectRoute<HttpHandler> = effectRoute { return redirectTo false "/" }
