@@ -1,4 +1,5 @@
-﻿module CommunicationsManagement.API.Views.Home
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Views.Home
 
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API

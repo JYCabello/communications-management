@@ -9,7 +9,6 @@ open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe
 open CommunicationsManagement.API.Models
-open CommunicationsManagement.API.Views.Users.ListUsers
 open CommunicationsManagement.API.Views.Users.CreateUser
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
@@ -24,7 +23,7 @@ let list: EffectRoute<HttpHandler> =
 
     return
       renderOk
-        usersListView
+        ListUsers.usersListView
         { Model = { Users = users }
           Root = root }
   }

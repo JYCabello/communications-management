@@ -7,10 +7,9 @@ open CommunicationsManagement.API.Routing.Routes.Rendering
 open Giraffe
 open Models
 open EffectfulRoutes
-open Views.Home
 
 let home: EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
-    return renderOk homeView { Model = (); Root = root }
+    return renderOk Views.Home.homeView { Model = (); Root = root }
   }
