@@ -125,6 +125,9 @@ let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   |> ignoreErrors
 
 
+let private handleChannel (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
+  failwith "not implemented"
+
 let subscribe cs (subscription: SubscriptionDetails) =
   let rec subscribeTo () =
     let reSubscribe (_: StreamSubscription) (reason: SubscriptionDroppedReason) (_: Exception) =
@@ -227,4 +230,16 @@ let triggerSubscriptions (ports: IPorts) =
     Handler = fun _ evnt _ -> task { do! handleSession evnt ports } :> Task
     GetCheckpoint = getCheckpoint sessionsCheckpoint
     SaveCheckpoint = saveSessionCheckpoint }
+  |> subscribe'
+  
+  let mutable channelsCheckpoint: StreamPosition option = None
+
+  let saveChannelsCheckpoint p =
+    channelsCheckpoint <- Some p
+    Task.CompletedTask
+
+  { StreamID = "Channels"
+    Handler = fun _ evnt _ -> task { do! handleChannel evnt ports } :> Task
+    GetCheckpoint = getCheckpoint channelsCheckpoint
+    SaveCheckpoint = saveChannelsCheckpoint }
   |> subscribe'
