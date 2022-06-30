@@ -7,16 +7,17 @@ open Flurl
 
 
 let private usersRow vm =
+  let url =
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegment("users")
+      .ToString()
+
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.UserManagement)
   |> Option.map (fun _ ->
-    [ a [ _href (
-            vm
-              .Root
-              .BaseUrl
-              .AppendPathSegment("users")
-              .ToString()
-          )
+    [ a [ _href url
           _class "btn btn-primary"
           _id "users-link" ] [
         "Users" |> vm.Root.Translate |> Text
