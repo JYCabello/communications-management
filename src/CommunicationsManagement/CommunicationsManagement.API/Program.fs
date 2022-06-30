@@ -12,11 +12,11 @@ open Giraffe
 
 
 let webApp (ports: IPorts) =
-  let solve er = solveHandler ports er
+  let solve = solveHandler ports
   let (>==>) a b = a >=> warbler (fun _ -> solve b)
 
   let routeCifE path routeHandler =
-    routeCif path (fun t -> routeHandler t |> solve)
+    routeCif path (routeHandler >> solve)
 
   choose [ GET
            >=> choose [ route "/login" >==> Login.get
@@ -36,8 +36,6 @@ let webApp (ports: IPorts) =
 
 let configureApp (app: IApplicationBuilder) ports =
   app.UseGiraffe <| webApp ports
-  //let localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>()
-  app.UseRequestLocalization() |> ignore
 
 let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
