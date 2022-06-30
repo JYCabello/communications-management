@@ -87,6 +87,7 @@ let createAndLogin (roles: Roles) (setup: Setup) =
     driver.FindElements(By.Name("roles"))
     |> Seq.filter (fun e -> roles |> Seq.exists (fun r -> e.GetAttribute("value") = (r |> int |> string)))
   
+  // Verify that all roles have an input.
   Assert.Equal(
     roles |> Seq.length,
     roleInputs |> Seq.length)

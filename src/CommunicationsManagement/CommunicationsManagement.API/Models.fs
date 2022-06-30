@@ -23,6 +23,7 @@ type Roles =
 let contains (searchTerm: Roles) (userRoles: Roles) =
   (searchTerm &&& userRoles) = searchTerm
   && (userRoles = Roles.None |> not)
+  && (searchTerm = Roles.None |> not)
 
 type DomainError =
   | NotAuthenticated
