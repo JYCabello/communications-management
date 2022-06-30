@@ -72,6 +72,7 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
         ul [ _class "list-group list-group-flush" ] [
           roleCheckBox Roles.Press (trx "Press")
           roleCheckBox Roles.Delegate (trx "Delegate")
+          roleCheckBox Roles.ChannelManagement (trx "ChannelManagement")
           roleCheckBox Roles.UserManagement (trx "UserManagement")
         ]
       ]

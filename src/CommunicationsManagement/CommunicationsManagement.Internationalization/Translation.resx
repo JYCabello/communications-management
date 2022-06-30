@@ -198,4 +198,7 @@
   <data name="Name" xml:space="preserve">
       <value>Name</value>
   </data>
+  <data name="ChannelManagement" xml:space="preserve">
+      <value>Channel management</value>
+  </data>
 </root>
