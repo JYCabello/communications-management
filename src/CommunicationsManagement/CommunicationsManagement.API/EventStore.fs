@@ -50,6 +50,18 @@ let deserialize (evnt: ResolvedEvent) =
       decoded
       |> JsonConvert.DeserializeObject<RoleRemoved>
       |> RoleRemoved
+    | "ChannelCreated" ->
+      decoded
+      |> JsonConvert.DeserializeObject<ChannelCreated>
+      |> ChannelCreated
+    | "ChannelEnabled" ->
+      decoded
+      |> JsonConvert.DeserializeObject<ChannelEnabled>
+      |> ChannelEnabled
+    | "ChannelDisabled" ->
+      decoded
+      |> JsonConvert.DeserializeObject<ChannelDisabled>
+      |> ChannelDisabled
     | t -> StreamEvent.Toxic { Type = t; Content = decoded }
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
@@ -165,6 +177,9 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
       | UserCreated e -> e |> JsonConvert.SerializeObject |> Some
       | RoleAdded e -> e |> JsonConvert.SerializeObject |> Some
       | RoleRemoved e -> e |> JsonConvert.SerializeObject |> Some
+      | ChannelCreated e -> e |> JsonConvert.SerializeObject |> Some
+      | ChannelEnabled e -> e |> JsonConvert.SerializeObject |> Some
+      | ChannelDisabled e -> e |> JsonConvert.SerializeObject |> Some
       |> Option.map Encoding.UTF8.GetBytes
       |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
       |> Option.map (fun ed ->

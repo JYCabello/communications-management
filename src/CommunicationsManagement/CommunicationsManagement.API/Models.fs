@@ -89,12 +89,24 @@ module EventModels =
   [<CLIMutable>]
   type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
 
+  [<CLIMutable>]
+  type ChannelCreated = { ChannelID: Guid; Name: string }
+  
+  [<CLIMutable>]
+  type ChannelEnabled = { ChannelID: Guid }
+  
+  [<CLIMutable>]
+  type ChannelDisabled = { ChannelID: Guid }
+
   type StreamEvent =
     | SessionCreated of SessionCreated
     | SessionTerminated of SessionTerminated
     | UserCreated of UserCreated
     | RoleAdded of RoleAdded
     | RoleRemoved of RoleRemoved
+    | ChannelCreated of ChannelCreated
+    | ChannelEnabled of ChannelEnabled
+    | ChannelDisabled of ChannelDisabled
     | Toxic of ToxicEvent
 
   let getEventTypeName =
@@ -104,6 +116,9 @@ module EventModels =
     | UserCreated _ -> "UserCreated"
     | RoleAdded _ -> "RoleAdded"
     | RoleRemoved _ -> "RoleRemoved"
+    | ChannelCreated _ -> "ChannelCreated"
+    | ChannelEnabled _ -> "ChannelEnabled"
+    | ChannelDisabled _ -> "ChannelDisabled"
     | Toxic _ -> "Toxic"
 
   let getStreamName =
@@ -113,6 +128,9 @@ module EventModels =
     | UserCreated _ -> "Users"
     | RoleAdded _ -> "Users"
     | RoleRemoved _ -> "Users"
+    | ChannelCreated _ -> "Channels"
+    | ChannelEnabled _ -> "Channels"
+    | ChannelDisabled _ -> "Channels"
     | Toxic _ -> "toxic"
 
   type SendEventParams = { Event: StreamEvent }
