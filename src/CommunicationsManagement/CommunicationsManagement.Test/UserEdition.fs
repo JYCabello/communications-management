@@ -8,7 +8,7 @@ open TestUtils
 
 
 [<Fact>]
-let ``role is removed and added`` () =
+let ``can add and remove roles`` () =
   task {
     use! setup = testSetup ()
     let driver = setup.driver

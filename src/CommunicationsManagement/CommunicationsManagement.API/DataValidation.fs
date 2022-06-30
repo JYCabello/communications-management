@@ -3,7 +3,7 @@
 open System.Net.Mail
 open CommunicationsManagement.API.Models
 
-let isValidEmail (email: string option) (tr: Translator) : string option =
+let validateEmail (email: string option) (tr: Translator) : string option =
   let errorMessage = "InvalidEmail" |> tr |> Some
 
   match email with

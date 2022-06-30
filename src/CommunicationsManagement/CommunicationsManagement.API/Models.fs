@@ -23,6 +23,14 @@ let contains (searchTerm: Roles) (userRoles: Roles) =
   (searchTerm &&& userRoles) = searchTerm
   && (userRoles = Roles.None |> not)
 
+type DomainError =
+  | NotAuthenticated
+  | Unauthorized of protectedResourceName: string
+  | NotFound of resourceName: string
+  | Conflict
+  | BadRequest
+  | InternalServerError of errorMessage: string
+
 type User =
   { Name: string
     ID: Guid
@@ -47,79 +55,73 @@ type ViewModelRoot =
 
 type ViewModel<'a> = { Root: ViewModelRoot; Model: 'a }
 
-[<CLIMutable>]
-type ToxicEvent = { Content: string; Type: string }
+module EventModels =
 
-[<CLIMutable>]
-type SessionCreated =
-  { SessionID: Guid
-    UserID: Guid
-    ExpiresAt: DateTime }
+  [<CLIMutable>]
+  type ToxicEvent = { Content: string; Type: string }
 
-[<CLIMutable>]
-type SessionTerminated = { SessionID: Guid }
+  [<CLIMutable>]
+  type SessionCreated =
+    { SessionID: Guid
+      UserID: Guid
+      ExpiresAt: DateTime }
 
-[<CLIMutable>]
-type UserCreated =
-  { UserID: Guid
-    Email: string
-    Name: string
-    Roles: Roles }
+  [<CLIMutable>]
+  type SessionTerminated = { SessionID: Guid }
 
-[<CLIMutable>]
-type RoleAdded = { UserID: Guid; RoleToAdd: Roles }
+  [<CLIMutable>]
+  type UserCreated =
+    { UserID: Guid
+      Email: string
+      Name: string
+      Roles: Roles }
 
-[<CLIMutable>]
-type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
+  [<CLIMutable>]
+  type RoleAdded = { UserID: Guid; RoleToAdd: Roles }
 
-type StreamEvent =
-  | SessionCreated of SessionCreated
-  | SessionTerminated of SessionTerminated
-  | UserCreated of UserCreated
-  | RoleAdded of RoleAdded
-  | RoleRemoved of RoleRemoved
-  | Toxic of ToxicEvent
+  [<CLIMutable>]
+  type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
 
-let getEventTypeName =
-  function
-  | SessionCreated _ -> "SessionCreated"
-  | SessionTerminated _ -> "SessionTerminated"
-  | UserCreated _ -> "UserCreated"
-  | RoleAdded _ -> "RoleAdded"
-  | RoleRemoved _ -> "RoleRemoved"
-  | Toxic _ -> "Toxic"
+  type StreamEvent =
+    | SessionCreated of SessionCreated
+    | SessionTerminated of SessionTerminated
+    | UserCreated of UserCreated
+    | RoleAdded of RoleAdded
+    | RoleRemoved of RoleRemoved
+    | Toxic of ToxicEvent
 
-let getStreamName =
-  function
-  | SessionCreated _ -> "Sessions"
-  | SessionTerminated _ -> "Sessions"
-  | UserCreated _ -> "Users"
-  | RoleAdded _ -> "Users"
-  | RoleRemoved _ -> "Users"
-  | Toxic _ -> "toxic"
+  let getEventTypeName =
+    function
+    | SessionCreated _ -> "SessionCreated"
+    | SessionTerminated _ -> "SessionTerminated"
+    | UserCreated _ -> "UserCreated"
+    | RoleAdded _ -> "RoleAdded"
+    | RoleRemoved _ -> "RoleRemoved"
+    | Toxic _ -> "Toxic"
 
-type DomainError =
-  | NotAuthenticated
-  | Unauthorized of protectedResourceName: string
-  | NotFound of resourceName: string
-  | Conflict
-  | BadRequest
-  | InternalServerError of errorMessage: string
-  | EarlyReturn of Giraffe.Core.HttpHandler
+  let getStreamName =
+    function
+    | SessionCreated _ -> "Sessions"
+    | SessionTerminated _ -> "Sessions"
+    | UserCreated _ -> "Users"
+    | RoleAdded _ -> "Users"
+    | RoleRemoved _ -> "Users"
+    | Toxic _ -> "toxic"
 
-type SendEventParams = { Event: StreamEvent }
+  type SendEventParams = { Event: StreamEvent }
 
-type WelcomeNotification = { UserName: string }
+module NotificationModels =
+  type WelcomeNotification = { UserName: string }
 
-type LoginNotification =
-  { UserName: string
-    ActivationCode: Guid
-    ActivationUrl: string }
+  type LoginNotification =
+    { UserName: string
+      ActivationCode: Guid
+      ActivationUrl: string }
 
-type Notification =
-  | Welcome of WelcomeNotification
-  | Login of LoginNotification
+  type Notification =
+    | Welcome of WelcomeNotification
+    | Login of LoginNotification
 
-type SendNotificationParams =
-  { Notification: Notification
-    Email: Email }
+  type SendNotificationParams =
+    { Notification: Notification
+      Email: Email }

@@ -1,56 +1,38 @@
 ﻿module Main
 
-open System.Collections.Generic
-open System.Globalization
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Routing
+open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Localization
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
 
-let (>>=>) a b = a >=> warbler (fun _ -> b)
-
 let webApp (ports: IPorts) =
+  let solve = solveHandler ports
+  let (>==>) a b = a >=> warbler (fun _ -> solve b)
+  let routeCifE path h = routeCif path (h >> solve)
+
   choose [ GET
-           >=> choose [ route "/login" >>=> Login.get ports
-                        route "/login/confirm" >>=> Login.confirm ports
-                        route "/logout" >>=> Login.logout ports
-                        route "/users" >>=> Users.list ports
-                        route "/users/create" >>=> Users.create ports
-                        routeCif "/users/%O" (fun id -> Users.details id ports)
-                        routeCif "/users/%O/roles/add/%i" (fun (userId, role) ->
-                          Users.addRole userId role ports)
-                        routeCif "/users/%O/roles/remove/%i" (fun (userId, role) ->
-                          Users.removeRole userId role ports)
-                        route "/ping" >=> text "pong"
-                        route "/" >>=> Home.home ports ]
+           >=> choose [ route "/login" >==> Login.get
+                        route "/login/confirm" >==> Login.confirm
+                        route "/logout" >==> Login.logout
+                        route "/users" >==> Users.list
+                        route "/users/create" >==> Users.create
+                        routeCifE "/users/%O" Users.details
+                        routeCifE "/users/%O/roles/add/%i" Users.addRole
+                        routeCifE "/users/%O/roles/remove/%i" Users.removeRole
+                        route "/" >==> Home.home ]
            POST
-           >=> choose [ route "/login" >>=> Login.post ports
-                        route "/users/create" >>=> Users.createPost ports ] ]
+           >=> choose [ route "/login" >==> Login.post
+                        route "/users/create" >==> Users.createPost ] ]
 
-let configureApp (app: IApplicationBuilder) ports =
-  app.UseGiraffe <| webApp ports
-  //let localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>()
-  app.UseRequestLocalization() |> ignore
-  ()
+let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
 
-let configureServices (services: IServiceCollection) =
-  services.AddGiraffe() |> ignore
-
-  services.Configure<RequestLocalizationOptions> (fun (opt: RequestLocalizationOptions) ->
-    let supportedCultures = [ CultureInfo("es"); CultureInfo("en") ] |> List
-    opt.DefaultRequestCulture <- RequestCulture(CultureInfo("es"), CultureInfo("es"))
-    opt.SupportedCultures <- supportedCultures
-    opt.SupportedUICultures <- supportedCultures
-    ())
-  |> ignore
-
-  ()
+let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
 let buildHost ports forcedPort =
   EventStore.triggerSubscriptions ports
@@ -77,9 +59,9 @@ let ports config : IPorts =
       member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
       member this.configuration = config
-      member this.query<'a> id = Storage.query<'a> config id
+      member this.find<'a> id = Storage.query<'a> config id
 
-      member this.find<'a> predicate =
+      member this.query<'a> predicate =
         Storage.queryPredicate<'a> config predicate
 
       member this.save<'a> a = Storage.save<'a> config a

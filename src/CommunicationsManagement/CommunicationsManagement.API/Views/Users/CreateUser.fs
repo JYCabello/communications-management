@@ -1,4 +1,5 @@
-﻿module CommunicationsManagement.API.Views.Users.CreateUser
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Views.Users.CreateUser
 
 open System
 open CommunicationsManagement.API.Models

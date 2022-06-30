@@ -20,7 +20,9 @@ let ``intercepts the error`` () =
      | Ok _ -> false
      | Error e ->
        match e with
-       | InternalServerError _ -> true
+       | InternalServerError e ->
+         Assert.Contains("boom", e)
+         true
        | _ -> false)
     |> Assert.True
   }

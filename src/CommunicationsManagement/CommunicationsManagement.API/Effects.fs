@@ -3,6 +3,8 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Models.NotificationModels
 open FsToolkit.ErrorHandling
 
 type IPorts =
@@ -12,11 +14,24 @@ type IPorts =
     Translator -> SendNotificationParams -> Task<Result<unit, DomainError>>
 
   abstract member configuration: Configuration
-  abstract member query<'a> : Guid -> Task<Result<'a, DomainError>>
-  abstract member find<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
+  abstract member find<'a> : Guid -> Task<Result<'a, DomainError>>
+  abstract member query<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
   abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
   abstract member delete<'a> : Guid -> Task<Result<unit, DomainError>>
   abstract member getAll<'a> : unit -> Task<Result<'a list, DomainError>>
+
+let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
+  task {
+    try
+      return! tr
+    with
+    | e ->
+      return
+        e.Message
+        |> sprintf "Something happened: %s"
+        |> InternalServerError
+        |> Error
+  }
 
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
@@ -135,14 +150,13 @@ type EffectBuilder() =
 
 let effect = EffectBuilder()
 
-let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
-  task {
-    try
-      return! tr
-    with
-    | e ->
-      return
-        $"Something happened: {e.Message}"
-        |> InternalServerError
-        |> Error
-  }
+let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
+
+let emit e =
+  effect { do! fun (p: IPorts) -> p.sendEvent e }
+
+let getAll<'a> : Effect<'a list> =
+  effect { return! fun (p: IPorts) -> p.getAll<'a> () }
+
+let query<'a> q : Effect<'a> =
+  effect { return! fun (p: IPorts) -> p.query q }

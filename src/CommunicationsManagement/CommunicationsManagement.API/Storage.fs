@@ -4,7 +4,9 @@ open System
 open System.Collections.Concurrent
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
+
 open FsToolkit.ErrorHandling
+
 
 let tryGet a (dict: ConcurrentDictionary<'a, 'b>) : 'b option =
   if dict.ContainsKey a then
@@ -60,9 +62,8 @@ let private deleteUser (id: Guid) = userStorage.TryRemove(id)
 let optionToObjResult<'a> (topt: Task<'a option>) =
   topt
   |> Task.map (function
-    | Some v -> Ok v
+    | Some v -> v |> box |> Ok
     | None -> NotFound typeof<'a>.Name |> Error)
-  |> TaskResult.map box
 
 let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
   fun _ id ->
@@ -129,12 +130,8 @@ let delete<'a> : Configuration -> Guid -> Task<Result<unit, DomainError>> =
     taskResult {
       do!
         match typeof<'a> with
-        | t when t = typeof<Session> ->
-          deleteSession id |> ignore
-          TaskResult.ok ()
-        | t when t = typeof<User> ->
-          deleteUser id |> ignore
-          TaskResult.ok ()
+        | t when t = typeof<Session> -> deleteSession id |> ignore |> TaskResult.ok
+        | t when t = typeof<User> -> deleteUser id |> ignore |> TaskResult.ok
         | t ->
           InternalServerError $"Delete not implemented for type {t.FullName}"
           |> TaskResult.error

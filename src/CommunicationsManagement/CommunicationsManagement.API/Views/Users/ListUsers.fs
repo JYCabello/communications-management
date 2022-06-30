@@ -1,4 +1,5 @@
-﻿module CommunicationsManagement.API.Views.Users.ListUsers
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Views.Users.ListUsers
 
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine.HtmlElements

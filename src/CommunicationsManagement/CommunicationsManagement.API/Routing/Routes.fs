@@ -8,14 +8,14 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
 open CommunicationsManagement.Internationalization
 open FsToolkit.ErrorHandling
+open Giraffe
 open Microsoft.AspNetCore.Http
-open Giraffe.Core
 open Giraffe.ViewEngine
 
-open type Giraffe.HttpContextExtensions
+open type HttpContextExtensions
 
 module Rendering =
-  open type Giraffe.HttpContextExtensions
+  open type HttpContextExtensions
 
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
@@ -89,7 +89,7 @@ module Rendering =
 
       let! session =
         fun p ->
-          p.query<Session> sessionID
+          p.find<Session> sessionID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
@@ -100,14 +100,15 @@ module Rendering =
 
       return!
         fun p ->
-          p.query<User> session.UserID
+          p.find<User> session.UserID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
     }
 
-  let buildModelRoot user (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let buildModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
+      let! user = auth ctx
       let tr = getTranslator ctx
       let! config = fun p -> p.configuration |> TaskResult.ok
 
@@ -132,26 +133,12 @@ module Rendering =
           BaseUrl = config.BaseUrl }
     }
 
-  let requireRole (user: User) (role: Roles) (resourceName: string) : Effect<unit> =
-    effect {
-      return!
-        (if user.hasRole role then
-           Ok()
-         else
-           resourceName |> Unauthorized |> Error)
-        |> Task.FromResult
-    }
-
   type Render<'a> = ViewModel<'a> -> XmlNode list
 
-  let renderText (vm: ViewModel<string>) = [ Text vm.Model ]
-
-  let renderHtml (view: XmlNode) : HttpHandler = htmlView view
-
-  let renderOk (model: ViewModel<'a>) (view: Render<'a>) : HttpHandler =
+  let renderOk (view: Render<'a>) (model: ViewModel<'a>) : HttpHandler =
     model
     |> (view >> Layout.layout model.Root)
-    |> renderHtml
+    |> htmlView
 
   let processError (e: DomainError) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
     let tr = getTranslator ctx
@@ -174,37 +161,125 @@ module Rendering =
        |> errorView
      | BadRequest ->
        [ "BadRequestTemplate" |> tr |> Text ]
-       |> errorView
-     | EarlyReturn h -> h)
+       |> errorView)
     |> fun handler -> handler next ctx
 
-  let resolveEffect
-    (ports: IPorts)
-    (view: Render<'a>)
-    (e: Effect<ViewModel<'a>>)
-    (next: HttpFunc)
-    (ctx: HttpContext)
-    : Task<HttpContext option> =
-    task {
-      let! result = e ports |> attempt
+module EffectfulRoutes =
+  type EffectRoute<'a> = IPorts -> HttpFunc -> HttpContext -> Task<Result<'a, DomainError>>
 
-      return!
-        match result with
-        | Ok model -> renderOk model view next ctx
-        | Error error -> processError error next ctx
+  let mapER (f: 'a -> 'b) (e: EffectRoute<'a>) : EffectRoute<'b> =
+    fun p next ctx -> e p next ctx |> TaskResult.map f
+
+  let bindER (f: 'a -> EffectRoute<'b>) (e: EffectRoute<'a>) : EffectRoute<'b> =
+    fun p next ctx ->
+      taskResult {
+        let! a = e p next ctx
+        let ber = f a |> mapER id
+        return! ber p next ctx
+      }
+
+  let toEffectRoute h : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok h
+
+  let solve p n c er : Task<Result<'a, DomainError>> = er p n c
+
+  type EffectRouteBuilder() =
+    member inline this.Bind
+      (
+        e: EffectRoute<'a>,
+        [<InlineIfLambda>] f: 'a -> EffectRoute<'b>
+      ) : EffectRoute<'b> =
+      bindER f e
+
+    member inline this.Return a : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok a
+    member inline this.ReturnFrom(e: EffectRoute<'a>) : EffectRoute<'a> = e
+    member inline this.Zero() : EffectRoute<Unit> = fun _ _ _ -> TaskResult.ok ()
+
+    member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
+      a |> bindER (fun _ -> b)
+
+    member inline this.Source(er: EffectRoute<'a>) : EffectRoute<'a> = er
+
+    member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
+      fun p _ c -> c |> ce |> (fun e -> e p)
+
+    member inline this.Source(h: HttpHandler) : EffectRoute<HttpHandler> =
+      fun _ _ _ -> TaskResult.ok h
+
+    member inline this.Source(ce: HttpContext -> Task<Result<'a, DomainError>>) : EffectRoute<'a> =
+      fun _ _ c -> c |> ce
+
+    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> = fun p _ _ -> e p
+
+    member inline this.Source<'a when 'a: not struct>(a: Task<'a>) : EffectRoute<'a> =
+      fun _ _ _ -> a |> Task.map Ok
+
+    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> = fun _ _ _ -> a
+
+    member inline this.Source(t: Task) : EffectRoute<unit> =
+      fun _ _ _ ->
+        task {
+          do! t
+          return! TaskResult.ok ()
+        }
+
+    member inline this.Source(a: Result<'a, DomainError>) : EffectRoute<'a> =
+      fun _ _ _ -> a |> Task.singleton
+
+  let effectRoute = EffectRouteBuilder()
+
+  open Rendering
+
+  let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
+    fun n c ->
+      task {
+        let! tr = er p n c
+
+        return!
+          match tr with
+          | Ok h -> h
+          | Error e -> processError e
+          |> (fun r -> r n c)
+      }
+
+  let bindForm<'a> (c: HttpContext) =
+    c.TryBindFormAsync<'a>()
+    |> TaskResult.mapError (fun _ -> BadRequest)
+
+  let queryGuid name (c: HttpContext) =
+    c.TryGetQueryStringValue(name)
+    |> Option.bind (fun c ->
+      match Guid.TryParse c with
+      | true, guid -> Some guid
+      | false, _ -> None)
+    |> function
+      | Some c -> TaskResult.ok c
+      | None -> TaskResult.error BadRequest
+
+  let setCookie name value (c: HttpContext) =
+    c.Response.Cookies.Append(name, value.ToString())
+    |> TaskResult.ok
+
+  let notify n : EffectRoute<unit> =
+    effectRoute {
+      let! rm = getAnonymousRootModel
+      do! fun (p: IPorts) -> p.sendNotification rm.Translate n
     }
 
-  // Exists just for the cases where the context is explicit in the route definition
-  let resolveEffect2 ports view next ctx eff = resolveEffect ports view eff next ctx
+  let requireRole (role: Roles) : EffectRoute<unit> =
+    let tag =
+      match role with
+      | Roles.Delegate -> "Delegate"
+      | Roles.Press -> "Press"
+      | Roles.UserManagement -> "UserManagement"
+      | _ -> "Unknown"
 
-  let resolveRedirect p (getUrl: IPorts -> 'a -> string) next ctx (e: Effect<'a>) : HttpFuncResult =
-    task {
-      let! r = e p
+    effectRoute {
+      let! user = auth
+      let! vmr = getAnonymousRootModel
 
       return!
-        match r |> Result.map (getUrl p) with
-        | Ok url -> redirectTo false url next ctx
-        | Error error -> processError error next ctx
+        (match user.hasRole role with
+         | true -> Ok()
+         | false -> tag |> vmr.Translate |> Unauthorized |> Error)
+        |> Task.FromResult
     }
-
-  let theVoid: Render<'a> = fun _ -> []

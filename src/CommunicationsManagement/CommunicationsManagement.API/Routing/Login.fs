@@ -1,59 +1,41 @@
-﻿module CommunicationsManagement.API.Routing.Login
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Routing.Login
 
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API
-open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Models.NotificationModels
+open CommunicationsManagement.API.Routing.Routes
 open FsToolkit.ErrorHandling
 open Routes.Rendering
 open Giraffe
 open Models
-open Views.Login
+open EffectfulRoutes
+open Effects
 
 [<CLIMutable>]
 type LoginDto = { Email: string option }
 
-let get (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! vmr = getAnonymousRootModel ctx
+let get =
+  effectRoute {
+    let! vmr = getAnonymousRootModel
 
-      return
+    return!
+      renderOk
+        Views.Login.loginView
         { Model = { Email = None; EmailError = None }
           Root = vmr }
-    }
-    |> resolveEffect2 ports loginView next ctx
+  }
 
 type LoginResult =
   | Success
-  | Failure of LoginModel
+  | Failure of Views.Login.LoginModel
 
-let post (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! dto =
-        ctx.TryBindFormAsync<LoginDto>()
-        |> TaskResult.mapError (fun _ -> BadRequest)
-
-      let! rm = getAnonymousRootModel ctx
-
-      let emailError = DataValidation.isValidEmail dto.Email rm.Translate
-
-      // Short-circuit for validation.
-      do!
-        match emailError with
-        | None -> Ok()
-        | Some error ->
-          { Model =
-              { Email = dto.Email
-                EmailError = Some error }
-            Root = rm }
-          |> fun m -> renderOk m loginView
-          |> EarlyReturn
-          |> Error
-
-      let! user =
-        fun p -> p.find<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
+let post: EffectRoute<HttpHandler> =
+  let create dto rm =
+    effectRoute {
+      let! user = query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
 
       let session =
         { UserID = user.ID
@@ -61,68 +43,64 @@ let post (ports: IPorts) : HttpHandler =
           ExpiresAt = DateTime.UtcNow.AddDays(15) }
 
       do!
-        fun p ->
-          p.sendEvent
-            { Event =
-                SessionCreated
-                  { SessionID = session.ID
-                    UserID = session.UserID
-                    ExpiresAt = session.ExpiresAt } }
+        emit
+          { Event =
+              SessionCreated
+                { SessionID = session.ID
+                  UserID = session.UserID
+                  ExpiresAt = session.ExpiresAt } }
 
-      let! notification =
-        fun p ->
+      do!
+        notify
           { Email = user.Email
             Notification =
               Login
                 { UserName = user.Name
                   ActivationCode = session.ID
-                  ActivationUrl = $"{p.configuration.BaseUrl}/login/confirm?code={session.ID}" } }
-          |> TaskResult.ok
-
-      do! fun p -> p.sendNotification rm.Translate notification
+                  ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
 
       return
-        { Root = rm
-          Model = rm.Translate "EmailLoginDetails" }
+        renderOk
+          Views.Login.loginMessage
+          { Root = rm
+            Model = rm.Translate "EmailLoginDetails" }
     }
-    |> resolveEffect2 ports loginMessage next ctx
 
-let confirm (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! mr = getAnonymousRootModel ctx
-
-      let! code =
-        fun _ ->
-          ctx.TryGetQueryStringValue("code")
-          |> Option.bind (fun c ->
-            match Guid.TryParse c with
-            | true, guid -> Some guid
-            | false, _ -> None)
-          |> function
-            | Some c -> TaskResult.ok c
-            | None -> TaskResult.error BadRequest
-
-      do ctx.Response.Cookies.Append("sessionID", code.ToString())
-
-      // Short-circuit for redirection.
-      let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
-      do! redirectTo false baseUrl |> EarlyReturn |> Error
-
-      return { Model = (); Root = mr }
+  let renderErrors rm error dto =
+    effectRoute {
+      return
+        renderOk
+          Views.Login.loginView
+          { Model =
+              { Email = dto.Email
+                EmailError = Some error }
+            Root = rm }
     }
-    |> resolveEffect2 ports theVoid next ctx
 
-let logout (ports: IPorts) : HttpHandler =
-  fun next ctx ->
-    effect {
-      let! sessionID = getSessionID ctx
-      do! fun p -> p.sendEvent { Event = SessionTerminated { SessionID = sessionID } }
-      // Short-circuit for redirection.
-      let! baseUrl = fun p -> p.configuration.BaseUrl |> TaskResult.ok
-      do! Task.Delay(25)
-      do! redirectTo false baseUrl |> EarlyReturn |> Error
-      let! mr = getAnonymousRootModel ctx
-      return { Model = (); Root = mr }
-    }
-    |> resolveEffect2 ports theVoid next ctx
+  effectRoute {
+    let! dto = bindForm<LoginDto>
+    let! rm = getAnonymousRootModel
+
+    return!
+      match DataValidation.validateEmail dto.Email rm.Translate with
+      | None -> create dto rm
+      | Some error -> renderErrors rm error dto
+  }
+
+let confirm =
+  effectRoute {
+    let! mr = getAnonymousRootModel
+    let! code = queryGuid "code"
+    do! setCookie "sessionID" code
+    return! redirectTo false mr.BaseUrl
+  }
+
+let logout =
+  effectRoute {
+    let! sessionID = getSessionID
+    do! emit { Event = SessionTerminated { SessionID = sessionID } }
+    let! mr = getAnonymousRootModel
+    // Catch your breath while processing the logout. Don't judge me.
+    do! Task.Delay(25)
+    return! redirectTo false mr.BaseUrl
+  }

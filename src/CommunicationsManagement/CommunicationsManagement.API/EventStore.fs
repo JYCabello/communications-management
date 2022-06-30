@@ -7,6 +7,7 @@ open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.EventModels
 open EventStore.Client
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling
@@ -53,17 +54,17 @@ let deserialize (evnt: ResolvedEvent) =
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
 
+// Ignore errors just because it's a pet project, logs go in here.
 let private ignoreErrors =
   Task.map (fun r ->
     match r with
     | Ok u -> u
-    | Error _ -> () // Ignore errors for now
-  )
+    | Error _ -> ())
 
 let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (sc: SessionCreated) =
     taskResult {
-      let! user = ports.query<User> sc.UserID
+      let! user = ports.find<User> sc.UserID
       do! ports.save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
 
       do!
@@ -94,13 +95,13 @@ let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
 
   let handleRoleAdded (ra: RoleAdded) =
     taskResult {
-      let! user = ports.query<User> ra.UserID
+      let! user = ports.find<User> ra.UserID
       do! ports.save<User> { user with Roles = user.Roles + ra.RoleToAdd }
     }
 
   let handleRoleRemoved (rr: RoleRemoved) =
     taskResult {
-      let! user = ports.query<User> rr.UserID
+      let! user = ports.find<User> rr.UserID
       do! ports.save<User> { user with Roles = user.Roles - rr.RoleRemoved }
     }
 

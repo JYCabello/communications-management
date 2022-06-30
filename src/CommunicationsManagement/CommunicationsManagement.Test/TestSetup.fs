@@ -8,6 +8,7 @@ open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.NotificationModels
 open Docker.DotNet
 open Docker.DotNet.Models
 open FsToolkit.ErrorHandling
@@ -190,8 +191,8 @@ let testSetup () =
 
           member this.configuration = mainPorts.configuration
           member this.save a = mainPorts.save a
-          member this.query id = mainPorts.query id
-          member this.find predicate = mainPorts.find predicate
+          member this.find id = mainPorts.find id
+          member this.query predicate = mainPorts.query predicate
           member this.delete<'a> id = mainPorts.delete<'a> id
           member this.getAll<'a>() = mainPorts.getAll<'a> () }
 

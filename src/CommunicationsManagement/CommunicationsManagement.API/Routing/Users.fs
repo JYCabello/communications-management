@@ -1,49 +1,49 @@
-﻿module CommunicationsManagement.API.Routing.Users
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Routing.Users
 
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
-open Microsoft.AspNetCore.Http
 open Giraffe
 open CommunicationsManagement.API.Models
-open CommunicationsManagement.API.Views.Users.ListUsers
-open CommunicationsManagement.API.Views.Users.CreateUser
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open Flurl
+open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 
-let list (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-    do! requireRole user Roles.UserManagement (root.Translate "Users")
-    let! users = fun p -> p.getAll<User> ()
-
-    return
-      { Model = { Users = users }
-        Root = root }
-  }
-  |> resolveEffect2 ports usersListView next ctx
-
-let create (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-    do! requireRole user Roles.UserManagement (root.Translate "Users")
+let list: EffectRoute<HttpHandler> =
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement
+    let! users = getAll<User>
 
     return
-      { Model =
-          { Name = None
-            NameError = None
-            Email = None
-            EmailError = None
-            Roles = Roles.None
-            RolesError = None }
-        Root = root }
+      renderOk
+        ListUsers.usersListView
+        { Model = { Users = users }
+          Root = root }
   }
-  |> resolveEffect2 ports createUserView next ctx
+
+let create: EffectRoute<HttpHandler> =
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement
+
+    return
+      renderOk
+        CreateUser.createUserView
+        { Model =
+            { Name = None
+              NameError = None
+              Email = None
+              EmailError = None
+              Roles = Roles.None
+              RolesError = None }
+          Root = root }
+  }
 
 [<CLIMutable>]
 type CreateUserDto =
@@ -53,12 +53,12 @@ type CreateUserDto =
 
 type UserCreationValidation =
   | Valid of UserCreated
-  | Invalid of UserCreationViewModel
+  | Invalid of CreateUser.UserCreationViewModel
 
-let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpContext option> =
-  let validate (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
+let createPost =
+  let validate (p: IPorts) (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
     task {
-      let emailError = isValidEmail dto.Email tr
+      let emailError = validateEmail dto.Email tr
 
       let! emailExists =
         match emailError with
@@ -67,7 +67,7 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
           match dto.Email with
           | None -> true |> Task.FromResult
           | Some email ->
-            ports.find<User> (fun u -> u.Email = Email email)
+            p.query<User> (fun u -> u.Email = Email email)
             |> Task.map (fun r ->
               r
               |> function
@@ -113,72 +113,51 @@ let createPost (ports: IPorts) (next: HttpFunc) (ctx: HttpContext) : Task<HttpCo
               Roles = dto.Roles.Value }
     }
 
-  let save usr vmr : Effect<ViewModel<UserCreationViewModel>> =
-    effect {
-      do! fun p -> p.sendEvent { Event = UserCreated usr }
-
-      return!
-        renderOk { Model = "Ok"; Root = vmr } successMessage
-        |> EarlyReturn
-        |> Error
+  let save usr vmr : EffectRoute<HttpHandler> =
+    effectRoute {
+      do! emit { Event = UserCreated usr }
+      return! renderOk CreateUser.successMessage { Model = "Ok"; Root = vmr }
     }
 
-  effect {
-    let! user = auth ctx
-    let! root = buildModelRoot user ctx
-    do! requireRole user Roles.UserManagement (root.Translate "Users")
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement
 
-    let! dto =
-      ctx.TryBindFormAsync<CreateUserDto>()
-      |> TaskResult.mapError (fun _ -> BadRequest)
+    let! dto = bindForm<CreateUserDto>
 
-    let! validationResult = validate dto root.Translate
+    let! p = getPorts
+
+    let! validationResult = validate p dto root.Translate
 
     return!
       match validationResult with
       | Valid user -> save user root
       | Invalid userCreationViewModel ->
-        { Model = userCreationViewModel
-          Root = root }
-        |> Task.FromResult
-        |> fromTask
+        renderOk
+          CreateUser.createUserView
+          { Model = userCreationViewModel
+            Root = root }
+        |> toEffectRoute
   }
-  |> resolveEffect2 ports createUserView next ctx
 
-let details
-  (id: Guid)
-  (ports: IPorts)
-  (next: HttpFunc)
-  (ctx: HttpContext)
-  : Task<HttpContext option> =
-  effect {
-    let! currentUser = auth ctx
-    let! root = buildModelRoot currentUser ctx
-    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
-    let! user = fun p -> p.query<User> id
-    return { Model = user; Root = root }
+let details id =
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement
+    let! user = fun (p: IPorts) -> p.find<User> id
+    return renderOk UserDetails.details { Model = user; Root = root }
   }
-  |> resolveEffect2 ports UserDetails.details next ctx
 
-let userUrl (p: IPorts) (u: User) =
-  p
-    .configuration
-    .BaseUrl
+let userUrl (baseUrl: string) (u: User) =
+  baseUrl
     .AppendPathSegments("users", u.ID)
     .ToString()
 
-let addRole
-  (userId: Guid)
-  (role: int)
-  (ports: IPorts)
-  (next: HttpFunc)
-  (ctx: HttpContext)
-  : HttpFuncResult =
-  effect {
-    let! currentUser = auth ctx
-    let! root = buildModelRoot currentUser ctx
-    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
-    let! user = fun p -> p.query<User> userId
+let addRole (userId, role) =
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement
+    let! user = fun (p: IPorts) -> p.find<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
@@ -187,24 +166,15 @@ let addRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! fun p -> p.sendEvent { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
-
-    return user
+    do! emit { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
+    return userUrl root.BaseUrl user |> redirectTo false
   }
-  |> resolveRedirect ports userUrl next ctx
 
-let removeRole
-  (userId: Guid)
-  (role: int)
-  (ports: IPorts)
-  (next: HttpFunc)
-  (ctx: HttpContext)
-  : HttpFuncResult =
-  effect {
-    let! currentUser = auth ctx
-    let! root = buildModelRoot currentUser ctx
-    do! requireRole currentUser Roles.UserManagement (root.Translate "Users")
-    let! user = fun p -> p.query<User> userId
+let removeRole (userId, role) =
+  effectRoute {
+    let! root = buildModelRoot
+    do! requireRole Roles.UserManagement
+    let! user = fun (p: IPorts) -> p.find<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
@@ -213,8 +183,7 @@ let removeRole
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! fun p -> p.sendEvent { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
+    do! emit { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
 
-    return user
+    return userUrl root.BaseUrl user |> redirectTo false
   }
-  |> resolveRedirect ports userUrl next ctx
