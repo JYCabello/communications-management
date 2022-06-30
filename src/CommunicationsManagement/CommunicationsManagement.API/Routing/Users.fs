@@ -153,7 +153,7 @@ let userUrl (baseUrl: string) (u: User) =
     .AppendPathSegments("users", u.ID)
     .ToString()
 
-let addRole userId role =
+let addRole (userId, role) =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement
@@ -170,7 +170,7 @@ let addRole userId role =
     return userUrl root.BaseUrl user |> redirectTo false
   }
 
-let removeRole userId role =
+let removeRole (userId, role) =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement
