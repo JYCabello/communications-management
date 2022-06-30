@@ -1,4 +1,4 @@
-﻿module TestProject1CommunicationsManagement.Test.ContainsRolesShould
+﻿module TestProject1CommunicationsManagement.Test.``contain roles``
 
 open CommunicationsManagement.API
 open Xunit
@@ -18,7 +18,6 @@ open Models
 [<InlineData(true, Roles.Admin, Roles.Admin)>]
 [<InlineData(true, Roles.UserManagement, Roles.Admin)>]
 [<InlineData(true, Roles.ChannelManagement, Roles.Admin)>]
-[<InlineData(true, Roles.None, Roles.Admin)>]
 // Roles match
 [<InlineData(true, Roles.Press, Roles.Press)>]
 [<InlineData(true, Roles.Press, Roles.Press ||| Roles.Delegate)>]
@@ -34,5 +33,11 @@ open Models
 [<InlineData(false, Roles.Press, Roles.Delegate ||| Roles.UserManagement)>]
 [<InlineData(false, Roles.Delegate, Roles.Press ||| Roles.UserManagement)>]
 [<InlineData(false, Roles.UserManagement, Roles.Press ||| Roles.Delegate)>]
+// Nobody has the None role
+[<InlineData(false, Roles.None, Roles.Admin)>]
+[<InlineData(false, Roles.None, Roles.UserManagement)>]
+[<InlineData(false, Roles.None, Roles.Delegate)>]
+[<InlineData(false, Roles.None, Roles.Press)>]
+[<InlineData(false, Roles.None, Roles.ChannelManagement)>]
 let ``process roles correctly`` result searchTerm userRoles =
   Assert.Equal(result, contains searchTerm userRoles)

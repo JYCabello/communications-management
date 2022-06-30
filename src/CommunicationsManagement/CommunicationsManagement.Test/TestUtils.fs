@@ -78,13 +78,21 @@ let createAndLogin (roles: Roles) (setup: Setup) =
   driver
     .FindElement(By.Id("input-email"))
     .SendKeys(testUser.Email)
-
-  for role in
+    
+  let roles = 
     Enum.GetValues<Roles>()
-    |> Seq.filter (fun r -> contains r roles) do
+    |> Seq.filter (fun r -> contains r roles)
+  
+  let roleInputs =
     driver.FindElements(By.Name("roles"))
-    |> Seq.tryFind (fun e -> e.GetAttribute("value") = (role |> int |> string))
-    |> Option.iter (fun e -> e.Click())
+    |> Seq.filter (fun e -> roles |> Seq.exists (fun r -> e.GetAttribute("value") = (r |> int |> string)))
+  
+  Assert.Equal(
+    roles |> Seq.length,
+    roleInputs |> Seq.length)
+  
+  roleInputs
+  |> Seq.iter (fun i -> i.Click())
 
   driver
     .FindElement(By.Id("create-user-sumbit"))

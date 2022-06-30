@@ -11,9 +11,10 @@
     <ItemGroup>
         <Compile Include="TestSetup.fs" />
         <Compile Include="TestUtils.fs" />
-        <Compile Include="Attempting.fs" />
+        <Compile Include="attempt wrapper.fs" />
         <Compile Include="ContainsRolesShould.fs" />
         <Compile Include="UserEdition.fs" />
+        <Compile Include="ChannelManagement.fs" />
         <Compile Include="Program.fs" />
         <Content Include="xunit.runner.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
