@@ -3,6 +3,8 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API
+open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Models.NotificationModels
 open CommunicationsManagement.API.Routing.Routes
 open FsToolkit.ErrorHandling
 open Routes.Rendering
@@ -98,6 +100,7 @@ let logout =
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! mr = getAnonymousRootModel
+    // Catch your breath while processing the logout. Don't judge me.
     do! Task.Delay(25)
     return! redirectTo false mr.BaseUrl
   }

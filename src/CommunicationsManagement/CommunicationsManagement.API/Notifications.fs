@@ -3,6 +3,7 @@ module CommunicationsManagement.API.Notifications
 
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.NotificationModels
 open FsToolkit.ErrorHandling
 open SendGrid
 open SendGrid.Helpers.Mail

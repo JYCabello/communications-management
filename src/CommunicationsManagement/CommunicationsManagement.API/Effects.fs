@@ -3,6 +3,8 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Models.NotificationModels
 open FsToolkit.ErrorHandling
 
 type IPorts =

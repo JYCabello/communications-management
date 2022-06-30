@@ -3,6 +3,7 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe

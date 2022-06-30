@@ -7,6 +7,7 @@ open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.EventModels
 open EventStore.Client
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling

@@ -3,6 +3,7 @@
 open System
 open System.Threading
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.NotificationModels
 open OpenQA.Selenium
 open Xunit
 open TestSetup

@@ -8,6 +8,7 @@ open System.Threading
 open System.Threading.Tasks
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Models.NotificationModels
 open Docker.DotNet
 open Docker.DotNet.Models
 open FsToolkit.ErrorHandling
