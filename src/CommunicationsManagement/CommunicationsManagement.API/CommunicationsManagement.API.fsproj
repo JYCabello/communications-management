@@ -22,6 +22,7 @@
         <Compile Include="Views\Users\ListUsers.fs" />
         <Compile Include="Views\Users\CreateUser.fs" />
         <Compile Include="Views\Users\UserDetails.fs" />
+        <Compile Include="Views\Channels\ListChannels.fs" />
         <Compile Include="Routing\Routes.fs" />
         <Compile Include="Routing\Login.fs" />
         <Compile Include="Routing\Home.fs" />
