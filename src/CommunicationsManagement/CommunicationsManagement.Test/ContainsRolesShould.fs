@@ -10,12 +10,14 @@ open Models
 [<InlineData(false, Roles.Press, Roles.None)>]
 [<InlineData(false, Roles.Delegate, Roles.None)>]
 [<InlineData(false, Roles.UserManagement, Roles.None)>]
+[<InlineData(false, Roles.ChannelManagement, Roles.None)>]
 [<InlineData(false, Roles.None, Roles.None)>]
 // Admin has all roles
 [<InlineData(true, Roles.Delegate, Roles.Admin)>]
 [<InlineData(true, Roles.Press, Roles.Admin)>]
 [<InlineData(true, Roles.Admin, Roles.Admin)>]
 [<InlineData(true, Roles.UserManagement, Roles.Admin)>]
+[<InlineData(true, Roles.ChannelManagement, Roles.Admin)>]
 [<InlineData(true, Roles.None, Roles.Admin)>]
 // Roles match
 [<InlineData(true, Roles.Press, Roles.Press)>]
@@ -27,6 +29,7 @@ open Models
 [<InlineData(true, Roles.UserManagement, Roles.UserManagement)>]
 [<InlineData(true, Roles.UserManagement, Roles.UserManagement ||| Roles.Press)>]
 [<InlineData(true, Roles.UserManagement, Roles.UserManagement ||| Roles.Delegate)>]
+[<InlineData(true, Roles.ChannelManagement, Roles.ChannelManagement)>]
 // Roles not matching
 [<InlineData(false, Roles.Press, Roles.Delegate ||| Roles.UserManagement)>]
 [<InlineData(false, Roles.Delegate, Roles.Press ||| Roles.UserManagement)>]

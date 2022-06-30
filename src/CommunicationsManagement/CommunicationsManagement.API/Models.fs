@@ -17,6 +17,7 @@ type Roles =
   | Delegate = 1
   | Press = 2
   | UserManagement = 4
+  | ChannelManagement = 8
   | Admin = 131071
 
 let contains (searchTerm: Roles) (userRoles: Roles) =
