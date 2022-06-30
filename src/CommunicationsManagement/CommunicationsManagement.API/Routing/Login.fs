@@ -1,4 +1,5 @@
-﻿module CommunicationsManagement.API.Routing.Login
+﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
+module CommunicationsManagement.API.Routing.Login
 
 open System
 open System.Threading.Tasks

@@ -30,7 +30,6 @@ type DomainError =
   | Conflict
   | BadRequest
   | InternalServerError of errorMessage: string
-  | EarlyReturn of Giraffe.Core.HttpHandler
 
 type User =
   { Name: string

@@ -54,12 +54,12 @@ let deserialize (evnt: ResolvedEvent) =
   with
   | _ -> StreamEvent.Toxic { Type = "Message"; Content = decoded }
 
+// Ignore errors just because it's a pet project, logs go in here.
 let private ignoreErrors =
   Task.map (fun r ->
     match r with
     | Ok u -> u
-    | Error _ -> () // Ignore errors for now
-  )
+    | Error _ -> ())
 
 let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (sc: SessionCreated) =

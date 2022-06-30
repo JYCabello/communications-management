@@ -20,6 +20,19 @@ type IPorts =
   abstract member delete<'a> : Guid -> Task<Result<unit, DomainError>>
   abstract member getAll<'a> : unit -> Task<Result<'a list, DomainError>>
 
+let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
+  task {
+    try
+      return! tr
+    with
+    | e ->
+      return
+        e.Message
+        |> sprintf "Something happened: %s"
+        |> InternalServerError
+        |> Error
+  }
+
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
 let mapE (f: 'a -> 'b) (e: Effect<'a>) : Effect<'b> = fun p -> p |> e |> TaskResult.map f
@@ -137,17 +150,7 @@ type EffectBuilder() =
 
 let effect = EffectBuilder()
 
-let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
-  task {
-    try
-      return! tr
-    with
-    | e ->
-      return
-        $"Something happened: {e.Message}"
-        |> InternalServerError
-        |> Error
-  }
+let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
 
 let emit e =
   effect { do! fun (p: IPorts) -> p.sendEvent e }

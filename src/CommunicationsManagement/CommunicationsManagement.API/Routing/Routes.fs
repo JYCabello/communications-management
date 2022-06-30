@@ -161,8 +161,7 @@ module Rendering =
        |> errorView
      | BadRequest ->
        [ "BadRequestTemplate" |> tr |> Text ]
-       |> errorView
-     | EarlyReturn h -> h)
+       |> errorView)
     |> fun handler -> handler next ctx
 
 module EffectfulRoutes =
@@ -227,8 +226,6 @@ module EffectfulRoutes =
       fun _ _ _ -> a |> Task.singleton
 
   let effectRoute = EffectRouteBuilder()
-
-  let getPorts: EffectRoute<IPorts> = fun p _ _ -> TaskResult.ok p
 
   open Rendering
 
