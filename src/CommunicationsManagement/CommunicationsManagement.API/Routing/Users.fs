@@ -9,7 +9,6 @@ open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe
 open CommunicationsManagement.API.Models
-open CommunicationsManagement.API.Views.Users.CreateUser
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open Flurl
@@ -35,7 +34,7 @@ let create: EffectRoute<HttpHandler> =
 
     return
       renderOk
-        createUserView
+        CreateUser.createUserView
         { Model =
             { Name = None
               NameError = None
@@ -54,7 +53,7 @@ type CreateUserDto =
 
 type UserCreationValidation =
   | Valid of UserCreated
-  | Invalid of UserCreationViewModel
+  | Invalid of CreateUser.UserCreationViewModel
 
 let createPost =
   let validate (p: IPorts) (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
@@ -117,7 +116,7 @@ let createPost =
   let save usr vmr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-      return! renderOk successMessage { Model = "Ok"; Root = vmr }
+      return! renderOk CreateUser.successMessage { Model = "Ok"; Root = vmr }
     }
 
   effectRoute {
@@ -135,7 +134,7 @@ let createPost =
       | Valid user -> save user root
       | Invalid userCreationViewModel ->
         renderOk
-          createUserView
+          CreateUser.createUserView
           { Model = userCreationViewModel
             Root = root }
         |> toEffectRoute
