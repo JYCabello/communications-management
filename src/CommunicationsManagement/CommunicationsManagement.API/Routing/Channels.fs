@@ -13,5 +13,10 @@ let list: EffectRoute<HttpHandler> =
   effectRoute {
     let! vmr = buildModelRoot
     let! channels = getAll<Channel>
-    return renderOk ListChannels.list { Model = { Channels = channels }; Root = vmr }
+
+    return
+      renderOk
+        ListChannels.list
+        { Model = { Channels = channels }
+          Root = vmr }
   }
