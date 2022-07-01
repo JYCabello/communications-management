@@ -14,25 +14,25 @@ open Giraffe
 open System
 open Urls
 
-let list: EffectRoute<HttpHandler> =
+let list =
   effectRoute {
     do! requireRole Roles.ChannelManagement
     let! vmr = getModelRoot
     let! channels = getAll<Channel>
 
-    return
+    return!
       renderOk
         ListChannels.list
         { Model = { Channels = channels }
           Root = vmr }
   }
 
-let createGet: EffectRoute<HttpHandler> =
+let createGet =
   effectRoute {
     do! requireRole Roles.ChannelManagement
     let! vmr = getModelRoot
 
-    return
+    return!
       renderOk
         CreateChannel.create
         { Root = vmr
