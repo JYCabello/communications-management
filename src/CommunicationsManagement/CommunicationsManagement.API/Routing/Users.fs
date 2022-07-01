@@ -149,8 +149,7 @@ let details id =
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
-let userUrl (u: User) =
-  append "users" >> append u.ID
+let userUrl (u: User) = append "users" >> append u.ID
 
 let addRole (userId, role) =
   effectRoute {

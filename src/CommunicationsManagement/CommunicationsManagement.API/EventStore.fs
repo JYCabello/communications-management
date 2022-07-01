@@ -225,7 +225,9 @@ let triggerSubscriptions (ports: IPorts) =
 
   let mutable checkpoint: Position option = None
 
-  let saveCheckpoint = Option.iter (fun p -> checkpoint <- Some p) >> Task.singleton
+  let saveCheckpoint =
+    Option.iter (fun p -> checkpoint <- Some p)
+    >> Task.singleton
 
   { Handler = fun _ evnt _ -> task { do! handle evnt ports } :> Task
     GetCheckpoint = getCheckpoint checkpoint
