@@ -3,6 +3,7 @@ module CommunicationsManagement.API.Routing.Users
 
 open System
 open System.Threading.Tasks
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Views.Users
@@ -11,8 +12,8 @@ open Giraffe
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
-open Flurl
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
+open Urls
 
 let list: EffectRoute<HttpHandler> =
   effectRoute {
@@ -148,10 +149,8 @@ let details id =
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
-let userUrl (baseUrl: string) (u: User) =
-  baseUrl
-    .AppendPathSegments("users", u.ID)
-    .ToString()
+let userUrl (u: User) =
+  append "users" >> append u.ID
 
 let addRole (userId, role) =
   effectRoute {
@@ -167,7 +166,7 @@ let addRole (userId, role) =
       | None -> BadRequest |> Error)
 
     do! emit { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
-    return userUrl root.BaseUrl user |> redirectTo false
+    return userUrl user root.BaseUrl |> redirectTo false
   }
 
 let removeRole (userId, role) =
@@ -185,5 +184,5 @@ let removeRole (userId, role) =
 
     do! emit { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
 
-    return userUrl root.BaseUrl user |> redirectTo false
+    return userUrl user root.BaseUrl |> redirectTo false
   }
