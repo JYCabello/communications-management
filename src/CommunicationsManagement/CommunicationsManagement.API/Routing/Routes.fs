@@ -274,6 +274,11 @@ module EffectfulRoutes =
       return!
         (match user.hasRole role with
          | true -> Ok()
-         | false -> role |> getRoleName |> vmr.Translate |> Unauthorized |> Error)
+         | false ->
+           role
+           |> getRoleName
+           |> vmr.Translate
+           |> Unauthorized
+           |> Error)
         |> Task.FromResult
     }

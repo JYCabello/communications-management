@@ -48,14 +48,19 @@ type private ValidationResult =
 
 let createPost: EffectRoute<HttpHandler> =
   let validate: EffectRoute<ValidationResult> =
-    let existingError trx name (p: IPorts) _ _ =
-      p.query<Channel> (fun c -> c.Name = name)
-      |> Task.map (function
-        | Ok _ -> "AlreadyExists" |> trx |> Some |> Ok
-        | Error error ->
-          match error with
-          | NotFound _ -> Ok None
-          | e -> Error e)
+    let existingError trx name =
+      effectRoute {
+        let! p = getPorts
+
+        return!
+          p.query<Channel> (fun c -> c.Name = name)
+          |> Task.map (function
+            | Ok _ -> "AlreadyExists" |> trx |> Some |> Ok
+            | Error error ->
+              match error with
+              | NotFound _ -> Ok None
+              | e -> Error e)
+      }
 
     effectRoute {
       let! dto = fromForm<CreateChannelPostDto>
