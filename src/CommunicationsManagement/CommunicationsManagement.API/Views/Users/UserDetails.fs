@@ -39,14 +39,14 @@ let details (vm: ViewModel<User>) =
       vm
         .Root
         .BaseUrl
-        .AppendPathSegments("users", m.ID, "roles", "add", (role |> int |> string))
+        .AppendPathSegments("users", m.ID, "roles", "add", role |> int |> string)
         .ToString()
 
     let removeRoleUrl =
       vm
         .Root
         .BaseUrl
-        .AppendPathSegments("users", m.ID, "roles", "remove", (role |> int |> string))
+        .AppendPathSegments("users", m.ID, "roles", "remove", role |> int |> string)
         .ToString()
 
     li [ _class "list-group-item" ] [
