@@ -8,8 +8,8 @@ open Giraffe
 open Models
 open EffectfulRoutes
 
-let home: EffectRoute<HttpHandler> =
+let home =
   effectRoute {
     let! root = getModelRoot
-    return renderOk Views.Home.homeView { Model = (); Root = root }
+    return! renderOk Views.Home.homeView { Model = (); Root = root }
   }

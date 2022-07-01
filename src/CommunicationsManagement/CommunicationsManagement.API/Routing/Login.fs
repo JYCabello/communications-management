@@ -33,7 +33,7 @@ type LoginResult =
   | Success
   | Failure of Views.Login.LoginModel
 
-let post: EffectRoute<HttpHandler> =
+let post =
   let create dto rm =
     effectRoute {
       let! user = query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
@@ -64,7 +64,7 @@ let post: EffectRoute<HttpHandler> =
                     |> append "confirm"
                     |> addQueryParam "code" session.ID } }
 
-      return
+      return!
         renderOk
           Views.Login.loginMessage
           { Root = rm
@@ -73,7 +73,7 @@ let post: EffectRoute<HttpHandler> =
 
   let renderErrors rm error dto =
     effectRoute {
-      return
+      return!
         renderOk
           Views.Login.loginView
           { Model =

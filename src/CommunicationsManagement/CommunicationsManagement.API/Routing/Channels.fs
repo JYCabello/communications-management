@@ -46,7 +46,7 @@ type private ValidationResult =
   | Valid of string
   | Invalid of ViewModel<CreateChannel.ChannelCreationViewModel>
 
-let createPost: EffectRoute<HttpHandler> =
+let createPost =
   let validate: EffectRoute<ValidationResult> =
     let existingError trx name =
       effectRoute {
@@ -98,7 +98,7 @@ let createPost: EffectRoute<HttpHandler> =
                 { ChannelID = Guid.NewGuid()
                   ChannelName = name } }
 
-      return redirectTo false <| append "channels" vmr.BaseUrl
+      return! redirectTo false <| append "channels" vmr.BaseUrl
     }
 
   effectRoute {
@@ -111,17 +111,17 @@ let createPost: EffectRoute<HttpHandler> =
       | Invalid m -> effectRoute { return renderOk CreateChannel.create m }
   }
 
-let private switchChannel id eventBuilder : EffectRoute<HttpHandler> =
+let private switchChannel id eventBuilder =
   effectRoute {
     do! requireRole Roles.ChannelManagement
     let! vmr = getModelRoot
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
-    return redirectTo false (vmr.BaseUrl |> append "channels")
+    return! redirectTo false (vmr.BaseUrl |> append "channels")
   }
 
-let enableChannel id : EffectRoute<HttpHandler> =
+let enableChannel id =
   switchChannel id (fun c -> ChannelEnabled { ChannelID = c.ID })
 
-let disableChannel id : EffectRoute<HttpHandler> =
+let disableChannel id =
   switchChannel id (fun c -> ChannelDisabled { ChannelID = c.ID })
