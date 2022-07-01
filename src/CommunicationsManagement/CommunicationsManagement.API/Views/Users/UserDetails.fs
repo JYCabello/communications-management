@@ -1,9 +1,10 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Users.UserDetails
 
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open Flurl
+open Urls
 
 let details (vm: ViewModel<User>) =
   let trx = vm.Root.Translate
@@ -35,18 +36,20 @@ let details (vm: ViewModel<User>) =
 
   let roleButton role i18tag =
     let addRoleUrl =
-      vm
-        .Root
-        .BaseUrl
-        .AppendPathSegments("users", m.ID, "roles", "add", role |> int |> string)
-        .ToString()
+      vm.Root.BaseUrl
+      |> append "users"
+      |> append m.ID
+      |> append "roles"
+      |> append "add"
+      |> append (role |> int |> string)
 
     let removeRoleUrl =
-      vm
-        .Root
-        .BaseUrl
-        .AppendPathSegments("users", m.ID, "roles", "remove", role |> int |> string)
-        .ToString()
+      vm.Root.BaseUrl
+      |> append "users"
+      |> append m.ID
+      |> append "roles"
+      |> append "remove"
+      |> append (role |> int |> string)
 
     li [ _class "list-group-item" ] [
       div [] [ i18tag |> trx |> Text ]
