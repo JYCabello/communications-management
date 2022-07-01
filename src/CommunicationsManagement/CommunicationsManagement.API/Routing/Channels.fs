@@ -12,7 +12,7 @@ open Microsoft.FSharp.Core
 open Effects
 open Giraffe
 open System
-open Flurl
+open Urls
 
 let list: EffectRoute<HttpHandler> =
   effectRoute {
@@ -93,11 +93,7 @@ let createPost: EffectRoute<HttpHandler> =
                 { ChannelID = Guid.NewGuid()
                   ChannelName = name } }
 
-      let url =
-        vmr
-          .BaseUrl
-          .AppendPathSegment("channels")
-          .ToString()
+      let url = vmr.BaseUrl |> append "channels"
 
       return redirectTo true url
     }
@@ -119,13 +115,7 @@ let private switchChannel id eventBuilder : EffectRoute<HttpHandler> =
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
 
-    return
-      redirectTo
-        false
-        (vmr
-          .BaseUrl
-          .AppendPathSegment("channels")
-          .ToString())
+    return redirectTo false (vmr.BaseUrl |> append "channels")
   }
 
 let enableChannel id : EffectRoute<HttpHandler> =
