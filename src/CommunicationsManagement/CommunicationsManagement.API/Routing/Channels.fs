@@ -118,7 +118,7 @@ let private switchChannel id eventBuilder =
     let! vmr = getModelRoot
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
-    return! redirectTo false (vmr.BaseUrl |> append "channels")
+    return redirectTo false (vmr.BaseUrl |> append "channels")
   }
 
 let enableChannel id =

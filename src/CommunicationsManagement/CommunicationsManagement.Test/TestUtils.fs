@@ -72,6 +72,11 @@ let createAndLogin (roles: Roles) (setup: Setup) =
     .FindElement(By.Id("new-user-button"))
     .Click()
 
+  // Just trigger the validation.
+  driver
+    .FindElement(By.Id("create-user-sumbit"))
+    .Click()
+
   driver
     .FindElement(By.Id("input-name"))
     .SendKeys(testUser.Name)
