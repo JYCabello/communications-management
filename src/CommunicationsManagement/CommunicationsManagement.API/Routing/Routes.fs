@@ -13,14 +13,6 @@ open Microsoft.AspNetCore.Http
 open Giraffe.ViewEngine
 open type HttpContextExtensions
 
-module Urls =
-  open Flurl
-
-  let append segment (url: string) =
-    url.AppendPathSegment(segment).ToString()
-  
-  let addQueryParam name value (url: string) =
-    url.SetQueryParam(name, value).ToString()
 
 module Rendering =
   open type HttpContextExtensions

@@ -1,14 +1,15 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Layout
 
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open Flurl
+open Urls
 
 let private navTemplate (vmr: ViewModelRoot) =
   let langUrls =
-    [ (vmr.CurrentUrl.SetQueryParam("setLang", "en"), "en")
-      (vmr.CurrentUrl.SetQueryParam("setLang", "es"), "es") ]
+    [ (vmr.CurrentUrl |> addQueryParam "setLang" "en", "en")
+      (vmr.CurrentUrl |> addQueryParam "setLang" "es", "es") ]
 
   nav [] [
     yield!
@@ -26,7 +27,7 @@ let private navTemplate (vmr: ViewModelRoot) =
             Text u.Name
           ]
           Text "&nbsp;"
-          a [ _href (vmr.BaseUrl.AppendPathSegment("logout").ToString())
+          a [ _href (vmr.BaseUrl |> append "logout")
               _id "logout-link" ] [
             "Logout" |> vmr.Translate |> Text
           ] ])
