@@ -11,7 +11,7 @@
     <ItemGroup>
         <Compile Include="TestSetup.fs" />
         <Compile Include="TestUtils.fs" />
-        <Compile Include="attempt wrapper.fs" />
+        <Compile Include="Attempt.fs" />
         <Compile Include="ContainsRolesShould.fs" />
         <Compile Include="UserEdition.fs" />
         <Compile Include="ChannelManagement.fs" />
