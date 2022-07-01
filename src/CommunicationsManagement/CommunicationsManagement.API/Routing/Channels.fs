@@ -114,3 +114,22 @@ let createPost: EffectRoute<HttpHandler> =
       | Valid s -> save s
       | Invalid m -> effectRoute { return renderOk CreateChannel.create m }
   }
+
+let private switchChannel id eventBuilder : EffectRoute<HttpHandler> =
+  effectRoute {
+    do! requireRole Roles.ChannelManagement
+    let! vmr = getModelRoot
+    let! channel = find<Channel> id
+    do! emit { Event = eventBuilder channel }
+
+    return
+      redirectTo
+        false
+        (vmr.BaseUrl.AppendPathSegment("channels").ToString())
+  }
+
+let enableChannel id: EffectRoute<HttpHandler> =
+  switchChannel id (fun c -> ChannelEnabled { ChannelID = c.ID })
+
+let disableChannel id: EffectRoute<HttpHandler> =
+  switchChannel id (fun c -> ChannelDisabled { ChannelID = c.ID })

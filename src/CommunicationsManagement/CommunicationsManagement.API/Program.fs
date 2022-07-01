@@ -27,6 +27,8 @@ let webApp (ports: IPorts) =
                         routeCifE "/users/%O/roles/remove/%i" Users.removeRole
                         route "/channels" >==> Channels.list
                         route "/channels/create" >==> Channels.createGet
+                        routeCifE "/channels/%O/enable" Channels.enableChannel
+                        routeCifE "/channels/%O/disable" Channels.disableChannel
                         route "/" >==> Home.home ]
            POST
            >=> choose [ route "/login" >==> Login.post
