@@ -20,3 +20,9 @@ let list: EffectRoute<HttpHandler> =
         { Model = { Channels = channels }
           Root = vmr }
   }
+
+let createGet: EffectRoute<HttpHandler> =
+  effectRoute { return redirectTo true "/" }
+
+let createPost: EffectRoute<HttpHandler> =
+  effectRoute { return redirectTo true "/" }

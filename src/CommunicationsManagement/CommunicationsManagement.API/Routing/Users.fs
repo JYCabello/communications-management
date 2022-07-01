@@ -27,7 +27,7 @@ let list: EffectRoute<HttpHandler> =
           Root = root }
   }
 
-let create: EffectRoute<HttpHandler> =
+let createGet: EffectRoute<HttpHandler> =
   effectRoute {
     let! root = buildModelRoot
     do! requireRole Roles.UserManagement

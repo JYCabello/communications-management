@@ -21,15 +21,17 @@ let webApp (ports: IPorts) =
                         route "/login/confirm" >==> Login.confirm
                         route "/logout" >==> Login.logout
                         route "/users" >==> Users.list
-                        route "/users/create" >==> Users.create
+                        route "/users/create" >==> Users.createGet
                         routeCifE "/users/%O" Users.details
                         routeCifE "/users/%O/roles/add/%i" Users.addRole
                         routeCifE "/users/%O/roles/remove/%i" Users.removeRole
                         route "/channels" >==> Channels.list
+                        route "/channels/create" >==> Channels.createGet
                         route "/" >==> Home.home ]
            POST
            >=> choose [ route "/login" >==> Login.post
-                        route "/users/create" >==> Users.createPost ] ]
+                        route "/users/create" >==> Users.createPost
+                        route "/channels/create" >==> Channels.createPost ] ]
 
 let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp ports
 
