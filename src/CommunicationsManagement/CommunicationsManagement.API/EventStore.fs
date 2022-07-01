@@ -13,14 +13,7 @@ open EventStore.Client
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling
 
-
 type SubscriptionDetails =
-  { StreamID: string
-    Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task
-    GetCheckpoint: unit -> Task<FromStream>
-    SaveCheckpoint: StreamPosition -> Task }
-
-type SubscribeToAllDetails =
   { Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task
     GetCheckpoint: unit -> Task<FromAll>
     SaveCheckpoint: Position option -> Task<unit> }
@@ -146,7 +139,7 @@ let private handle (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   |> solve ports
   |> ignoreErrors
 
-let subscribe cs (subscription: SubscribeToAllDetails) =
+let subscribe cs (subscription: SubscriptionDetails) =
   let rec subscribeTo () =
     let reSubscribe (_: StreamSubscription) (reason: SubscriptionDroppedReason) (_: Exception) =
       if reason = SubscriptionDroppedReason.Disposed |> not then
