@@ -2,22 +2,23 @@
 
 open System
 open System.Threading
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.NotificationModels
 open OpenQA.Selenium
 open Xunit
 open TestSetup
-open Flurl
+open Urls
 
 let logout (setup: Setup) =
-  setup.driver.Url <- setup.config.BaseUrl.AppendPathSegment("logout")
+  setup.driver.Url <- setup.config.BaseUrl |> append "logout"
 
 let login email (setup: Setup) =
   logout setup
 
   let driver = setup.driver
 
-  Assert.Equal(setup.config.BaseUrl.AppendPathSegment("login"), driver.Url)
+  Assert.Equal(setup.config.BaseUrl |> append "login", driver.Url)
 
   driver
     .FindElement(By.Name("email"))

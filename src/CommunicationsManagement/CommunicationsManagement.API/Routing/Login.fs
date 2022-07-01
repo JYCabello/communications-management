@@ -12,6 +12,8 @@ open Giraffe
 open Models
 open EffectfulRoutes
 open Effects
+open Urls
+
 
 [<CLIMutable>]
 type LoginDto = { Email: string option }
@@ -56,7 +58,11 @@ let post: EffectRoute<HttpHandler> =
               Login
                 { UserName = user.Name
                   ActivationCode = session.ID
-                  ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
+                  ActivationUrl =
+                    rm.BaseUrl
+                    |> append "login"
+                    |> append "confirm"
+                    |> addQueryParam "code" session.ID } }
 
       return
         renderOk

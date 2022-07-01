@@ -8,4 +8,6 @@ let append segment (url: string) =
     .ToString()
 
 let addQueryParam name value (url: string) =
-  url.SetQueryParam(name, value).ToString()
+  url
+    .SetQueryParam(name, value.ToString())
+    .ToString()
