@@ -1,17 +1,20 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Users.ListUsers
 
-open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine.HtmlElements
 open Giraffe.ViewEngine
-open Urls
+open Flurl
 
 type UserListViewModel = { Users: User list }
 
 let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
   let url (u: User) =
-    vm.Root.BaseUrl |> append "users" |> append u.ID
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegments("users", u.ID)
+      .ToString()
 
   let userRow (u: User) =
     let email =
@@ -41,9 +44,11 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
     ]
 
   let newUserUrl =
-    vm.Root.BaseUrl
-    |> append "users"
-    |> append "create"
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegments("users", "create")
+      .ToString()
 
   [ div [ _class "d-flex flex-row-reverse" ] [
       a [ _href newUserUrl

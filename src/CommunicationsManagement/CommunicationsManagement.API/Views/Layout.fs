@@ -4,20 +4,26 @@ module CommunicationsManagement.API.Views.Layout
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open Urls
+open Flurl
 
 let private navTemplate (vmr: ViewModelRoot) =
   let langUrls =
-    [ (vmr.CurrentUrl |> addQueryParam "setLang" "en", "en")
-      (vmr.CurrentUrl |> addQueryParam "setLang" "es", "es") ]
+    [ (vmr
+        .CurrentUrl
+        .SetQueryParam("setLang", "en")
+         .ToString(),
+       "en")
+      (vmr
+        .CurrentUrl
+        .SetQueryParam("setLang", "es")
+         .ToString(),
+       "es") ]
 
   nav [] [
     yield!
       langUrls
       |> List.collect (fun (url, lang) ->
-        [ a [ _href (url.ToString()) ] [
-            Text lang
-          ]
+        [ a [ _href url ] [ Text lang ]
           Text "&nbsp;" ])
 
     yield!
@@ -27,7 +33,7 @@ let private navTemplate (vmr: ViewModelRoot) =
             Text u.Name
           ]
           Text "&nbsp;"
-          a [ _href (vmr.BaseUrl |> append "logout")
+          a [ _href (vmr.BaseUrl.AppendPathSegment("logout").ToString())
               _id "logout-link" ] [
             "Logout" |> vmr.Translate |> Text
           ] ])

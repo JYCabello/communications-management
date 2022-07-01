@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <Compile Include="Option.fs" />
-        <Compile Include="Urls.fs" />
         <Compile Include="Models.fs" />
         <Compile Include="Storage.fs" />
         <Compile Include="Effects.fs" />

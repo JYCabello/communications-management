@@ -13,7 +13,7 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
-open Urls
+open Flurl
 
 let list =
   effectRoute {
@@ -149,7 +149,8 @@ let details id =
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
-let userUrl (u: User) = append "users" >> append u.ID
+let userUrl (u: User) (url: string) =
+  url.AppendPathSegments("users", u.ID).ToString()
 
 let switchRole (userId, role) eventBuilder =
   effectRoute {

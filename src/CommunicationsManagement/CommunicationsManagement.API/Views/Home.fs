@@ -4,11 +4,16 @@ module CommunicationsManagement.API.Views.Home
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API
 open Giraffe.ViewEngine
-open Urls
+open Flurl
 
 
 let private usersRow vm =
-  let url = vm.Root.BaseUrl |> append "users"
+  let url =
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegment("users")
+      .ToString()
 
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.UserManagement)
@@ -21,7 +26,12 @@ let private usersRow vm =
   |> Option.defaultValue []
 
 let private channelsRow vm =
-  let url = vm.Root.BaseUrl |> append "channels"
+  let url =
+    vm
+      .Root
+      .BaseUrl
+      .AppendPathSegment("channels")
+      .ToString()
 
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.ChannelManagement)

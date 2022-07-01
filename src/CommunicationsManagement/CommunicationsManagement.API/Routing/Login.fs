@@ -12,7 +12,7 @@ open Giraffe
 open Models
 open EffectfulRoutes
 open Effects
-open Urls
+open Flurl
 
 
 [<CLIMutable>]
@@ -59,10 +59,11 @@ let post =
                 { UserName = user.Name
                   ActivationCode = session.ID
                   ActivationUrl =
-                    rm.BaseUrl
-                    |> append "login"
-                    |> append "confirm"
-                    |> addQueryParam "code" session.ID } }
+                    rm
+                      .BaseUrl
+                      .AppendPathSegments("login", "confirm")
+                      .SetQueryParam("code", session.ID)
+                      .ToString() } }
 
       return!
         renderOk
