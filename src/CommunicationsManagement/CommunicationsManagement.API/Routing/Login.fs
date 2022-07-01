@@ -2,7 +2,6 @@
 module CommunicationsManagement.API.Routing.Login
 
 open System
-open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
