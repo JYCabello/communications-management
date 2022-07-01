@@ -22,14 +22,14 @@
         <Compile Include="Views\Users\ListUsers.fs" />
         <Compile Include="Views\Users\CreateUser.fs" />
         <Compile Include="Views\Users\UserDetails.fs" />
+        <Compile Include="Views\Channels\ListChannels.fs" />
+        <Compile Include="Views\Channels\CreateChannel.fs" />
         <Compile Include="Routing\Routes.fs" />
         <Compile Include="Routing\Login.fs" />
         <Compile Include="Routing\Home.fs" />
         <Compile Include="Routing\Users.fs" />
+        <Compile Include="Routing\Channels.fs" />
         <Compile Include="Program.fs" />
-        <Content Include="pages\index.html">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
         <Content Update="appsettings.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>

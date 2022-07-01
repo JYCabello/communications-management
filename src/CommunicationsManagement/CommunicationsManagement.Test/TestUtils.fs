@@ -10,14 +10,26 @@ open TestSetup
 open Flurl
 
 let logout (setup: Setup) =
-  setup.driver.Url <- setup.config.BaseUrl.AppendPathSegment("logout")
+  setup.driver.Url <-
+    setup
+      .config
+      .BaseUrl
+      .AppendPathSegment("logout")
+      .ToString()
 
 let login email (setup: Setup) =
   logout setup
 
   let driver = setup.driver
 
-  Assert.Equal(setup.config.BaseUrl.AppendPathSegment("login"), driver.Url)
+  Assert.Equal(
+    setup
+      .config
+      .BaseUrl
+      .AppendPathSegment("login")
+      .ToString(),
+    driver.Url
+  )
 
   driver
     .FindElement(By.Name("email"))
@@ -71,6 +83,11 @@ let createAndLogin (roles: Roles) (setup: Setup) =
     .FindElement(By.Id("new-user-button"))
     .Click()
 
+  // Just trigger the validation.
+  driver
+    .FindElement(By.Id("create-user-sumbit"))
+    .Click()
+
   driver
     .FindElement(By.Id("input-name"))
     .SendKeys(testUser.Name)
@@ -79,12 +96,20 @@ let createAndLogin (roles: Roles) (setup: Setup) =
     .FindElement(By.Id("input-email"))
     .SendKeys(testUser.Email)
 
-  for role in
+  let roles =
     Enum.GetValues<Roles>()
-    |> Seq.filter (fun r -> contains r roles) do
+    |> Seq.filter (fun r -> contains r roles)
+
+  let roleInputs =
     driver.FindElements(By.Name("roles"))
-    |> Seq.tryFind (fun e -> e.GetAttribute("value") = (role |> int |> string))
-    |> Option.iter (fun e -> e.Click())
+    |> Seq.filter (fun e ->
+      roles
+      |> Seq.exists (fun r -> e.GetAttribute("value") = (r |> int |> string)))
+
+  // Verify that all roles have an input.
+  Assert.Equal(roles |> Seq.length, roleInputs |> Seq.length)
+
+  roleInputs |> Seq.iter (fun i -> i.Click())
 
   driver
     .FindElement(By.Id("create-user-sumbit"))

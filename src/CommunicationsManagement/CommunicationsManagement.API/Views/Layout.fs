@@ -1,22 +1,29 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Layout
 
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
 open Flurl
 
 let private navTemplate (vmr: ViewModelRoot) =
   let langUrls =
-    [ (vmr.CurrentUrl.SetQueryParam("setLang", "en"), "en")
-      (vmr.CurrentUrl.SetQueryParam("setLang", "es"), "es") ]
+    [ (vmr
+        .CurrentUrl
+        .SetQueryParam("setLang", "en")
+         .ToString(),
+       "en")
+      (vmr
+        .CurrentUrl
+        .SetQueryParam("setLang", "es")
+         .ToString(),
+       "es") ]
 
   nav [] [
     yield!
       langUrls
       |> List.collect (fun (url, lang) ->
-        [ a [ _href (url.ToString()) ] [
-            Text lang
-          ]
+        [ a [ _href url ] [ Text lang ]
           Text "&nbsp;" ])
 
     yield!

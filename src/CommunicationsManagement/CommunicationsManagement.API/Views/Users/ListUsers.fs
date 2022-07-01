@@ -13,7 +13,7 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
     vm
       .Root
       .BaseUrl
-      .AppendPathSegments("users", u.ID.ToString())
+      .AppendPathSegments("users", u.ID)
       .ToString()
 
   let userRow (u: User) =

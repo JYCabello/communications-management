@@ -1,6 +1,7 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Users.UserDetails
 
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
 open Flurl
@@ -26,7 +27,7 @@ let details (vm: ViewModel<User>) =
   let disabledInputFor value name i18nTag =
     [ labelFor i18nTag (Some $"input-%s{name}")
       div [ _class "input-group mb-3" ] [
-        input [ _class $"form-control"
+        input [ _class "form-control"
                 _name name
                 _disabled
                 _id $"input-%s{name}"
@@ -75,6 +76,7 @@ let details (vm: ViewModel<User>) =
         ul [ _class "list-group list-group-flush" ] [
           roleButton Roles.Press "Press"
           roleButton Roles.Delegate "Delegate"
+          roleButton Roles.ChannelManagement "ChannelManagement"
           roleButton Roles.UserManagement "UserManagement"
         ]
       ]

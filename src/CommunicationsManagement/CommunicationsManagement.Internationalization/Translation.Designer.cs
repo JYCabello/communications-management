@@ -97,11 +97,29 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Channel management.
+        /// </summary>
+        public static string ChannelManagement {
+            get {
+                return ResourceManager.GetString("ChannelManagement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The system was in an invalid state for the action you were trying to perform.
         /// </summary>
         public static string ConflictTemplate {
             get {
                 return ResourceManager.GetString("ConflictTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create channel.
+        /// </summary>
+        public static string CreateChannel {
+            get {
+                return ResourceManager.GetString("CreateChannel", resourceCulture);
             }
         }
         

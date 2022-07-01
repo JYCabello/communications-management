@@ -3,6 +3,7 @@ module CommunicationsManagement.API.Routing.Users
 
 open System
 open System.Threading.Tasks
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Views.Users
@@ -11,28 +12,28 @@ open Giraffe
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
-open Flurl
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
+open Flurl
 
-let list: EffectRoute<HttpHandler> =
+let list =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! users = getAll<User>
 
-    return
+    return!
       renderOk
         ListUsers.usersListView
         { Model = { Users = users }
           Root = root }
   }
 
-let create: EffectRoute<HttpHandler> =
+let createGet =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
 
-    return
+    return!
       renderOk
         CreateUser.createUserView
         { Model =
@@ -120,10 +121,10 @@ let createPost =
     }
 
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
 
-    let! dto = bindForm<CreateUserDto>
+    let! dto = fromForm<CreateUserDto>
 
     let! p = getPorts
 
@@ -142,20 +143,18 @@ let createPost =
 
 let details id =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> id
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
-let userUrl (baseUrl: string) (u: User) =
-  baseUrl
-    .AppendPathSegments("users", u.ID)
-    .ToString()
+let userUrl (u: User) (url: string) =
+  url.AppendPathSegments("users", u.ID).ToString()
 
-let addRole (userId, role) =
+let switchRole (userId, role) eventBuilder =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> userId
 
@@ -166,24 +165,12 @@ let addRole (userId, role) =
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! emit { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
-    return userUrl root.BaseUrl user |> redirectTo false
+    do! emit { Event = (user, role) |> eventBuilder }
+    return userUrl user root.BaseUrl |> redirectTo false
   }
 
-let removeRole (userId, role) =
-  effectRoute {
-    let! root = buildModelRoot
-    do! requireRole Roles.UserManagement
-    let! user = fun (p: IPorts) -> p.find<User> userId
+let addRole userIdRole =
+  switchRole userIdRole (fun (u, r) -> RoleAdded { UserID = u.ID; RoleToAdd = r })
 
-    let! role =
-      Enum.GetValues<Roles>()
-      |> Seq.tryFind (fun r -> (r |> int) = role)
-      |> (function
-      | Some r -> Ok r
-      | None -> BadRequest |> Error)
-
-    do! emit { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
-
-    return userUrl root.BaseUrl user |> redirectTo false
-  }
+let removeRole userIdRole =
+  switchRole userIdRole (fun (u, r) -> RoleRemoved { UserID = u.ID; RoleRemoved = r })

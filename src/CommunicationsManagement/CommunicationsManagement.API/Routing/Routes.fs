@@ -14,6 +14,7 @@ open Giraffe.ViewEngine
 
 open type HttpContextExtensions
 
+
 module Rendering =
   open type HttpContextExtensions
 
@@ -106,7 +107,7 @@ module Rendering =
             | e -> e)
     }
 
-  let buildModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let getModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
       let! user = auth ctx
       let tr = getTranslator ctx
@@ -232,7 +233,7 @@ module EffectfulRoutes =
   let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
     fun n c ->
       task {
-        let! tr = er p n c
+        let! tr = er p n c |> attempt
 
         return!
           match tr with
@@ -241,7 +242,7 @@ module EffectfulRoutes =
           |> (fun r -> r n c)
       }
 
-  let bindForm<'a> (c: HttpContext) =
+  let fromForm<'a> (c: HttpContext) =
     c.TryBindFormAsync<'a>()
     |> TaskResult.mapError (fun _ -> BadRequest)
 
@@ -266,13 +267,6 @@ module EffectfulRoutes =
     }
 
   let requireRole (role: Roles) : EffectRoute<unit> =
-    let tag =
-      match role with
-      | Roles.Delegate -> "Delegate"
-      | Roles.Press -> "Press"
-      | Roles.UserManagement -> "UserManagement"
-      | _ -> "Unknown"
-
     effectRoute {
       let! user = auth
       let! vmr = getAnonymousRootModel
@@ -280,6 +274,11 @@ module EffectfulRoutes =
       return!
         (match user.hasRole role with
          | true -> Ok()
-         | false -> tag |> vmr.Translate |> Unauthorized |> Error)
+         | false ->
+           role
+           |> getRoleName
+           |> vmr.Translate
+           |> Unauthorized
+           |> Error)
         |> Task.FromResult
     }

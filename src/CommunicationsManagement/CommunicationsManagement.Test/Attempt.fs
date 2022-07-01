@@ -1,18 +1,19 @@
-﻿module TestProject1CommunicationsManagement.Test.Attempting
+﻿module TestProject1CommunicationsManagement.Test.``attempt wrapper``
 
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Xunit
 open Effects
 
-let blowsUp () =
-  task {
-    failwith "boom"
-    return Ok "hello"
-  }
 
 [<Fact>]
 let ``intercepts the error`` () =
+  let blowsUp () =
+    task {
+      failwith "boom"
+      return Ok "hello"
+    }
+
   task {
     let! r = blowsUp () |> attempt
 

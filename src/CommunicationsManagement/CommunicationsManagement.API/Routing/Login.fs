@@ -2,7 +2,6 @@
 module CommunicationsManagement.API.Routing.Login
 
 open System
-open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
@@ -13,6 +12,8 @@ open Giraffe
 open Models
 open EffectfulRoutes
 open Effects
+open Flurl
+
 
 [<CLIMutable>]
 type LoginDto = { Email: string option }
@@ -32,7 +33,7 @@ type LoginResult =
   | Success
   | Failure of Views.Login.LoginModel
 
-let post: EffectRoute<HttpHandler> =
+let post =
   let create dto rm =
     effectRoute {
       let! user = query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
@@ -57,9 +58,14 @@ let post: EffectRoute<HttpHandler> =
               Login
                 { UserName = user.Name
                   ActivationCode = session.ID
-                  ActivationUrl = $"{rm.BaseUrl}/login/confirm?code={session.ID}" } }
+                  ActivationUrl =
+                    rm
+                      .BaseUrl
+                      .AppendPathSegments("login", "confirm")
+                      .SetQueryParam("code", session.ID)
+                      .ToString() } }
 
-      return
+      return!
         renderOk
           Views.Login.loginMessage
           { Root = rm
@@ -68,7 +74,7 @@ let post: EffectRoute<HttpHandler> =
 
   let renderErrors rm error dto =
     effectRoute {
-      return
+      return!
         renderOk
           Views.Login.loginView
           { Model =
@@ -78,7 +84,7 @@ let post: EffectRoute<HttpHandler> =
     }
 
   effectRoute {
-    let! dto = bindForm<LoginDto>
+    let! dto = fromForm<LoginDto>
     let! rm = getAnonymousRootModel
 
     return!
@@ -100,7 +106,5 @@ let logout =
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! mr = getAnonymousRootModel
-    // Catch your breath while processing the logout. Don't judge me.
-    do! Task.Delay(25)
     return! redirectTo false mr.BaseUrl
   }

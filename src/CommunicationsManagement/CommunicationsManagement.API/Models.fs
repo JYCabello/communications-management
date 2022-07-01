@@ -17,11 +17,21 @@ type Roles =
   | Delegate = 1
   | Press = 2
   | UserManagement = 4
+  | ChannelManagement = 8
   | Admin = 131071
+
+let getRoleName =
+  function
+  | Roles.Delegate -> "Delegate"
+  | Roles.Press -> "Press"
+  | Roles.UserManagement -> "UserManagement"
+  | Roles.ChannelManagement -> "ChannelManagement"
+  | _ -> "Unknown"
 
 let contains (searchTerm: Roles) (userRoles: Roles) =
   (searchTerm &&& userRoles) = searchTerm
   && (userRoles = Roles.None |> not)
+  && (searchTerm = Roles.None |> not)
 
 type DomainError =
   | NotAuthenticated
@@ -43,6 +53,11 @@ type Session =
   { ID: Guid
     UserID: Guid
     ExpiresAt: DateTime }
+
+type Channel =
+  { ID: Guid
+    Name: string
+    IsEnabled: bool }
 
 type Translator = string -> string
 
@@ -82,12 +97,26 @@ module EventModels =
   [<CLIMutable>]
   type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
 
+  [<CLIMutable>]
+  type ChannelCreated =
+    { ChannelID: Guid
+      ChannelName: string }
+
+  [<CLIMutable>]
+  type ChannelEnabled = { ChannelID: Guid }
+
+  [<CLIMutable>]
+  type ChannelDisabled = { ChannelID: Guid }
+
   type StreamEvent =
     | SessionCreated of SessionCreated
     | SessionTerminated of SessionTerminated
     | UserCreated of UserCreated
     | RoleAdded of RoleAdded
     | RoleRemoved of RoleRemoved
+    | ChannelCreated of ChannelCreated
+    | ChannelEnabled of ChannelEnabled
+    | ChannelDisabled of ChannelDisabled
     | Toxic of ToxicEvent
 
   let getEventTypeName =
@@ -97,6 +126,9 @@ module EventModels =
     | UserCreated _ -> "UserCreated"
     | RoleAdded _ -> "RoleAdded"
     | RoleRemoved _ -> "RoleRemoved"
+    | ChannelCreated _ -> "ChannelCreated"
+    | ChannelEnabled _ -> "ChannelEnabled"
+    | ChannelDisabled _ -> "ChannelDisabled"
     | Toxic _ -> "Toxic"
 
   let getStreamName =
@@ -106,6 +138,9 @@ module EventModels =
     | UserCreated _ -> "Users"
     | RoleAdded _ -> "Users"
     | RoleRemoved _ -> "Users"
+    | ChannelCreated _ -> "Channels"
+    | ChannelEnabled _ -> "Channels"
+    | ChannelDisabled _ -> "Channels"
     | Toxic _ -> "toxic"
 
   type SendEventParams = { Event: StreamEvent }

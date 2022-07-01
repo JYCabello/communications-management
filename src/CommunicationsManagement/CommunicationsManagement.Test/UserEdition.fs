@@ -1,4 +1,4 @@
-﻿module TestProject1CommunicationsManagement.Test.UserEdition
+﻿module TestProject1CommunicationsManagement.Test.``user edition``
 
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
