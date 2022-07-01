@@ -29,7 +29,7 @@ let ``adds and disables channels`` () =
       .SendKeys("Brand new channel")
 
     driver
-      .FindElement(By.Id("channel-submit"))
+      .FindElement(By.Id("channel-sumbit"))
       .Click()
 
     Assert.NotEmpty(driver.FindElements(By.ClassName("disable-channel-link")))
