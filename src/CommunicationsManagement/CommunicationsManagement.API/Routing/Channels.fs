@@ -1,17 +1,14 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Routing.Channels
 
-open System.Threading.Channels
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
-open CommunicationsManagement.API.Routing
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
-open Models
 open Effects
 open Giraffe
 open System
@@ -125,11 +122,14 @@ let private switchChannel id eventBuilder : EffectRoute<HttpHandler> =
     return
       redirectTo
         false
-        (vmr.BaseUrl.AppendPathSegment("channels").ToString())
+        (vmr
+          .BaseUrl
+          .AppendPathSegment("channels")
+          .ToString())
   }
 
-let enableChannel id: EffectRoute<HttpHandler> =
+let enableChannel id : EffectRoute<HttpHandler> =
   switchChannel id (fun c -> ChannelEnabled { ChannelID = c.ID })
 
-let disableChannel id: EffectRoute<HttpHandler> =
+let disableChannel id : EffectRoute<HttpHandler> =
   switchChannel id (fun c -> ChannelDisabled { ChannelID = c.ID })
