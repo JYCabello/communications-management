@@ -15,25 +15,25 @@ open CommunicationsManagement.API.DataValidation
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open Urls
 
-let list: EffectRoute<HttpHandler> =
+let list =
   effectRoute {
     let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! users = getAll<User>
 
-    return
+    return!
       renderOk
         ListUsers.usersListView
         { Model = { Users = users }
           Root = root }
   }
 
-let createGet: EffectRoute<HttpHandler> =
+let createGet =
   effectRoute {
     let! root = getModelRoot
     do! requireRole Roles.UserManagement
 
-    return
+    return!
       renderOk
         CreateUser.createUserView
         { Model =
