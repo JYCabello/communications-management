@@ -22,8 +22,8 @@ let ``adds, enables and disables channels`` () =
 
     driver
       .FindElement(By.Id("new-channel-link"))
-      .Click()    
-    
+      .Click()
+
     // Just trigger validation
     driver
       .FindElement(By.Id("channel-sumbit"))
