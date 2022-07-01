@@ -151,7 +151,7 @@ let details id =
 
 let userUrl (u: User) = append "users" >> append u.ID
 
-let addRole (userId, role) =
+let switchRole (userId, role) eventBuilder =
   effectRoute {
     let! root = getModelRoot
     do! requireRole Roles.UserManagement
@@ -164,24 +164,12 @@ let addRole (userId, role) =
       | Some r -> Ok r
       | None -> BadRequest |> Error)
 
-    do! emit { Event = RoleAdded { UserID = user.ID; RoleToAdd = role } }
+    do! emit { Event = (user, role) |> eventBuilder }
     return userUrl user root.BaseUrl |> redirectTo false
   }
 
-let removeRole (userId, role) =
-  effectRoute {
-    let! root = getModelRoot
-    do! requireRole Roles.UserManagement
-    let! user = fun (p: IPorts) -> p.find<User> userId
+let addRole userIdRole =
+  switchRole userIdRole (fun (u, r) -> RoleAdded { UserID = u.ID; RoleToAdd = r })
 
-    let! role =
-      Enum.GetValues<Roles>()
-      |> Seq.tryFind (fun r -> (r |> int) = role)
-      |> (function
-      | Some r -> Ok r
-      | None -> BadRequest |> Error)
-
-    do! emit { Event = RoleRemoved { UserID = user.ID; RoleRemoved = role } }
-
-    return userUrl user root.BaseUrl |> redirectTo false
-  }
+let removeRole userIdRole =
+  switchRole userIdRole (fun (u, r) -> RoleRemoved { UserID = u.ID; RoleRemoved = r })
