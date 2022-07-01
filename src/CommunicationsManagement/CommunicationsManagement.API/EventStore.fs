@@ -75,58 +75,82 @@ let private ignoreErrors =
 
 let private handleSession (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (sc: SessionCreated) =
-    taskResult {
-      let! user = ports.find<User> sc.UserID
-      do! ports.save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
+    effect {
+      let! user = find<User> sc.UserID
+      do! save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
 
       do!
-        ports.save<Session>
+        save<Session>
           { ID = sc.SessionID
             UserID = sc.UserID
             ExpiresAt = sc.ExpiresAt }
     }
 
-  let handleTerminated (st: SessionTerminated) = ports.delete<Session> st.SessionID
+  let handleTerminated (st: SessionTerminated) = delete<Session> st.SessionID
 
   match deserialize se with
-  | SessionCreated sc -> handleCreated sc |> ignoreErrors
-  | SessionTerminated st -> handleTerminated st |> ignoreErrors
-  | _ -> Task.FromResult()
+  | SessionCreated sc -> handleCreated sc
+  | SessionTerminated st -> handleTerminated st
+  | _ -> effect { return () }
+  |> solve ports
+  |> ignoreErrors
 
 let private handleUsers (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let handleCreated (uc: UserCreated) =
-    taskResult {
-      do!
-        ports.save<User>
-          { Name = uc.Name
-            Email = uc.Email |> Email
-            ID = uc.UserID
-            Roles = uc.Roles
-            LastLogin = None }
-    }
+    save<User>
+      { Name = uc.Name
+        Email = uc.Email |> Email
+        ID = uc.UserID
+        Roles = uc.Roles
+        LastLogin = None }
 
   let handleRoleAdded (ra: RoleAdded) =
-    taskResult {
-      let! user = ports.find<User> ra.UserID
-      do! ports.save<User> { user with Roles = user.Roles + ra.RoleToAdd }
+    effect {
+      let! user = find<User> ra.UserID
+      do! save<User> { user with Roles = user.Roles + ra.RoleToAdd }
     }
 
   let handleRoleRemoved (rr: RoleRemoved) =
-    taskResult {
-      let! user = ports.find<User> rr.UserID
-      do! ports.save<User> { user with Roles = user.Roles - rr.RoleRemoved }
+    effect {
+      let! user = find<User> rr.UserID
+      do! save<User> { user with Roles = user.Roles - rr.RoleRemoved }
     }
 
   match deserialize se with
   | UserCreated uc -> handleCreated uc
   | RoleAdded ra -> handleRoleAdded ra
   | RoleRemoved rr -> handleRoleRemoved rr
-  | _ -> TaskResult.ok ()
+  | _ ->  effect { return () }
+  |> solve ports
   |> ignoreErrors
 
 
 let private handleChannel (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
-  failwith "not implemented"
+  let handleCreated (e: ChannelCreated) =
+    save<Channel>
+      { ID = e.ChannelID
+        Name = e.ChannelName
+        IsEnabled = true }
+
+  let handleEnabled (e: ChannelEnabled) =
+    effect {
+      let! channel = find<Channel> e.ChannelID
+      do! save { channel with IsEnabled = true }
+    }
+
+  let handleDisabled (e: ChannelDisabled) =
+    effect {
+      let! channel = find<Channel> e.ChannelID
+      do! save { channel with IsEnabled = false }
+    }
+
+  match deserialize se with
+  | ChannelCreated cc -> handleCreated cc
+  | ChannelEnabled ce -> handleEnabled ce
+  | ChannelDisabled cd -> handleDisabled cd
+  | _ -> effect { return () }
+  |> solve ports
+  |> ignoreErrors
 
 let subscribe cs (subscription: SubscriptionDetails) =
   let rec subscribeTo () =
@@ -231,7 +255,7 @@ let triggerSubscriptions (ports: IPorts) =
     GetCheckpoint = getCheckpoint sessionsCheckpoint
     SaveCheckpoint = saveSessionCheckpoint }
   |> subscribe'
-  
+
   let mutable channelsCheckpoint: StreamPosition option = None
 
   let saveChannelsCheckpoint p =

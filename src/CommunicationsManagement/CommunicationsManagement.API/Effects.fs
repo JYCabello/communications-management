@@ -151,12 +151,10 @@ type EffectBuilder() =
 let effect = EffectBuilder()
 
 let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
-
-let emit e =
-  effect { do! fun (p: IPorts) -> p.sendEvent e }
-
-let getAll<'a> : Effect<'a list> =
-  effect { return! fun (p: IPorts) -> p.getAll<'a> () }
-
-let query<'a> q : Effect<'a> =
-  effect { return! fun (p: IPorts) -> p.query q }
+let emit e : Effect<unit> = fun p -> p.sendEvent e
+let getAll<'a> : Effect<'a list> = fun p -> p.getAll<'a> ()
+let find<'a> id : Effect<'a> = fun p -> p.find id
+let query<'a> q : Effect<'a> = fun p -> p.query q
+let save<'a> a : Effect<unit> = fun p -> p.save<'a> a
+let delete<'a> a : Effect<unit> = fun p -> p.delete<'a> a
+let solve p (e: Effect<'a>) = e p

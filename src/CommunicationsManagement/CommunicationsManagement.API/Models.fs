@@ -90,11 +90,13 @@ module EventModels =
   type RoleRemoved = { UserID: Guid; RoleRemoved: Roles }
 
   [<CLIMutable>]
-  type ChannelCreated = { ChannelID: Guid; Name: string }
-  
+  type ChannelCreated =
+    { ChannelID: Guid
+      ChannelName: string }
+
   [<CLIMutable>]
   type ChannelEnabled = { ChannelID: Guid }
-  
+
   [<CLIMutable>]
   type ChannelDisabled = { ChannelID: Guid }
 
