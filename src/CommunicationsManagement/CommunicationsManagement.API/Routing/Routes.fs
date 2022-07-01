@@ -267,13 +267,6 @@ module EffectfulRoutes =
     }
 
   let requireRole (role: Roles) : EffectRoute<unit> =
-    let tag =
-      match role with
-      | Roles.Delegate -> "Delegate"
-      | Roles.Press -> "Press"
-      | Roles.UserManagement -> "UserManagement"
-      | _ -> "Unknown"
-
     effectRoute {
       let! user = auth
       let! vmr = getAnonymousRootModel
@@ -281,6 +274,6 @@ module EffectfulRoutes =
       return!
         (match user.hasRole role with
          | true -> Ok()
-         | false -> tag |> vmr.Translate |> Unauthorized |> Error)
+         | false -> role |> getRoleName |> vmr.Translate |> Unauthorized |> Error)
         |> Task.FromResult
     }

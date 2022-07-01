@@ -20,6 +20,14 @@ type Roles =
   | ChannelManagement = 8
   | Admin = 131071
 
+let getRoleName =
+  function
+  | Roles.Delegate -> "Delegate"
+  | Roles.Press -> "Press"
+  | Roles.UserManagement -> "UserManagement"
+  | Roles.ChannelManagement -> "ChannelManagement"
+  | _ -> "Unknown"
+
 let contains (searchTerm: Roles) (userRoles: Roles) =
   (searchTerm &&& userRoles) = searchTerm
   && (userRoles = Roles.None |> not)
