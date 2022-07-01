@@ -98,9 +98,7 @@ let createPost: EffectRoute<HttpHandler> =
                 { ChannelID = Guid.NewGuid()
                   ChannelName = name } }
 
-      let url = vmr.BaseUrl |> append "channels"
-
-      return redirectTo true url
+      return redirectTo false <| append "channels" vmr.BaseUrl
     }
 
   effectRoute {
@@ -119,7 +117,6 @@ let private switchChannel id eventBuilder : EffectRoute<HttpHandler> =
     let! vmr = getModelRoot
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
-
     return redirectTo false (vmr.BaseUrl |> append "channels")
   }
 

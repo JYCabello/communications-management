@@ -33,6 +33,12 @@ jobs:
           parallelizeAssembly: "false"
           parallelizeTestCollections: "false"
 
+      - name: Install tools
+        run: dotnet tool restore
+
+      - name: Check format
+        run: dotnet fantomas --check .
+
       - name: Test
         run: dotnet test ./src/CommunicationsManagement/CommunicationsManagement.sln
 
