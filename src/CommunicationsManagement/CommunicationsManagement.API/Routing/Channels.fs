@@ -14,6 +14,14 @@ open Giraffe
 open System
 open Urls
 
+
+[<CLIMutable>]
+type CreateChannelPostDto = { Name: string option }
+
+type private ValidationResult =
+  | Valid of string
+  | Invalid of ViewModel<CreateChannel.ChannelCreationViewModel>
+
 let list =
   effectRoute {
     do! requireRole Roles.ChannelManagement
@@ -38,13 +46,6 @@ let createGet =
         { Root = vmr
           Model = { Name = None; NameError = None } }
   }
-
-[<CLIMutable>]
-type CreateChannelPostDto = { Name: string option }
-
-type private ValidationResult =
-  | Valid of string
-  | Invalid of ViewModel<CreateChannel.ChannelCreationViewModel>
 
 let createPost =
   let validate: EffectRoute<ValidationResult> =
