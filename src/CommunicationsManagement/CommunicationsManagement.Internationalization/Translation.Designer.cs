@@ -115,6 +115,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create channel.
+        /// </summary>
+        public static string CreateChannel {
+            get {
+                return ResourceManager.GetString("CreateChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create user.
         /// </summary>
         public static string CreateUser {

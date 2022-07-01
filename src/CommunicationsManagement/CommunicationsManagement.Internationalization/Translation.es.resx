@@ -201,4 +201,7 @@
   <data name="ChannelManagement" xml:space="preserve">
       <value>Administración de canales</value>
   </data>
+  <data name="CreateChannel" xml:space="preserve">
+      <value>Crear canal</value>
+  </data>
 </root>

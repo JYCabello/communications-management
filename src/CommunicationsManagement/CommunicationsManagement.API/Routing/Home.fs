@@ -10,6 +10,6 @@ open EffectfulRoutes
 
 let home: EffectRoute<HttpHandler> =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     return renderOk Views.Home.homeView { Model = (); Root = root }
   }

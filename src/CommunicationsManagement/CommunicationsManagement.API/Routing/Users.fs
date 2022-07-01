@@ -16,7 +16,7 @@ open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 
 let list: EffectRoute<HttpHandler> =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! users = getAll<User>
 
@@ -29,7 +29,7 @@ let list: EffectRoute<HttpHandler> =
 
 let createGet: EffectRoute<HttpHandler> =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
 
     return
@@ -120,10 +120,10 @@ let createPost =
     }
 
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
 
-    let! dto = bindForm<CreateUserDto>
+    let! dto = fromForm<CreateUserDto>
 
     let! p = getPorts
 
@@ -142,7 +142,7 @@ let createPost =
 
 let details id =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> id
     return renderOk UserDetails.details { Model = user; Root = root }
@@ -155,7 +155,7 @@ let userUrl (baseUrl: string) (u: User) =
 
 let addRole (userId, role) =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> userId
 
@@ -172,7 +172,7 @@ let addRole (userId, role) =
 
 let removeRole (userId, role) =
   effectRoute {
-    let! root = buildModelRoot
+    let! root = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> userId
 

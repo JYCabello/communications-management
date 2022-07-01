@@ -78,7 +78,7 @@ let post: EffectRoute<HttpHandler> =
     }
 
   effectRoute {
-    let! dto = bindForm<LoginDto>
+    let! dto = fromForm<LoginDto>
     let! rm = getAnonymousRootModel
 
     return!
@@ -100,7 +100,5 @@ let logout =
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! mr = getAnonymousRootModel
-    // Catch your breath while processing the logout. Don't judge me.
-    do! Task.Delay(25)
     return! redirectTo false mr.BaseUrl
   }

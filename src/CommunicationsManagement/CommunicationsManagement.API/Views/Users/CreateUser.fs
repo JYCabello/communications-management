@@ -21,26 +21,6 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
   let trx = vm.Root.Translate
   let m = vm.Model
 
-  let labelFor i18nTag forId =
-    label [ _class "form-label"
-            yield!
-              forId
-              |> Option.map (fun id -> _for id)
-              |> Option.toList ] [
-      i18nTag |> trx |> Text
-    ]
-
-  let inputGroupFor value error name i18nTag =
-    [ labelFor i18nTag (Some $"input-%s{name}")
-      div [ _class "input-group mb-3" ] [
-        input [ _class $"form-control {validationClass error}"
-                _name name
-                _id $"input-%s{name}"
-                value |> Option.defaultValue "" |> _value ]
-
-        yield! validationError error
-      ] ]
-
   let roleCheckBox role lbl =
     let inputID = Guid.NewGuid().ToString()
 
@@ -65,10 +45,10 @@ let createUserView (vm: ViewModel<UserCreationViewModel>) =
     form [ _action "/users/create"
            _method "post"
            _novalidate ] [
-      yield! inputGroupFor m.Name m.NameError "name" "Name"
-      yield! inputGroupFor m.Email m.EmailError "email" "Email"
+      yield! inputGroupFor trx m.Name m.NameError "name" "Name"
+      yield! inputGroupFor trx m.Email m.EmailError "email" "Email"
       div [ _class "input-group mb-3" ] [
-        labelFor "Roles" None
+        labelFor trx "Roles" None
         ul [ _class "list-group list-group-flush" ] [
           roleCheckBox Roles.Press (trx "Press")
           roleCheckBox Roles.Delegate (trx "Delegate")

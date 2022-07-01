@@ -106,7 +106,7 @@ module Rendering =
             | e -> e)
     }
 
-  let buildModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let getModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
       let! user = auth ctx
       let tr = getTranslator ctx
@@ -241,7 +241,7 @@ module EffectfulRoutes =
           |> (fun r -> r n c)
       }
 
-  let bindForm<'a> (c: HttpContext) =
+  let fromForm<'a> (c: HttpContext) =
     c.TryBindFormAsync<'a>()
     |> TaskResult.mapError (fun _ -> BadRequest)
 
