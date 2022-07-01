@@ -11,6 +11,7 @@ open Giraffe
 
 let list: EffectRoute<HttpHandler> =
   effectRoute {
+    do! requireRole Roles.ChannelManagement
     let! vmr = buildModelRoot
     let! channels = getAll<Channel>
 
