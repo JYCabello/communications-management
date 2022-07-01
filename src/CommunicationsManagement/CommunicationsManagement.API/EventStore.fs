@@ -212,7 +212,7 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
       |> Option.map (fun ed ->
         client.AppendToStreamAsync(streamName, StreamState.Any, [ ed ]) :> Task)
       |> Option.defaultValue Task.CompletedTask
-    
+
     // Give the event processor a bit of space to process the message.
     // This is work in progress I probably need to redesign the flow around it.
     do! Task.Delay(25)
