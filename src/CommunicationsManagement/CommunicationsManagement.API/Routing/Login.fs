@@ -106,5 +106,5 @@ let logout =
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! mr = getAnonymousRootModel
-    return! redirectTo false mr.BaseUrl
+    return! redirectTo false (mr.BaseUrl.AppendPathSegment("login").ToString())
   }
