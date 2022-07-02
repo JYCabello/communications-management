@@ -77,7 +77,7 @@ module Channels =
 
   let getAll () =
     channelStorage.Values
-    |> Seq.sortByDescending (fun c -> c.IsEnabled)
+    |> Seq.sortBy (fun c -> c.IsEnabled)
     |> Seq.toList
     |> TaskResult.ok
 
