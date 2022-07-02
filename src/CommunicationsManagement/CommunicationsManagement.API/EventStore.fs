@@ -163,7 +163,7 @@ let subscribe cs (subscription: SubscriptionDetails) =
         do! client.SubscribeToAllAsync(checkpoint, handler, false, reSubscribe) :> Task
       with
       | _ ->
-        do! Task.Delay(10)
+        do! Task.Delay(75)
         return! subscribeTo ()
     }
 
