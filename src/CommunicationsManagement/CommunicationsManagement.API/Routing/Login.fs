@@ -72,17 +72,6 @@ let post =
             Model = rm.Translate "EmailLoginDetails" }
     }
 
-  let renderErrors rm error dto =
-    effectRoute {
-      return!
-        renderOk
-          Views.Login.loginView
-          { Model =
-              { Email = dto.Email
-                EmailError = Some error }
-            Root = rm }
-    }
-
   effectRoute {
     let! dto = fromForm<LoginDto>
     let! rm = getAnonymousRootModel
@@ -90,7 +79,16 @@ let post =
     return!
       match DataValidation.validateEmail dto.Email rm.Translate with
       | None -> create dto rm
-      | Some error -> renderErrors rm error dto
+      | Some error ->
+        effectRoute {
+          return!
+            renderOk
+              Views.Login.loginView
+              { Model =
+                  { Email = dto.Email
+                    EmailError = Some error }
+                Root = rm }
+        }
   }
 
 let confirm =
