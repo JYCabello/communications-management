@@ -167,8 +167,7 @@ let subscribe cs (subscription: SubscriptionDetails) =
         return! subscribeTo ()
     }
 
-  subscribeTo () |> ignore
-
+  subscribeTo ()
 
 let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, DomainError>> =
   taskResult {
