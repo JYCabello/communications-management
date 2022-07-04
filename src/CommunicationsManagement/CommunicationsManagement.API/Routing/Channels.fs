@@ -106,12 +106,7 @@ let createPost =
           .AppendPathSegment("channels")
           .ToString()
 
-      return!
-        htmlView (
-          Layout.notificationReturn
-            { Root = vmr
-              Model = { Message = "Success"; Url = returnUrl } }
-        )
+      return! renderSuccess returnUrl
     }
 
   effectRoute {
@@ -137,14 +132,7 @@ let private switchChannel id eventBuilder =
         .AppendPathSegment("channels")
         .ToString()
 
-    return!
-      htmlView (
-        Layout.notificationReturn
-          { Root = vmr
-            Model =
-              { Message = "OperationSuccessful" |> vmr.Translate
-                Url = returnUrl } }
-      )
+    return! renderSuccess returnUrl
   }
 
 let enableChannel id =

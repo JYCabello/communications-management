@@ -118,21 +118,8 @@ let createPost =
   let save usr vmr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-      
-      let url =
-        vmr
-          .BaseUrl
-          .AppendPathSegment("users")
-          .ToString()
-      
-      return!
-        htmlView (
-          Layout.notificationReturn
-            { Root = vmr
-              Model =
-                { Message = "OperationSuccessful" |> vmr.Translate
-                  Url = url } }
-      )
+      let url = vmr.BaseUrl.AppendPathSegment("users").ToString()
+      return! renderSuccess url
     }
 
   effectRoute {
@@ -182,15 +169,7 @@ let switchRole (userId, role) eventBuilder =
 
     do! emit { Event = (user, role) |> eventBuilder }
     let url = userUrl user vmr.BaseUrl
-
-    return!
-      htmlView (
-        Layout.notificationReturn
-          { Root = vmr
-            Model =
-              { Message = "OperationSuccessful" |> vmr.Translate
-                Url = url } }
-      )
+    return! renderSuccess url
   }
 
 let addRole userIdRole =

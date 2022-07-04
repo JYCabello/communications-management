@@ -230,6 +230,24 @@ module EffectfulRoutes =
 
   open Rendering
 
+  let renderMsg m url : EffectRoute<HttpHandler> =
+    effectRoute {
+      let! vmr = getModelRoot
+
+      return!
+        htmlView (
+          Layout.notificationReturn
+            { Root = vmr
+              Model = { Message = m; Url = url } }
+        )
+    }
+
+  let renderSuccess url : EffectRoute<HttpHandler> =
+    effectRoute {
+      let! vmr = getModelRoot
+      return! renderMsg ("OperationSuccessful" |> vmr.Translate) url
+    }
+
   let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
     fun n c ->
       task {
