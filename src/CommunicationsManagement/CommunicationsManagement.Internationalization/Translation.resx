@@ -204,4 +204,10 @@
   <data name="CreateChannel" xml:space="preserve">
       <value>Create channel</value>
   </data>
+  <data name="OperationSuccessful" xml:space="preserve">
+      <value>Operation was successful</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+      <value>Close</value>
+  </data>
 </root>

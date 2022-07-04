@@ -53,7 +53,7 @@ let closeButton translate url =
   a [ _href url
       _class "btn btn-primary"
       _id "close-button" ] [
-    translate "Back" |> Text
+    translate "Close" |> Text
   ]
 
 let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =

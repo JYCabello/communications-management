@@ -141,7 +141,9 @@ let private switchChannel id eventBuilder =
       htmlView (
         Layout.notificationReturn
           { Root = vmr
-            Model = { Message = "Success"; Url = returnUrl } }
+            Model =
+              { Message = "OperationSuccessful" |> vmr.Translate
+                Url = returnUrl } }
       )
   }
 

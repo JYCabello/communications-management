@@ -106,6 +106,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string Close {
+            get {
+                return ResourceManager.GetString("Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The system was in an invalid state for the action you were trying to perform.
         /// </summary>
         public static string ConflictTemplate {
@@ -246,6 +255,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string NotFoundTextTemplate {
             get {
                 return ResourceManager.GetString("NotFoundTextTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Operation was successful.
+        /// </summary>
+        public static string OperationSuccessful {
+            get {
+                return ResourceManager.GetString("OperationSuccessful", resourceCulture);
             }
         }
         
