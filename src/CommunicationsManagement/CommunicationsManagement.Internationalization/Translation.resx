@@ -213,4 +213,25 @@
   <data name="Channels" xml:space="preserve">
       <value>Channels</value>
   </data>
+  <data name="Never" xml:space="preserve">
+      <value>Never</value>
+  </data>
+  <data name="LastLogin" xml:space="preserve">
+      <value>Last login</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+      <value>Enabled</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+      <value>Enable</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+      <value>Disable</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+      <value>Disabled</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+      <value>Status</value>
+  </data>
 </root>
