@@ -131,13 +131,18 @@ let private switchChannel id eventBuilder =
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
 
-    return
-      redirectTo
-        false
-        (vmr
+    let returnUrl =
+        vmr
           .BaseUrl
           .AppendPathSegment("channels")
-          .ToString())
+          .ToString()
+    
+    return!
+      htmlView (
+        Layout.notificationReturn
+          { Root = vmr
+            Model = { Message = "Success"; Url = returnUrl } }
+      )
   }
 
 let enableChannel id =
