@@ -18,11 +18,13 @@ let private usersRow vm =
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.UserManagement)
   |> Option.map (fun _ ->
-    [ a [ _href url
+    [ div [] [
+      h1 [] [ "Users" |> vm.Root.Translate |> Text ]
+      a [ _href url
           _class "btn btn-primary"
           _id "users-link" ] [
         "UserManagement" |> vm.Root.Translate |> Text
-      ] ])
+      ] ]])
   |> Option.defaultValue []
 
 let private channelsRow vm =
@@ -36,11 +38,13 @@ let private channelsRow vm =
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.ChannelManagement)
   |> Option.map (fun _ ->
-    [ a [ _href url
+    [ div [] [
+      h1 [] [ "Channels" |> vm.Root.Translate |> Text ]
+      a [ _href url
           _class "btn btn-primary"
           _id "channels-link" ] [
         "ChannelManagement" |> vm.Root.Translate |> Text
-      ] ])
+      ] ] ])
   |> Option.defaultValue []
 
 let homeView (vm: ViewModel<unit>) : XmlNode list =

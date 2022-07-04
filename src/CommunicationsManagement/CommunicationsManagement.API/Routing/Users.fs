@@ -118,7 +118,21 @@ let createPost =
   let save usr vmr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-      return! renderOk CreateUser.successMessage { Model = "Ok"; Root = vmr }
+      
+      let url =
+        vmr
+          .BaseUrl
+          .AppendPathSegment("users")
+          .ToString()
+      
+      return!
+        htmlView (
+          Layout.notificationReturn
+            { Root = vmr
+              Model =
+                { Message = "OperationSuccessful" |> vmr.Translate
+                  Url = url } }
+      )
     }
 
   effectRoute {
