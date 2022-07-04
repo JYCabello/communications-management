@@ -132,11 +132,11 @@ let private switchChannel id eventBuilder =
     do! emit { Event = eventBuilder channel }
 
     let returnUrl =
-        vmr
-          .BaseUrl
-          .AppendPathSegment("channels")
-          .ToString()
-    
+      vmr
+        .BaseUrl
+        .AppendPathSegment("channels")
+        .ToString()
+
     return!
       htmlView (
         Layout.notificationReturn

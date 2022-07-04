@@ -6,6 +6,7 @@ open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Views
 open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe
@@ -154,7 +155,7 @@ let userUrl (u: User) (url: string) =
 
 let switchRole (userId, role) eventBuilder =
   effectRoute {
-    let! root = getModelRoot
+    let! vmr = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> userId
 
@@ -166,7 +167,16 @@ let switchRole (userId, role) eventBuilder =
       | None -> BadRequest |> Error)
 
     do! emit { Event = (user, role) |> eventBuilder }
-    return userUrl user root.BaseUrl |> redirectTo false
+    let url = userUrl user vmr.BaseUrl
+
+    return!
+      htmlView (
+        Layout.notificationReturn
+          { Root = vmr
+            Model =
+              { Message = "OperationSuccessful" |> vmr.Translate
+                Url = url } }
+      )
   }
 
 let addRole userIdRole =
