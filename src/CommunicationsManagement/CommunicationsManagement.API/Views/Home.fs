@@ -21,7 +21,7 @@ let private usersRow vm =
     [ a [ _href url
           _class "btn btn-primary"
           _id "users-link" ] [
-        "Users" |> vm.Root.Translate |> Text
+        "UserManagement" |> vm.Root.Translate |> Text
       ] ])
   |> Option.defaultValue []
 
@@ -39,7 +39,7 @@ let private channelsRow vm =
     [ a [ _href url
           _class "btn btn-primary"
           _id "channels-link" ] [
-        "Users" |> vm.Root.Translate |> Text
+        "ChannelManagement" |> vm.Root.Translate |> Text
       ] ])
   |> Option.defaultValue []
 

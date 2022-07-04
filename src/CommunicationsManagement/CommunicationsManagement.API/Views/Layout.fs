@@ -21,6 +21,8 @@ let private navTemplate (vmr: ViewModelRoot) =
        "es") ]
 
   nav [] [
+    a [ _href "/" ] [ "Home" |> vmr.Translate |> Text ]
+    Text "&nbsp;"
     yield!
       langUrls
       |> List.collect (fun (url, lang) ->

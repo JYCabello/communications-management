@@ -210,4 +210,7 @@
   <data name="Close" xml:space="preserve">
       <value>Cerrar</value>
   </data>
+  <data name="Channels" xml:space="preserve">
+      <value>Canales</value>
+  </data>
 </root>
