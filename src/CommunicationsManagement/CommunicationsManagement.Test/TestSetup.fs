@@ -198,7 +198,7 @@ let testSetup () =
 
     let! host =
       task {
-        let h = Main.buildHost ports <| Some sitePort
+        let! h = Main.buildHost ports <| Some sitePort
         do! h.StartAsync()
         return h
       }

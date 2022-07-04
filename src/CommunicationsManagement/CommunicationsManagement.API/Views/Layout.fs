@@ -48,6 +48,13 @@ let homeButton translate =
     translate "Home" |> Text
   ]
 
+let closeButton translate url =
+  a [ _href url
+      _class "btn btn-primary"
+      _id "close-button" ] [
+    translate "Back" |> Text
+  ]
+
 let layout (vmr: ViewModelRoot) (bodyContent: XmlNode seq) =
   html [] [
     head [] [
@@ -80,6 +87,25 @@ let notification translate bodyContent =
       div [ _id "body-container" ] [
         yield! bodyContent
         homeButton translate
+      ]
+    ]
+  ]
+
+let notificationReturn translate bodyContent url =
+  html [] [
+    head [] [
+      title [] [
+        "AppName" |> translate |> Text
+      ]
+      link [ _href "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
+             _rel "stylesheet"
+             _integrity "sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
+             _crossorigin "anonymous" ]
+    ]
+    body [ _class "container" ] [
+      div [ _id "body-container" ] [
+        yield! bodyContent
+        closeButton translate url
       ]
     ]
   ]

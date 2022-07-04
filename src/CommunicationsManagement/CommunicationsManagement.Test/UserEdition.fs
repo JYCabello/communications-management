@@ -13,19 +13,24 @@ let ``can add and remove roles`` () =
     use! setup = testSetup ()
     let driver = setup.driver
     let testUser = createAndLogin (Roles.UserManagement ||| Roles.Press) setup
-    driver.FindElement(By.Id("users-link")).Click()
+    driver.FindElement(By.Id "users-link").Click()
 
     login setup.config.AdminEmail setup
 
-    driver.FindElement(By.Id("users-link")).Click()
+    driver.FindElement(By.Id "users-link").Click()
 
     driver
-      .FindElement(By.CssSelector($"[data-user-details=\"{testUser.Email}\"]"))
+      .FindElement(By.CssSelector $"[data-user-details=\"{testUser.Email}\"]")
       .Click()
 
     driver
-      .FindElement(By.CssSelector("a#remove-role-4"))
+      .FindElement(By.CssSelector "a#remove-role-4")
       .Click()
+
+    driver.FindElement(By.Id "close-button").Click()
+
+    Assert.Empty(driver.FindElements(By.CssSelector "a#remove-role-4"))
+
 
     login testUser.Email setup
 
@@ -33,17 +38,21 @@ let ``can add and remove roles`` () =
 
     login setup.config.AdminEmail setup
 
-    driver.FindElement(By.Id("users-link")).Click()
+    driver.FindElement(By.Id "users-link").Click()
 
     driver
-      .FindElement(By.CssSelector($"a[data-user-details=\"{testUser.Email}\"]"))
+      .FindElement(By.CssSelector $"a[data-user-details=\"{testUser.Email}\"]")
       .Click()
 
     driver
-      .FindElement(By.CssSelector("a#add-role-4"))
+      .FindElement(By.CssSelector "a#add-role-4")
       .Click()
+
+    driver.FindElement(By.Id "close-button").Click()
+
+    Assert.Empty(driver.FindElements(By.CssSelector "a#add-role-4"))
 
     login testUser.Email setup
 
-    driver.FindElement(By.Id("users-link")).Click()
+    driver.FindElement(By.Id "users-link").Click()
   }

@@ -37,17 +37,24 @@ let ``adds, enables and disables channels`` () =
       .FindElement(By.Id("channel-sumbit"))
       .Click()
 
+    driver.FindElement(By.Id "close-button").Click()
+
     Assert.NotEmpty(driver.FindElements(By.CssSelector(".disable-channel-link")))
 
     driver
       .FindElement(By.CssSelector(".disable-channel-link"))
       .Click()
 
+    driver.FindElement(By.Id "close-button").Click()
+
+
     Assert.NotEmpty(driver.FindElements(By.CssSelector(".enable-channel-link")))
 
     driver
       .FindElement(By.CssSelector(".enable-channel-link"))
       .Click()
+
+    driver.FindElement(By.Id "close-button").Click()
 
     Assert.NotEmpty(driver.FindElements(By.CssSelector(".disable-channel-link")))
   }
