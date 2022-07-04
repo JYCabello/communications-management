@@ -6,6 +6,7 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
+open CommunicationsManagement.API.Views
 open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
@@ -99,13 +100,18 @@ let createPost =
                 { ChannelID = Guid.NewGuid()
                   ChannelName = name } }
 
+      let returnUrl =
+        vmr
+          .BaseUrl
+          .AppendPathSegment("channels")
+          .ToString()
+
       return!
-        redirectTo
-          false
-          (vmr
-            .BaseUrl
-            .AppendPathSegment("channels")
-            .ToString())
+        htmlView (
+          Layout.notificationReturn
+            { Root = vmr
+              Model = { Message = "Success"; Url = returnUrl } }
+        )
     }
 
   effectRoute {
