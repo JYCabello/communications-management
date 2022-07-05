@@ -7,6 +7,7 @@ open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
 open CommunicationsManagement.Internationalization
+open Flurl
 open FsToolkit.ErrorHandling
 open Giraffe
 open Microsoft.AspNetCore.Http
@@ -229,6 +230,18 @@ module EffectfulRoutes =
   let effectRoute = EffectRouteBuilder()
 
   open Rendering
+
+  let buildUrl (segments: string seq) : EffectRoute<string> =
+    effectRoute {
+      let! ports = getPorts
+      let baseUrl = ports.configuration.BaseUrl |> Url
+
+      return
+        (baseUrl, segments)
+        ||> Seq.fold (fun url s -> s |> url.AppendPathSegment)
+        |> string
+    }
+
 
   let renderMsg m url : EffectRoute<HttpHandler> =
     effectRoute {
