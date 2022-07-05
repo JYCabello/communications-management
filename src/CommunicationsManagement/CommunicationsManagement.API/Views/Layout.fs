@@ -33,7 +33,8 @@ let private navTemplate (vmr: ViewModelRoot) =
               _id "logout-link" ] [
             "Logout" |> trxTxt
           ] ])
-      |> Option.defaultValue []
+      |> Option.toList
+      |> List.collect id
   ]
 
 let homeButton translate =

@@ -21,7 +21,8 @@ let private usersRow vm =
           "UserManagement" |> trxTxt
         ]
       ] ])
-  |> Option.defaultValue []
+  |> Option.toList
+  |> List.collect id
 
 let private channelsRow vm =
   let trxTxt = vm.Root.Translate >> Text
@@ -37,7 +38,8 @@ let private channelsRow vm =
           "ChannelManagement" |> trxTxt
         ]
       ] ])
-  |> Option.defaultValue []
+  |> Option.toList
+  |> List.collect id
 
 let homeView (vm: ViewModel<unit>) : XmlNode list =
   [ yield! usersRow vm
