@@ -13,7 +13,7 @@ let ``can add and remove roles`` () =
     use! setup = testSetup ()
     let driver = setup.driver
     let testUser = createAndLogin (Roles.UserManagement ||| Roles.Press) setup
-    driver.FindElement(By.Id "users-link").Click()
+    driver |> click "#users-link"
     login setup.config.AdminEmail setup
     driver |> click "#users-link"
 

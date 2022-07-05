@@ -142,7 +142,7 @@ let details id =
   effectRoute {
     let! root = getModelRoot
     do! requireRole Roles.UserManagement
-    let! user = fun (p: IPorts) -> p.find<User> id
+    let! user = find<User> id
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
@@ -150,7 +150,7 @@ let details id =
 let switchRole (userId, role) eventBuilder =
   effectRoute {
     do! requireRole Roles.UserManagement
-    let! user = fun (p: IPorts) -> p.find<User> userId
+    let! user = find<User> userId
 
     let! role =
       Enum.GetValues<Roles>()
