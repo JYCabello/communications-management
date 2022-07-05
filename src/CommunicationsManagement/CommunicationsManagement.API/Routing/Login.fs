@@ -12,7 +12,7 @@ open Giraffe
 open Models
 open EffectfulRoutes
 open Effects
-open Flurl
+
 
 
 [<CLIMutable>]
@@ -50,6 +50,8 @@ let post =
                 { SessionID = session.ID
                   UserID = session.UserID
                   ExpiresAt = session.ExpiresAt } }
+      
+      let! activationUrl = buildUrl ["login"; "confirm"] [("code", session.ID)] 
 
       do!
         notify
@@ -58,12 +60,7 @@ let post =
               Login
                 { UserName = user.Name
                   ActivationCode = session.ID
-                  ActivationUrl =
-                    rm
-                      .BaseUrl
-                      .AppendPathSegments("login", "confirm")
-                      .SetQueryParam("code", session.ID)
-                      .ToString() } }
+                  ActivationUrl = activationUrl } }
 
       return!
         renderOk
@@ -103,6 +100,6 @@ let logout =
   effectRoute {
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
-    let! mr = getAnonymousRootModel
-    return! redirectTo false (mr.BaseUrl.AppendPathSegment("login").ToString())
+    let! loginUrl = buildUrl ["login"] []
+    return! redirectTo false loginUrl
   }

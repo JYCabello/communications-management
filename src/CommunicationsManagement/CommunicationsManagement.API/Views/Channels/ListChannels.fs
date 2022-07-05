@@ -16,7 +16,7 @@ let list (vm: ViewModel<ChannelListViewModel>) : XmlNode list =
   let newChannelUrl = urlFor baseUrl ["channels"; "create"] []
 
   let enableLink (c: Channel) =
-    let url = urlFor baseUrl ["channels"; c.ID |> string; "enable"] []
+    let url = urlFor baseUrl ["channels"; c.ID; "enable"] []
 
     a [ _href url
         _class "btn btn-success btn-sm enable-channel-link" ] [
@@ -24,7 +24,7 @@ let list (vm: ViewModel<ChannelListViewModel>) : XmlNode list =
     ]
 
   let disableLink (c: Channel) =
-    let url = urlFor baseUrl ["channels"; c.ID |> string; "disable"] []
+    let url = urlFor baseUrl ["channels"; c.ID; "disable"] []
 
     a [ _href url
         _class "btn btn-danger btn-sm disable-channel-link" ] [

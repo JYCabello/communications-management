@@ -160,7 +160,7 @@ let switchRole (userId, role) eventBuilder =
       | None -> BadRequest |> Error)
 
     do! emit { Event = (user, role) |> eventBuilder }
-    let! url = buildUrl [ "users"; user.ID |> string ] []
+    let! url = buildUrl [ "users"; user.ID ] []
     return! renderSuccess url
   }
 
