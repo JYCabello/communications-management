@@ -10,9 +10,7 @@ open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
 open Effects
-open Giraffe
 open System
-open Flurl
 
 
 [<CLIMutable>]
@@ -90,8 +88,6 @@ let createPost =
 
   let save name =
     effectRoute {
-      let! vmr = getModelRoot
-
       do!
         emit
           { Event =
@@ -99,13 +95,8 @@ let createPost =
                 { ChannelID = Guid.NewGuid()
                   ChannelName = name } }
 
-      return!
-        redirectTo
-          false
-          (vmr
-            .BaseUrl
-            .AppendPathSegment("channels")
-            .ToString())
+      let! returnUrl = buildUrl [ "channels" ] []
+      return! renderSuccess returnUrl
     }
 
   effectRoute {
@@ -121,17 +112,12 @@ let createPost =
 let private switchChannel id eventBuilder =
   effectRoute {
     do! requireRole Roles.ChannelManagement
-    let! vmr = getModelRoot
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
 
-    return
-      redirectTo
-        false
-        (vmr
-          .BaseUrl
-          .AppendPathSegment("channels")
-          .ToString())
+    let! returnUrl = buildUrl [ "channels" ] []
+
+    return! renderSuccess returnUrl
   }
 
 let enableChannel id =

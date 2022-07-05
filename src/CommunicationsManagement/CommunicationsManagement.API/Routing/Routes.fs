@@ -3,6 +3,7 @@
 open System
 open System.Globalization
 open System.Threading.Tasks
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Views
@@ -229,6 +230,31 @@ module EffectfulRoutes =
   let effectRoute = EffectRouteBuilder()
 
   open Rendering
+  open Urls
+
+  let buildUrl segments queryParams : EffectRoute<string> =
+    effectRoute {
+      let! ports = getPorts
+      return urlFor ports.configuration.BaseUrl segments queryParams
+    }
+
+  let renderMsg m url : EffectRoute<HttpHandler> =
+    effectRoute {
+      let! vmr = getModelRoot
+
+      return!
+        htmlView (
+          Layout.notificationReturn
+            { Root = vmr
+              Model = { Message = m; Url = url } }
+        )
+    }
+
+  let renderSuccess url : EffectRoute<HttpHandler> =
+    effectRoute {
+      let! vmr = getModelRoot
+      return! renderMsg ("OperationSuccessful" |> vmr.Translate) url
+    }
 
   let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
     fun n c ->

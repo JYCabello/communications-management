@@ -1,42 +1,34 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Channels.ListChannels
 
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine.HtmlElements
-open Flurl
+open Urls
 open Giraffe.ViewEngine
 
 type ChannelListViewModel = { Channels: Channel list }
 
 let list (vm: ViewModel<ChannelListViewModel>) : XmlNode list =
-  let trx = vm.Root.Translate
+  let trxTxt = vm.Root.Translate >> Text
   let baseUrl = vm.Root.BaseUrl
 
-  let newChannelUrl =
-    baseUrl
-      .AppendPathSegments("channels", "create")
-      .ToString()
+  let newChannelUrl = urlFor baseUrl [ "channels"; "create" ] []
 
   let enableLink (c: Channel) =
-    let enableUrl =
-      baseUrl
-        .AppendPathSegments("channels", c.ID, "enable")
-        .ToString()
+    let url = urlFor baseUrl [ "channels"; c.ID; "enable" ] []
 
-    a [ _href enableUrl
+    a [ _href url
         _class "btn btn-success btn-sm enable-channel-link" ] [
-      "Enable" |> trx |> Text
+      "Enable" |> trxTxt
     ]
 
   let disableLink (c: Channel) =
-    let enableUrl =
-      baseUrl
-        .AppendPathSegments("channels", c.ID, "disable")
-        .ToString()
+    let url = urlFor baseUrl [ "channels"; c.ID; "disable" ] []
 
-    a [ _href enableUrl
+    a [ _href url
         _class "btn btn-danger btn-sm disable-channel-link" ] [
-      "Disable" |> trx |> Text
+      "Disable" |> trxTxt
     ]
 
   let row (c: Channel) =
@@ -46,8 +38,7 @@ let list (vm: ViewModel<ChannelListViewModel>) : XmlNode list =
         match c.IsEnabled with
         | true -> "Enabled"
         | false -> "Disabled"
-        |> trx
-        |> Text
+        |> trxTxt
       ]
       div [ _class "col" ] [
         match c.IsEnabled with
@@ -60,19 +51,19 @@ let list (vm: ViewModel<ChannelListViewModel>) : XmlNode list =
       a [ _href newChannelUrl
           _class "btn btn-success btn-sm user-link"
           _id "new-channel-link" ] [
-        "New" |> vm.Root.Translate |> Text
+        "New" |> trxTxt
       ]
     ]
     div [ _class "container" ] [
       div [ _class "row p-2 bd-highlight" ] [
         div [ _class "col" ] [
-          "Name" |> vm.Root.Translate |> Text
+          "Name" |> trxTxt
         ]
         div [ _class "col" ] [
-          "Status" |> vm.Root.Translate |> Text
+          "Status" |> trxTxt
         ]
         div [ _class "col" ] [
-          "Actions" |> vm.Root.Translate |> Text
+          "Actions" |> trxTxt
         ]
       ]
       yield! vm.Model.Channels |> List.map row

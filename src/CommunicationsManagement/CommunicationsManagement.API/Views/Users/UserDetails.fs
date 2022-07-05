@@ -4,10 +4,10 @@ module CommunicationsManagement.API.Views.Users.UserDetails
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open Flurl
+open Urls
 
 let details (vm: ViewModel<User>) =
-  let trx = vm.Root.Translate
+  let trxTxt = vm.Root.Translate >> Text
   let m = vm.Model
 
   let email =
@@ -21,7 +21,7 @@ let details (vm: ViewModel<User>) =
               forId
               |> Option.map (fun id -> _for id)
               |> Option.toList ] [
-      i18nTag |> trx |> Text
+      i18nTag |> trxTxt
     ]
 
   let disabledInputFor value name i18nTag =
@@ -36,38 +36,44 @@ let details (vm: ViewModel<User>) =
 
   let roleButton role i18tag =
     let addRoleUrl =
-      vm
-        .Root
-        .BaseUrl
-        .AppendPathSegments("users", m.ID, "roles", "add", role |> int |> string)
-        .ToString()
+      urlFor
+        vm.Root.BaseUrl
+        [ "users"
+          m.ID
+          "roles"
+          "add"
+          role |> int ]
+        []
 
     let removeRoleUrl =
-      vm
-        .Root
-        .BaseUrl
-        .AppendPathSegments("users", m.ID, "roles", "remove", role |> int |> string)
-        .ToString()
+      urlFor
+        vm.Root.BaseUrl
+        [ "users"
+          m.ID
+          "roles"
+          "remove"
+          role |> int ]
+        []
 
     li [ _class "list-group-item" ] [
-      div [] [ i18tag |> trx |> Text ]
+      div [] [ i18tag |> trxTxt ]
 
       match m.hasRole role with
       | true ->
         a [ _href removeRoleUrl
             _id $"remove-role-{role |> int}"
             _class "btn btn-danger btn-sm" ] [
-          "Remove" |> trx |> Text
+          "Remove" |> trxTxt
         ]
       | false ->
         a [ _href addRoleUrl
             _id $"add-role-{role |> int}"
             _class "btn btn-success btn-sm" ] [
-          "Add" |> trx |> Text
+          "Add" |> trxTxt
         ]
     ]
 
-  [ h1 [] [ "Details" |> trx |> Text ]
+  [ h1 [] [ "Details" |> trxTxt ]
     form [ _novalidate ] [
       yield! disabledInputFor m.Name "name" "Name"
       yield! disabledInputFor email "email" "Email"

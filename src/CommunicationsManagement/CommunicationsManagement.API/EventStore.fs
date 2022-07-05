@@ -163,18 +163,17 @@ let subscribe cs (subscription: SubscriptionDetails) =
         do! client.SubscribeToAllAsync(checkpoint, handler, false, reSubscribe) :> Task
       with
       | _ ->
-        do! Task.Delay(75)
+        do! Task.Delay(5000)
         return! subscribeTo ()
     }
 
-  subscribeTo () |> ignore
-
+  subscribeTo ()
 
 let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, DomainError>> =
   taskResult {
-    let client = getClient c.EventStoreConnectionString
-    let streamName = getStreamName e.Event
-    let eventTypeName = getEventTypeName e.Event
+    let cl = getClient c.EventStoreConnectionString
+    let sn = getStreamName e.Event
+    let etn = getEventTypeName e.Event
 
     do!
       match e.Event with
@@ -188,14 +187,9 @@ let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, Domain
       | ChannelEnabled e -> e |> JsonConvert.SerializeObject |> Some
       | ChannelDisabled e -> e |> JsonConvert.SerializeObject |> Some
       |> Option.map Encoding.UTF8.GetBytes
-      |> Option.map (fun b -> EventData(Uuid.NewUuid(), eventTypeName, b))
-      |> Option.map (fun ed ->
-        client.AppendToStreamAsync(streamName, StreamState.Any, [ ed ]) :> Task)
+      |> Option.map (fun b -> [ EventData(Uuid.NewUuid(), etn, b) ])
+      |> Option.map (fun ed -> cl.AppendToStreamAsync(sn, StreamState.Any, ed) :> Task)
       |> Option.defaultValue Task.CompletedTask
-
-    // Give the event processor a bit of space to process the message.
-    // This is work in progress, I need to redesign the flow around it.
-    do! Task.Delay(25)
   }
 
 let triggerSubscriptions (ports: IPorts) =

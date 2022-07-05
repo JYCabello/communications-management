@@ -4,6 +4,7 @@ open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Routing
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
+open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
@@ -40,24 +41,27 @@ let configureApp (app: IApplicationBuilder) ports = app.UseGiraffe <| webApp por
 let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
 
 let buildHost ports forcedPort =
-  EventStore.triggerSubscriptions ports
+  task {
+    do! EventStore.triggerSubscriptions ports
 
-  Host
-    .CreateDefaultBuilder()
-    .ConfigureWebHostDefaults(fun webHostBuilder ->
-      webHostBuilder
-        .Configure(fun app -> configureApp app ports)
-        .ConfigureServices(configureServices)
-      |> ignore
+    return
+      Host
+        .CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(fun webHostBuilder ->
+          webHostBuilder
+            .Configure(fun app -> configureApp app ports)
+            .ConfigureServices(configureServices)
+          |> ignore
 
-      match forcedPort with
-      | Some n ->
-        webHostBuilder.UseUrls($"http://localhost:%i{n}")
-        |> ignore
-      | None -> ()
+          match forcedPort with
+          | Some n ->
+            webHostBuilder.UseUrls($"http://localhost:%i{n}")
+            |> ignore
+          | None -> ()
 
-      webHostBuilder |> ignore)
-    .Build()
+          webHostBuilder |> ignore)
+        .Build()
+  }
 
 let ports config : IPorts =
   { new IPorts with
@@ -75,7 +79,9 @@ let ports config : IPorts =
 
 [<EntryPoint>]
 let main _ =
-  (buildHost (ports Configuration.configuration) None)
-    .Run()
-
-  0
+  task {
+    let! host = (buildHost (ports Configuration.configuration) None)
+    host.Run()
+    return 0
+  }
+  |> fun t -> t.Result

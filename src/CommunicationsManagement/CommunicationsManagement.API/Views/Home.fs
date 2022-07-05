@@ -4,44 +4,42 @@ module CommunicationsManagement.API.Views.Home
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API
 open Giraffe.ViewEngine
-open Flurl
+open Urls
 
 
 let private usersRow vm =
-  let url =
-    vm
-      .Root
-      .BaseUrl
-      .AppendPathSegment("users")
-      .ToString()
+  let trxTxt = vm.Root.Translate >> Text
 
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.UserManagement)
   |> Option.map (fun _ ->
-    [ a [ _href url
-          _class "btn btn-primary"
-          _id "users-link" ] [
-        "Users" |> vm.Root.Translate |> Text
+    [ div [] [
+        h1 [] [ "Users" |> trxTxt ]
+        a [ _href <| urlFor vm.Root.BaseUrl [ "users" ] []
+            _class "btn btn-primary"
+            _id "users-link" ] [
+          "UserManagement" |> trxTxt
+        ]
       ] ])
-  |> Option.defaultValue []
+  |> Option.toList
+  |> List.collect id
 
 let private channelsRow vm =
-  let url =
-    vm
-      .Root
-      .BaseUrl
-      .AppendPathSegment("channels")
-      .ToString()
+  let trxTxt = vm.Root.Translate >> Text
 
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.ChannelManagement)
   |> Option.map (fun _ ->
-    [ a [ _href url
-          _class "btn btn-primary"
-          _id "channels-link" ] [
-        "Users" |> vm.Root.Translate |> Text
+    [ div [] [
+        h1 [] [ "Channels" |> trxTxt ]
+        a [ _href <| urlFor vm.Root.BaseUrl [ "channels" ] []
+            _class "btn btn-primary"
+            _id "channels-link" ] [
+          "ChannelManagement" |> trxTxt
+        ]
       ] ])
-  |> Option.defaultValue []
+  |> Option.toList
+  |> List.collect id
 
 let homeView (vm: ViewModel<unit>) : XmlNode list =
   [ yield! usersRow vm

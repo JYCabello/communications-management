@@ -106,6 +106,24 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Channels.
+        /// </summary>
+        public static string Channels {
+            get {
+                return ResourceManager.GetString("Channels", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string Close {
+            get {
+                return ResourceManager.GetString("Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The system was in an invalid state for the action you were trying to perform.
         /// </summary>
         public static string ConflictTemplate {
@@ -151,6 +169,24 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Disable.
+        /// </summary>
+        public static string Disable {
+            get {
+                return ResourceManager.GetString("Disable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Disabled.
+        /// </summary>
+        public static string Disabled {
+            get {
+                return ResourceManager.GetString("Disabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Email.
         /// </summary>
         public static string Email {
@@ -165,6 +201,24 @@ namespace CommunicationsManagement.Internationalization {
         public static string EmailLoginDetails {
             get {
                 return ResourceManager.GetString("EmailLoginDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable.
+        /// </summary>
+        public static string Enable {
+            get {
+                return ResourceManager.GetString("Enable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enabled.
+        /// </summary>
+        public static string Enabled {
+            get {
+                return ResourceManager.GetString("Enabled", resourceCulture);
             }
         }
         
@@ -192,6 +246,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string InvalidEmail {
             get {
                 return ResourceManager.GetString("InvalidEmail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last login.
+        /// </summary>
+        public static string LastLogin {
+            get {
+                return ResourceManager.GetString("LastLogin", resourceCulture);
             }
         }
         
@@ -232,6 +295,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Never.
+        /// </summary>
+        public static string Never {
+            get {
+                return ResourceManager.GetString("Never", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New.
         /// </summary>
         public static string New {
@@ -250,6 +322,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Operation was successful.
+        /// </summary>
+        public static string OperationSuccessful {
+            get {
+                return ResourceManager.GetString("OperationSuccessful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Press.
         /// </summary>
         public static string Press {
@@ -264,6 +345,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string Roles {
             get {
                 return ResourceManager.GetString("Roles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string Status {
+            get {
+                return ResourceManager.GetString("Status", resourceCulture);
             }
         }
         

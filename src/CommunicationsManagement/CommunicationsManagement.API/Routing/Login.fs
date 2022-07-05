@@ -12,7 +12,7 @@ open Giraffe
 open Models
 open EffectfulRoutes
 open Effects
-open Flurl
+
 
 
 [<CLIMutable>]
@@ -51,6 +51,11 @@ let post =
                   UserID = session.UserID
                   ExpiresAt = session.ExpiresAt } }
 
+      let! activationUrl =
+        buildUrl [ "login"; "confirm" ] [
+          ("code", session.ID)
+        ]
+
       do!
         notify
           { Email = user.Email
@@ -58,29 +63,13 @@ let post =
               Login
                 { UserName = user.Name
                   ActivationCode = session.ID
-                  ActivationUrl =
-                    rm
-                      .BaseUrl
-                      .AppendPathSegments("login", "confirm")
-                      .SetQueryParam("code", session.ID)
-                      .ToString() } }
+                  ActivationUrl = activationUrl } }
 
       return!
         renderOk
           Views.Login.loginMessage
           { Root = rm
             Model = rm.Translate "EmailLoginDetails" }
-    }
-
-  let renderErrors rm error dto =
-    effectRoute {
-      return!
-        renderOk
-          Views.Login.loginView
-          { Model =
-              { Email = dto.Email
-                EmailError = Some error }
-            Root = rm }
     }
 
   effectRoute {
@@ -90,7 +79,16 @@ let post =
     return!
       match DataValidation.validateEmail dto.Email rm.Translate with
       | None -> create dto rm
-      | Some error -> renderErrors rm error dto
+      | Some error ->
+        effectRoute {
+          return
+            renderOk
+              Views.Login.loginView
+              { Model =
+                  { Email = dto.Email
+                    EmailError = Some error }
+                Root = rm }
+        }
   }
 
 let confirm =
@@ -105,6 +103,6 @@ let logout =
   effectRoute {
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
-    let! mr = getAnonymousRootModel
-    return! redirectTo false mr.BaseUrl
+    let! loginUrl = buildUrl [ "login" ] []
+    return! redirectTo false loginUrl
   }
