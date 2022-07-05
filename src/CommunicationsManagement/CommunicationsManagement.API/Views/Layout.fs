@@ -1,24 +1,15 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Layout
 
-open System.Net.Mime
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
-open Flurl
+open Urls
 
 let private navTemplate (vmr: ViewModelRoot) =
   let langUrls =
-    [ (vmr
-        .CurrentUrl
-        .SetQueryParam("setLang", "en")
-         .ToString(),
-       "en")
-      (vmr
-        .CurrentUrl
-        .SetQueryParam("setLang", "es")
-         .ToString(),
-       "es") ]
+    [ (urlFor vmr.CurrentUrl [] [("setLang", "en")], "en")
+      (urlFor vmr.CurrentUrl [] [("setLang", "es")], "es") ]
 
   nav [] [
     a [ _href "/" ] [
@@ -38,12 +29,11 @@ let private navTemplate (vmr: ViewModelRoot) =
             Text u.Name
           ]
           Text "&nbsp;"
-          a [ _href (vmr.BaseUrl.AppendPathSegment("logout").ToString())
+          a [ _href <| urlFor vmr.BaseUrl ["logout"] []
               _id "logout-link" ] [
             "Logout" |> vmr.Translate |> Text
           ] ])
-      |> Option.toList
-      |> List.collect id
+      |> Option.defaultValue []
   ]
 
 let homeButton translate =
