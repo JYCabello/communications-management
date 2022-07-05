@@ -59,6 +59,14 @@ type Channel =
     Name: string
     IsEnabled: bool }
 
+type Media = { ID: Guid; FileName: string }
+
+type EditingCommunicationsRequest =
+  { ID: Guid
+    Title: string
+    Body: string
+    Media: Media list }
+
 type Translator = string -> string
 
 type ViewModelRoot =

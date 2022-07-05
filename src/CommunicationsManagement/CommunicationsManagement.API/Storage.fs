@@ -15,38 +15,32 @@ let tryGet a (dict: ConcurrentDictionary<'a, 'b>) : 'b option =
 
 [<RequireQualifiedAccess>]
 module Sessions =
-  let private sessionStorage = ConcurrentDictionary<Guid, Session>()
+  let private storage = ConcurrentDictionary<Guid, Session>()
 
-  let query id =
-    sessionStorage |> tryGet id |> Task.FromResult
+  let query id = storage |> tryGet id |> Task.FromResult
 
   let getAll () =
-    sessionStorage.Values
-    |> Seq.toList
-    |> TaskResult.ok
+    storage.Values |> Seq.toList |> TaskResult.ok
 
-  let save (s: Session) =
-    Task.FromResult <| sessionStorage[s.ID] <- s
+  let save (s: Session) = Task.FromResult <| storage[s.ID] <- s
 
   let find q =
-    sessionStorage.ToArray()
+    storage.ToArray()
     |> Seq.tryFind (fun kvp -> q kvp.Value)
     |> Option.map (fun kvp -> kvp.Value)
     |> Task.FromResult
 
   let delete (id: Guid) =
-    sessionStorage.TryRemove(id) |> ignore
-    Task.singleton ()
+    storage.TryRemove(id) |> ignore |> Task.singleton
 
 [<RequireQualifiedAccess>]
 module Users =
-  let private userStorage = ConcurrentDictionary<Guid, User>()
+  let private storage = ConcurrentDictionary<Guid, User>()
 
-  let query id =
-    userStorage |> tryGet id |> Task.singleton
+  let query id = storage |> tryGet id |> Task.singleton
 
   let getAll () =
-    userStorage.Values
+    storage.Values
     |> Seq.sortByDescending (fun u ->
       match u.LastLogin with
       | None -> DateTime.MinValue
@@ -55,45 +49,58 @@ module Users =
     |> TaskResult.ok
 
   let find q =
-    userStorage.ToArray()
+    storage.ToArray()
     |> Seq.tryFind (fun kvp -> q kvp.Value)
     |> Option.map (fun kvp -> kvp.Value)
     |> Task.singleton
 
-  let save (u: User) =
-    Task.singleton <| userStorage[u.ID] <- u
+  let save (u: User) = Task.singleton <| storage[u.ID] <- u
 
   let delete (id: Guid) =
-    userStorage.TryRemove(id)
-    |> ignore
-    |> Task.singleton
+    storage.TryRemove(id) |> ignore |> Task.singleton
 
 [<RequireQualifiedAccess>]
 module Channels =
-  let private channelStorage = ConcurrentDictionary<Guid, Channel>()
+  let private storage = ConcurrentDictionary<Guid, Channel>()
 
-  let query id =
-    channelStorage |> tryGet id |> Task.singleton
+  let query id = storage |> tryGet id |> Task.singleton
 
   let getAll () =
-    channelStorage.Values
+    storage.Values
     |> Seq.sortBy (fun c -> c.IsEnabled)
     |> Seq.toList
     |> TaskResult.ok
 
   let find q =
-    channelStorage.ToArray()
+    storage.ToArray()
     |> Seq.tryFind (fun kvp -> q kvp.Value)
     |> Option.map (fun kvp -> kvp.Value)
     |> Task.singleton
 
-  let save (c: Channel) =
-    Task.singleton <| channelStorage[c.ID] <- c
+  let save (c: Channel) = Task.singleton <| storage[c.ID] <- c
 
   let delete (id: Guid) =
-    channelStorage.TryRemove(id)
-    |> ignore
+    storage.TryRemove(id) |> ignore |> Task.singleton
+
+[<RequireQualifiedAccess>]
+module EditingCommunicationsRequests =
+  let private storage = ConcurrentDictionary<Guid, EditingCommunicationsRequest>()
+
+  let query id = storage |> tryGet id |> Task.singleton
+
+  let getAll () =
+    storage.Values |> Seq.toList |> TaskResult.ok
+
+  let find q =
+    storage.ToArray()
+    |> Seq.tryFind (fun kvp -> q kvp.Value)
+    |> Option.map (fun kvp -> kvp.Value)
     |> Task.singleton
+
+  let save (c: EditingCommunicationsRequest) = Task.singleton <| storage[c.ID] <- c
+
+  let delete (id: Guid) =
+    storage.TryRemove(id) |> ignore |> Task.singleton
 
 let optionToObjResult<'a> (topt: Task<'a option>) =
   topt
@@ -109,6 +116,9 @@ let query<'a> : Configuration -> Guid -> Task<Result<'a, DomainError>> =
         | t when t = typeof<Session> -> Sessions.query id |> optionToObjResult<Session>
         | t when t = typeof<User> -> Users.query id |> optionToObjResult<User>
         | t when t = typeof<Channel> -> Channels.query id |> optionToObjResult<Channel>
+        | t when t = typeof<EditingCommunicationsRequest> ->
+          EditingCommunicationsRequests.query id
+          |> optionToObjResult<EditingCommunicationsRequest>
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -124,6 +134,9 @@ let getAll<'a> : Configuration -> unit -> Task<Result<'a list, DomainError>> =
         | t when t = typeof<Session> -> Sessions.getAll () |> TaskResult.map box
         | t when t = typeof<User> -> Users.getAll () |> TaskResult.map box
         | t when t = typeof<Channel> -> Channels.getAll () |> TaskResult.map box
+        | t when t = typeof<EditingCommunicationsRequest> ->
+          EditingCommunicationsRequests.getAll ()
+          |> TaskResult.map box
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -148,6 +161,10 @@ let queryPredicate<'a> : Configuration -> ('a -> bool) -> Task<Result<'a, Domain
           box predicate :?> Channel -> bool
           |> Channels.find
           |> optionToObjResult<Channel>
+        | t when t = typeof<EditingCommunicationsRequest> ->
+          box predicate :?> EditingCommunicationsRequest -> bool
+          |> EditingCommunicationsRequests.find
+          |> optionToObjResult<EditingCommunicationsRequest>
         | t ->
           InternalServerError $"Query not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -163,6 +180,10 @@ let save<'a> : Configuration -> 'a -> Task<Result<unit, DomainError>> =
         | t when t = typeof<Session> -> box a :?> Session |> Sessions.save |> Task.map Ok
         | t when t = typeof<User> -> box a :?> User |> Users.save |> Task.map Ok
         | t when t = typeof<Channel> -> box a :?> Channel |> Channels.save |> Task.map Ok
+        | t when t = typeof<EditingCommunicationsRequest> ->
+          box a :?> EditingCommunicationsRequest
+          |> EditingCommunicationsRequests.save
+          |> Task.map Ok
         | t ->
           InternalServerError $"Save not implemented for type {t.FullName}"
           |> TaskResult.error
@@ -176,6 +197,9 @@ let delete<'a> : Configuration -> Guid -> Task<Result<unit, DomainError>> =
         | t when t = typeof<Session> -> Sessions.delete id |> Task.map Ok
         | t when t = typeof<User> -> Users.delete id |> Task.map Ok
         | t when t = typeof<Channel> -> Channels.delete id |> Task.map Ok
+        | t when t = typeof<EditingCommunicationsRequest> ->
+          EditingCommunicationsRequests.delete id
+          |> Task.map Ok
         | t ->
           InternalServerError $"Delete not implemented for type {t.FullName}"
           |> TaskResult.error
