@@ -95,7 +95,7 @@ let createPost =
                 { ChannelID = Guid.NewGuid()
                   ChannelName = name } }
 
-      let! returnUrl = buildUrl [ "channels" ]
+      let! returnUrl = buildUrl [ "channels" ] []
       return! renderSuccess returnUrl
     }
 
@@ -115,7 +115,7 @@ let private switchChannel id eventBuilder =
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
 
-    let! returnUrl = buildUrl [ "channels" ]
+    let! returnUrl = buildUrl [ "channels" ] []
 
     return! renderSuccess returnUrl
   }
