@@ -1,9 +1,10 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Views.Channels.ListChannels
 
+open CommunicationsManagement.API
 open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine.HtmlElements
-open Flurl
+open Urls
 open Giraffe.ViewEngine
 
 type ChannelListViewModel = { Channels: Channel list }
@@ -12,29 +13,20 @@ let list (vm: ViewModel<ChannelListViewModel>) : XmlNode list =
   let trx = vm.Root.Translate
   let baseUrl = vm.Root.BaseUrl
 
-  let newChannelUrl =
-    baseUrl
-      .AppendPathSegments("channels", "create")
-      .ToString()
+  let newChannelUrl = urlFor baseUrl ["channels"; "create"] []
 
   let enableLink (c: Channel) =
-    let enableUrl =
-      baseUrl
-        .AppendPathSegments("channels", c.ID, "enable")
-        .ToString()
+    let url = urlFor baseUrl ["channels"; c.ID |> string; "enable"] []
 
-    a [ _href enableUrl
+    a [ _href url
         _class "btn btn-success btn-sm enable-channel-link" ] [
       "Enable" |> trx |> Text
     ]
 
   let disableLink (c: Channel) =
-    let enableUrl =
-      baseUrl
-        .AppendPathSegments("channels", c.ID, "disable")
-        .ToString()
+    let url = urlFor baseUrl ["channels"; c.ID |> string; "disable"] []
 
-    a [ _href enableUrl
+    a [ _href url
         _class "btn btn-danger btn-sm disable-channel-link" ] [
       "Disable" |> trx |> Text
     ]

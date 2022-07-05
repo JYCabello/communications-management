@@ -6,7 +6,6 @@ open System.Threading.Tasks
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
-open CommunicationsManagement.API.Views
 open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe
@@ -14,7 +13,6 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
-open Flurl
 
 let list =
   effectRoute {
@@ -115,31 +113,28 @@ let createPost =
               Roles = dto.Roles.Value }
     }
 
-  let save usr vmr : EffectRoute<HttpHandler> =
+  let save usr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-      let url = vmr.BaseUrl.AppendPathSegment("users").ToString()
+      let! url = buildUrl ["users"] []
       return! renderSuccess url
     }
 
   effectRoute {
-    let! root = getModelRoot
+    let! vmr = getModelRoot
     do! requireRole Roles.UserManagement
-
     let! dto = fromForm<CreateUserDto>
-
     let! p = getPorts
-
-    let! validationResult = validate p dto root.Translate
+    let! validationResult = validate p dto vmr.Translate
 
     return!
       match validationResult with
-      | Valid user -> save user root
+      | Valid user -> save user
       | Invalid userCreationViewModel ->
         renderOk
           CreateUser.createUserView
           { Model = userCreationViewModel
-            Root = root }
+            Root = vmr }
         |> toEffectRoute
   }
 
@@ -151,12 +146,9 @@ let details id =
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
-let userUrl (u: User) (url: string) =
-  url.AppendPathSegments("users", u.ID).ToString()
 
 let switchRole (userId, role) eventBuilder =
   effectRoute {
-    let! vmr = getModelRoot
     do! requireRole Roles.UserManagement
     let! user = fun (p: IPorts) -> p.find<User> userId
 
@@ -168,7 +160,7 @@ let switchRole (userId, role) eventBuilder =
       | None -> BadRequest |> Error)
 
     do! emit { Event = (user, role) |> eventBuilder }
-    let url = userUrl user vmr.BaseUrl
+    let! url = buildUrl [ "users"; user.ID |> string ] []
     return! renderSuccess url
   }
 

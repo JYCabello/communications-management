@@ -4,51 +4,40 @@ module CommunicationsManagement.API.Views.Home
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API
 open Giraffe.ViewEngine
-open Flurl
+open Urls
 
 
 let private usersRow vm =
-  let url =
-    vm
-      .Root
-      .BaseUrl
-      .AppendPathSegment("users")
-      .ToString()
+  let trxTxt = vm.Root.Translate >> Text
 
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.UserManagement)
   |> Option.map (fun _ ->
     [ div [] [
         h1 [] [
-          "Users" |> vm.Root.Translate |> Text
+          "Users" |> trxTxt
         ]
-        a [ _href url
+        a [ _href <| urlFor vm.Root.BaseUrl ["users"] []
             _class "btn btn-primary"
             _id "users-link" ] [
-          "UserManagement" |> vm.Root.Translate |> Text
+          "UserManagement" |> trxTxt
         ]
       ] ])
   |> Option.defaultValue []
 
 let private channelsRow vm =
-  let url =
-    vm
-      .Root
-      .BaseUrl
-      .AppendPathSegment("channels")
-      .ToString()
-
+  let trxTxt = vm.Root.Translate >> Text
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.ChannelManagement)
   |> Option.map (fun _ ->
     [ div [] [
         h1 [] [
-          "Channels" |> vm.Root.Translate |> Text
+          "Channels" |> trxTxt
         ]
-        a [ _href url
+        a [ _href <| urlFor vm.Root.BaseUrl ["channels"] []
             _class "btn btn-primary"
             _id "channels-link" ] [
-          "ChannelManagement" |> vm.Root.Translate |> Text
+          "ChannelManagement" |> trxTxt
         ]
       ] ])
   |> Option.defaultValue []
