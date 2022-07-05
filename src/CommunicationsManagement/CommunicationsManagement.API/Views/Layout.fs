@@ -10,10 +10,12 @@ let private navTemplate (vmr: ViewModelRoot) =
   let langUrls =
     [ (urlFor vmr.CurrentUrl [] [("setLang", "en")], "en")
       (urlFor vmr.CurrentUrl [] [("setLang", "es")], "es") ]
+  
+  let trxTxt = vmr.Translate >> Text
 
   nav [] [
     a [ _href "/" ] [
-      "Home" |> vmr.Translate |> Text
+      "Home" |> trxTxt
     ]
     Text "&nbsp;"
     yield!
@@ -31,7 +33,7 @@ let private navTemplate (vmr: ViewModelRoot) =
           Text "&nbsp;"
           a [ _href <| urlFor vmr.BaseUrl ["logout"] []
               _id "logout-link" ] [
-            "Logout" |> vmr.Translate |> Text
+            "Logout" |> trxTxt
           ] ])
       |> Option.defaultValue []
   ]
