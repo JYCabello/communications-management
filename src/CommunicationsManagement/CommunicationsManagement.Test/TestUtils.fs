@@ -10,6 +10,11 @@ open Xunit
 open TestSetup
 open Urls
 
+let click cssSelector (driver: WebDriver) =
+  driver
+    .FindElement(By.CssSelector cssSelector)
+    .Click()
+
 let logout (setup: Setup) =
   setup.driver.Url <- urlFor setup.config.BaseUrl [ "logout" ] []
 
