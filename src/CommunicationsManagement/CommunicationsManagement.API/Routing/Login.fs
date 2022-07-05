@@ -50,8 +50,11 @@ let post =
                 { SessionID = session.ID
                   UserID = session.UserID
                   ExpiresAt = session.ExpiresAt } }
-      
-      let! activationUrl = buildUrl ["login"; "confirm"] [("code", session.ID)] 
+
+      let! activationUrl =
+        buildUrl [ "login"; "confirm" ] [
+          ("code", session.ID)
+        ]
 
       do!
         notify
@@ -100,6 +103,6 @@ let logout =
   effectRoute {
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
-    let! loginUrl = buildUrl ["login"] []
+    let! loginUrl = buildUrl [ "login" ] []
     return! redirectTo false loginUrl
   }

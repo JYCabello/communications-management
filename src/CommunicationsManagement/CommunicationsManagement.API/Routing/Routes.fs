@@ -231,7 +231,8 @@ module EffectfulRoutes =
 
   open Rendering
   open Urls
-  let buildUrl segments queryParams: EffectRoute<string> =
+
+  let buildUrl segments queryParams : EffectRoute<string> =
     effectRoute {
       let! ports = getPorts
       return urlFor ports.configuration.BaseUrl segments queryParams

@@ -116,7 +116,7 @@ let createPost =
   let save usr : EffectRoute<HttpHandler> =
     effectRoute {
       do! emit { Event = UserCreated usr }
-      let! url = buildUrl ["users"] []
+      let! url = buildUrl [ "users" ] []
       return! renderSuccess url
     }
 

@@ -11,17 +11,14 @@ open TestSetup
 open Urls
 
 let logout (setup: Setup) =
-  setup.driver.Url <- urlFor setup.config.BaseUrl ["logout"] []
+  setup.driver.Url <- urlFor setup.config.BaseUrl [ "logout" ] []
 
 let login email (setup: Setup) =
   logout setup
 
   let driver = setup.driver
 
-  Assert.Equal(
-    urlFor setup.config.BaseUrl ["login"] [],
-    driver.Url
-  )
+  Assert.Equal(urlFor setup.config.BaseUrl [ "login" ] [], driver.Url)
 
   driver
     .FindElement(By.Name("email"))

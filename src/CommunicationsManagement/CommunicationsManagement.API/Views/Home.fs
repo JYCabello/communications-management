@@ -14,10 +14,8 @@ let private usersRow vm =
   |> Option.bindBool (fun u -> u.hasRole Roles.UserManagement)
   |> Option.map (fun _ ->
     [ div [] [
-        h1 [] [
-          "Users" |> trxTxt
-        ]
-        a [ _href <| urlFor vm.Root.BaseUrl ["users"] []
+        h1 [] [ "Users" |> trxTxt ]
+        a [ _href <| urlFor vm.Root.BaseUrl [ "users" ] []
             _class "btn btn-primary"
             _id "users-link" ] [
           "UserManagement" |> trxTxt
@@ -27,14 +25,13 @@ let private usersRow vm =
 
 let private channelsRow vm =
   let trxTxt = vm.Root.Translate >> Text
+
   vm.Root.User
   |> Option.bindBool (fun u -> u.hasRole Roles.ChannelManagement)
   |> Option.map (fun _ ->
     [ div [] [
-        h1 [] [
-          "Channels" |> trxTxt
-        ]
-        a [ _href <| urlFor vm.Root.BaseUrl ["channels"] []
+        h1 [] [ "Channels" |> trxTxt ]
+        a [ _href <| urlFor vm.Root.BaseUrl [ "channels" ] []
             _class "btn btn-primary"
             _id "channels-link" ] [
           "ChannelManagement" |> trxTxt

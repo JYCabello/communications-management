@@ -11,7 +11,9 @@ type UserListViewModel = { Users: User list }
 
 let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
   let trxTxt = vm.Root.Translate >> Text
-  let url (u: User) = urlFor vm.Root.BaseUrl ["users"; u.ID |> string] []
+
+  let url (u: User) =
+    urlFor vm.Root.BaseUrl [ "users"; u.ID |> string ] []
 
   let userRow (u: User) =
     let email =
@@ -41,7 +43,8 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
     ]
 
   [ div [ _class "d-flex flex-row-reverse" ] [
-      a [ _href <| urlFor vm.Root.BaseUrl ["users"; "create"] []
+      a [ _href
+          <| urlFor vm.Root.BaseUrl [ "users"; "create" ] []
           _class "btn btn-success btn-sm user-link"
           _id "new-user-button" ] [
         "New" |> trxTxt

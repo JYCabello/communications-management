@@ -8,15 +8,13 @@ open Urls
 
 let private navTemplate (vmr: ViewModelRoot) =
   let langUrls =
-    [ (urlFor vmr.CurrentUrl [] [("setLang", "en")], "en")
-      (urlFor vmr.CurrentUrl [] [("setLang", "es")], "es") ]
-  
+    [ (urlFor vmr.CurrentUrl [] [ ("setLang", "en") ], "en")
+      (urlFor vmr.CurrentUrl [] [ ("setLang", "es") ], "es") ]
+
   let trxTxt = vmr.Translate >> Text
 
   nav [] [
-    a [ _href "/" ] [
-      "Home" |> trxTxt
-    ]
+    a [ _href "/" ] [ "Home" |> trxTxt ]
     Text "&nbsp;"
     yield!
       langUrls
@@ -31,7 +29,7 @@ let private navTemplate (vmr: ViewModelRoot) =
             Text u.Name
           ]
           Text "&nbsp;"
-          a [ _href <| urlFor vmr.BaseUrl ["logout"] []
+          a [ _href <| urlFor vmr.BaseUrl [ "logout" ] []
               _id "logout-link" ] [
             "Logout" |> trxTxt
           ] ])
