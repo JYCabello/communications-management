@@ -18,7 +18,6 @@ let ``adds, enables and disables channels`` () =
 
     driver.Url <- setup.config.BaseUrl
     driver.FindElement(By.Id("channels-link")).Click()
-    do! Task.Delay(12000)
     Assert.Empty(driver.FindElements(By.CssSelector ".enable-channel-link"))
     Assert.Empty(driver.FindElements(By.CssSelector ".disable-channel-link"))
     driver |> click "#new-channel-link"
