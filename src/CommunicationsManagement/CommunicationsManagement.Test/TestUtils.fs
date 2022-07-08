@@ -111,3 +111,14 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 
   login testUser.Email setup
   testUser
+
+let createChannel name (setup: Setup) =
+  let driver = setup.driver
+  login setup.config.AdminEmail setup
+  driver.FindElement(By.Id("channels-link")).Click()
+  Assert.Empty(driver.FindElements(By.CssSelector ".enable-channel-link"))
+  Assert.Empty(driver.FindElements(By.CssSelector ".disable-channel-link"))
+  driver |> click "#new-channel-link"
+  driver.FindElement(By.Name "name").SendKeys(name)
+  driver |> click "#channel-sumbit"
+  driver.Url <- setup.config.BaseUrl

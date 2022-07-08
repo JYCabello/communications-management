@@ -1,5 +1,6 @@
 ﻿module TestProject1CommunicationsManagement.Test.``channel management``
 
+open System.Threading.Tasks
 open CommunicationsManagement.API.Models
 open OpenQA.Selenium
 open TestSetup
@@ -17,8 +18,9 @@ let ``adds, enables and disables channels`` () =
 
     driver.Url <- setup.config.BaseUrl
     driver.FindElement(By.Id("channels-link")).Click()
-    Assert.Empty(driver.FindElements(By.CssSelector(".enable-channel-link")))
-    Assert.Empty(driver.FindElements(By.CssSelector(".disable-channel-link")))
+    do! Task.Delay(12000)
+    Assert.Empty(driver.FindElements(By.CssSelector ".enable-channel-link"))
+    Assert.Empty(driver.FindElements(By.CssSelector ".disable-channel-link"))
     driver |> click "#new-channel-link"
     // Just trigger validation
     driver |> click "#channel-sumbit"
@@ -29,11 +31,11 @@ let ``adds, enables and disables channels`` () =
 
     driver |> click "#channel-sumbit"
     driver |> click "#close-button"
-    Assert.NotEmpty(driver.FindElements(By.CssSelector(".disable-channel-link")))
+    Assert.NotEmpty(driver.FindElements(By.CssSelector ".disable-channel-link"))
     driver |> click ".disable-channel-link"
     driver |> click "#close-button"
-    Assert.NotEmpty(driver.FindElements(By.CssSelector(".enable-channel-link")))
+    Assert.NotEmpty(driver.FindElements(By.CssSelector ".enable-channel-link"))
     driver |> click ".enable-channel-link"
     driver |> click "#close-button"
-    Assert.NotEmpty(driver.FindElements(By.CssSelector(".disable-channel-link")))
+    Assert.NotEmpty(driver.FindElements(By.CssSelector ".disable-channel-link"))
   }
