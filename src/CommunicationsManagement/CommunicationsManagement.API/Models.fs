@@ -69,7 +69,8 @@ type MemoryStorage =
 
 [<CLIMutable>]
 type Configuration =
-  { EventStoreConnectionString: string
+  { BlobStorageConnectionString: string
+    EventStoreConnectionString: string
     BaseUrl: string
     AdminEmail: string
     SendGridKey: string
