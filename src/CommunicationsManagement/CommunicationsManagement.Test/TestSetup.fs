@@ -150,7 +150,7 @@ let testSetup () =
   task {
     let containerPort = getFreePort ()
 
-    let! containerID =
+    let! eventStoreContainerID =
       startContainer
       <| eventStoreCreateParams containerPort
 
@@ -204,7 +204,7 @@ let testSetup () =
       }
 
     let disposers =
-      [ fun () -> deleteContainer containerID |> fun t -> t.Result
+      [ fun () -> deleteContainer eventStoreContainerID |> fun t -> t.Result
         host.Dispose
         driver.Dispose ]
 
