@@ -8,7 +8,7 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
-open CommunicationsManagement.API.Validation
+open CommunicationsManagement.API.EffectValidation
 open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
@@ -21,7 +21,7 @@ type CreateChannelPostDto = { Name: string option }
 
 type private ValidationResult2 =
   | Valid of string
-  | Invalid of ViewModel<CreateChannel.ChannelCreationViewModel>
+  | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
 
 let list =
   effectRoute {
@@ -48,10 +48,16 @@ let createGet =
           Model = { Name = None; NameError = None } }
   }
   
-let validate (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> =
+let validatetv (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> =
   taskValidation {
-    let emptyError = { FieldName = nameof dto.Name; Error = "CannotBeEmpty" } |> TaskResult.error
-    let alreadyExistsError = { FieldName = nameof dto.Name; Error = "AlreadyExists" } |> TaskResult.error
+    let emptyError =
+      [{ FieldName = nameof dto.Name; Error = "CannotBeEmpty" }]
+      |> Invalid
+      |> TaskResult.error
+    let alreadyExistsError =
+      [ { FieldName = nameof dto.Name; Error = "AlreadyExists" } ]
+      |> Invalid
+      |> TaskResult.error
 
     let! name =
       match dto.Name with
@@ -60,6 +66,7 @@ let validate (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> =
         if String.IsNullOrWhiteSpace n
         then emptyError
         else n |> TaskResult.ok
+
     and! _ =
       match dto.Name with
       | None -> emptyError
@@ -70,7 +77,8 @@ let validate (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> =
           | Error error ->
             match error with
             | NotFound _ -> TaskResult.ok name
-            | e -> Error e)
+            | e -> e |> Fail |> TaskResult.error)
+
     return name
   }
 
@@ -110,7 +118,7 @@ let createPost =
         match error with
         | None -> Valid dto.Name.Value
         | Some e ->
-          Invalid
+          Invalid2
             { Root = vmr
               Model = { Name = dto.Name; NameError = Some e } }
     }
@@ -132,10 +140,14 @@ let createPost =
     do! requireRole Roles.ChannelManagement
     let! validation = validate
 
+    let! dto = fromForm<CreateChannelPostDto>
+    let! p = getPorts
+    let! (v2: string) = validatetv p dto
+
     return!
       match validation with
       | Valid s -> save s
-      | Invalid m -> effectRoute { return renderOk CreateChannel.create m }
+      | Invalid2 m -> effectRoute { return renderOk CreateChannel.create m }
   }
 
 let private switchChannel id eventBuilder =

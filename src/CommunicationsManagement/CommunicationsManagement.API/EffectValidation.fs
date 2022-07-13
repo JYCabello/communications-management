@@ -1,14 +1,42 @@
-﻿module CommunicationsManagement.API.Validation
+﻿module CommunicationsManagement.API.EffectValidation
 
 open System.Threading.Tasks
+open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
 type ValidationError = { FieldName: string; Error: string }
 
-type TaskValidation<'a> = Task<Result<'a, ValidationError list>>
+type EffectValidationResult<'a> =
+| Valid of 'a
+| Invalid of ValidationError list
+| Fail of DomainError
+
+type TaskValidation<'a> = Task<EffectValidationResult<'a>>
+
+let mapTV ()
+
+let zipTV (left: TaskValidation<'a>) (right: TaskValidation<'b>) : TaskValidation<'a * 'b> =
+  task {
+    let! l = left
+    let! r = right
+    return
+      match l with
+      | Valid a ->
+        match r with
+        | Valid b -> Valid (a, b)
+        | Invalid ver -> Invalid ver
+        | Fail fr -> Fail fr
+      | Invalid vel ->
+        match r with
+        | Valid _ -> Invalid vel
+        | Invalid ver -> vel @ ver |> Invalid
+        | Fail fr -> Fail fr
+      | Fail fl -> Fail fl
+  }
+
 
 type TaskValidationBuilder() =
-  member inline _.Return(value: 'ok) : TaskValidation<'ok> = TaskResult.ok value
+  member inline _.Return(value: 'ok) : TaskValidation<'ok> = value |> Valid |> Task.singleton
 
   member inline _.ReturnFrom(result: TaskValidation<'ok>) : TaskValidation<'ok> = result
 
@@ -36,22 +64,7 @@ type TaskValidationBuilder() =
       left: TaskValidation<'left>,
       right: TaskValidation<'right>
     ) : TaskValidation<'left * 'right> =
-    task {
-      let! l = left
-      let! r = right
-      return
-        match l with
-        | Ok lv ->
-          match r with
-          | Ok rv -> Ok (lv, rv)
-          | Error re -> Error re
-        | Error le ->
-          match r with
-          | Ok _ -> Error le
-          | Error re -> Error (le @ re)
-    }
-  
-  member inline _.Source(tr: Task<Result<'a, ValidationError>>): TaskValidation<'a> =
-    tr |> TaskResult.mapError (fun e -> [e])
+    zipTV left right
+
 
 let taskValidation = TaskValidationBuilder()
