@@ -1,11 +1,14 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Routing.Channels
 
+open System.ComponentModel.DataAnnotations
 open CommunicationsManagement.API
+open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
+open CommunicationsManagement.API.Validation
 open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
@@ -16,7 +19,7 @@ open System
 [<CLIMutable>]
 type CreateChannelPostDto = { Name: string option }
 
-type private ValidationResult =
+type private ValidationResult2 =
   | Valid of string
   | Invalid of ViewModel<CreateChannel.ChannelCreationViewModel>
 
@@ -44,9 +47,35 @@ let createGet =
         { Root = vmr
           Model = { Name = None; NameError = None } }
   }
+  
+let validate (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> =
+  taskValidation {
+    let emptyError = { FieldName = nameof dto.Name; Error = "CannotBeEmpty" } |> TaskResult.error
+    let alreadyExistsError = { FieldName = nameof dto.Name; Error = "AlreadyExists" } |> TaskResult.error
+
+    let! name =
+      match dto.Name with
+      | None -> emptyError
+      | Some n ->
+        if String.IsNullOrWhiteSpace n
+        then emptyError
+        else n |> TaskResult.ok
+    and! _ =
+      match dto.Name with
+      | None -> emptyError
+      | Some name ->
+        p.query<Channel> (fun c -> c.Name = name)
+        |> Task.bind (function
+          | Ok _ -> alreadyExistsError
+          | Error error ->
+            match error with
+            | NotFound _ -> TaskResult.ok name
+            | e -> Error e)
+    return name
+  }
 
 let createPost =
-  let validate: EffectRoute<ValidationResult> =
+  let validate: EffectRoute<ValidationResult2> =
     let existingError trx name =
       effectRoute {
         let! p = getPorts

@@ -5,37 +5,37 @@ open FsToolkit.ErrorHandling
 
 type ValidationError = { FieldName: string; Error: string }
 
-type ValidationResult<'a> = Task<Result<'a, ValidationError list>>
+type TaskValidation<'a> = Task<Result<'a, ValidationError list>>
 
 type TaskValidationBuilder() =
-  member inline _.Return(value: 'ok) : ValidationResult<'ok> = TaskResult.ok value
+  member inline _.Return(value: 'ok) : TaskValidation<'ok> = TaskResult.ok value
 
-  member inline _.ReturnFrom(result: ValidationResult<'ok>) : ValidationResult<'ok> = result
+  member inline _.ReturnFrom(result: TaskValidation<'ok>) : TaskValidation<'ok> = result
 
   member inline _.Bind
     (
-      result: ValidationResult<'okInput>,
-      [<InlineIfLambda>] binder: 'okInput -> ValidationResult<'okOutput>
-    ) : ValidationResult<'okOutput> =
+      result: TaskValidation<'okInput>,
+      [<InlineIfLambda>] binder: 'okInput -> TaskValidation<'okOutput>
+    ) : TaskValidation<'okOutput> =
       taskResult {
         let! okIn = result
         return! binder okIn
       }
 
-  member inline this.Zero() : ValidationResult<unit> = this.Return()
+  member inline this.Zero() : TaskValidation<unit> = this.Return()
 
   member inline _.BindReturn
     (
-      input: ValidationResult<'okInput>,
+      input: TaskValidation<'okInput>,
       [<InlineIfLambda>] mapper: 'okInput -> 'okOutput
-    ) : ValidationResult<'okOutput> =
+    ) : TaskValidation<'okOutput> =
     TaskResult.map mapper input
 
   member inline _.MergeSources
     (
-      left: ValidationResult<'left>,
-      right: ValidationResult<'right>
-    ) : ValidationResult<'left * 'right> =
+      left: TaskValidation<'left>,
+      right: TaskValidation<'right>
+    ) : TaskValidation<'left * 'right> =
     task {
       let! l = left
       let! r = right
@@ -50,5 +50,8 @@ type TaskValidationBuilder() =
           | Ok _ -> Error le
           | Error re -> Error (le @ re)
     }
+  
+  member inline _.Source(tr: Task<Result<'a, ValidationError>>): TaskValidation<'a> =
+    tr |> TaskResult.mapError (fun e -> [e])
 
 let taskValidation = TaskValidationBuilder()
