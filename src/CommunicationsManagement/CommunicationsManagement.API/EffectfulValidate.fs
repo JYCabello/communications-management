@@ -6,10 +6,29 @@ open FsToolkit.ErrorHandling
 
 type ValidationError = { FieldName: string; Error: string }
 
-
 type ValidateResult<'a> =
   | Valid of 'a
   | Invalid of ValidationError list
+
+let mapV f v =
+  match v with
+  | Valid a -> a |> f |> Valid
+  | Invalid ve -> ve |> Invalid
+
+let flattenV (vv: ValidateResult<ValidateResult<'a>>) : ValidateResult<'a> =
+  match vv with
+  | Valid v -> v
+  | Invalid iv -> iv |> Invalid
+
+let bindV (f: 'a -> ValidateResult<'b>) vr =
+  vr |> mapV f |> flattenV
+  
+module Validate =
+  let valid a : ValidateResult<'a> = a |> Valid
+  let invalid ve : ValidateResult<'a> = ve |> Invalid
+
+  let validationError name value : ValidateResult<'a> =
+    [ { FieldName = name; Error = value } ] |> invalid
 
 type EffectValidateResult<'a> =
   | EffectValid of 'a
@@ -38,7 +57,7 @@ let mapTV f tv =
       | EffectFail de -> de |> EffectFail
   }
 
-let flatten
+let flattenTV
   (tvtv: TaskEffectValidateResult<TaskEffectValidateResult<'a>>)
   : TaskEffectValidateResult<'a> =
   task {
@@ -52,7 +71,7 @@ let flatten
   }
 
 let bindTV (f: 'a -> TaskEffectValidateResult<'b>) tv : TaskEffectValidateResult<'b> =
-  mapTV f tv |> flatten
+  mapTV f tv |> flattenTV
 
 let zipTV
   (left: TaskEffectValidateResult<'a>)
@@ -78,7 +97,7 @@ let zipTV
   }
 
 
-type TaskValidationBuilder() =
+type TaskEffectValidationBuilder() =
   member inline _.Return(value: 'ok) : TaskEffectValidateResult<'ok> =
     value |> EffectValid |> Task.singleton
 
@@ -111,4 +130,4 @@ type TaskValidationBuilder() =
     zipTV left right
 
 
-let taskValidation = TaskValidationBuilder()
+let taskEffValid = TaskEffectValidationBuilder()

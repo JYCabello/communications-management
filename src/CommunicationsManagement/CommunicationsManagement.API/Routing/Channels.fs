@@ -48,7 +48,7 @@ let createGet =
 
 let createPost =
   let validate (dto: CreateChannelPostDto) (p: IPorts) : TaskEffectValidateResult<string> =
-    taskValidation {
+    taskEffValid {
       let! name =
         match dto.Name with
         | None -> EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
