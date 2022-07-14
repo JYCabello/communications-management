@@ -8,7 +8,7 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
-open CommunicationsManagement.API.EffectValidation
+open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
@@ -48,16 +48,14 @@ let createGet =
           Model = { Name = None; NameError = None } }
   }
   
-let validatetv (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> =
+let validatetv (p: IPorts) (dto: CreateChannelPostDto) : TaskEffectValidateResult<string> =
   taskValidation {
     let emptyError =
       [{ FieldName = nameof dto.Name; Error = "CannotBeEmpty" }]
-      |> Invalid
-      |> TaskResult.error
+      |> EffectValidate.invalid
     let alreadyExistsError =
       [ { FieldName = nameof dto.Name; Error = "AlreadyExists" } ]
-      |> Invalid
-      |> TaskResult.error
+      |> EffectValidate.invalid
 
     let! name =
       match dto.Name with
@@ -65,7 +63,7 @@ let validatetv (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> 
       | Some n ->
         if String.IsNullOrWhiteSpace n
         then emptyError
-        else n |> TaskResult.ok
+        else n |> EffectValidate.valid
 
     and! _ =
       match dto.Name with
@@ -76,8 +74,8 @@ let validatetv (p: IPorts) (dto: CreateChannelPostDto) : TaskValidation<string> 
           | Ok _ -> alreadyExistsError
           | Error error ->
             match error with
-            | NotFound _ -> TaskResult.ok name
-            | e -> e |> Fail |> TaskResult.error)
+            | NotFound _ -> EffectValidate.valid name
+            | e -> e |> EffectValidate.fail)
 
     return name
   }
@@ -142,7 +140,7 @@ let createPost =
 
     let! dto = fromForm<CreateChannelPostDto>
     let! p = getPorts
-    let! (v2: string) = validatetv p dto
+    let! v2 = validatetv p dto
 
     return!
       match validation with
