@@ -4,11 +4,11 @@ open System.Threading.Tasks
 open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
-type ValidationError = { FieldName: string; Error: string }
+type ValidateError = { FieldName: string; Error: string }
 
 type ValidateResult<'a> =
   | Valid of 'a
-  | Invalid of ValidationError list
+  | Invalid of ValidateError list
 
 let mapV f v =
   match v with
@@ -78,7 +78,7 @@ let validate = ValidateBuilder()
 
 type EffectValidateResult<'a> =
   | EffectValid of 'a
-  | EffectInvalid of ValidationError list
+  | EffectInvalid of ValidateError list
   | EffectFail of DomainError
 
 type TaskEffectValidateResult<'a> = Task<EffectValidateResult<'a>>

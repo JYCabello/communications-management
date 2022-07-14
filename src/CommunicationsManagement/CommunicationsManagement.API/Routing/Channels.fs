@@ -1,7 +1,7 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Routing.Channels
 
-open CommunicationsManagement.API
+open System.Linq.Expressions
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
@@ -83,33 +83,28 @@ let createPost =
       return! renderSuccess returnUrl
     }
 
+  let renderValidationErrors dto ve =
+    effectRoute {
+      let! vmr = getModelRoot
+
+      return
+        renderOk
+          CreateChannel.create
+          { Root = vmr
+            Model =
+              { Name = dto.Name
+                NameError = errorFor (nameof dto.Name) ve vmr.Translate } }
+    }
+
   effectRoute {
     do! requireRole Roles.ChannelManagement
-
     let! dto = fromForm<CreateChannelPostDto>
     let! validateResult = validate dto
 
     return!
       match validateResult with
       | Valid s -> save s
-      | Invalid ve ->
-        effectRoute {
-          let! vmr = getModelRoot
-
-          let nameError =
-            ve
-            |> Seq.tryFind (fun e -> e.FieldName = "Name")
-            |> Option.map (fun e -> e.Error)
-            |> Option.map vmr.Translate
-
-          return
-            renderOk
-              CreateChannel.create
-              { Root = vmr
-                Model =
-                  { Name = dto.Name
-                    NameError = nameError } }
-        }
+      | Invalid ve -> renderValidationErrors dto ve
   }
 
 let private switchChannel id eventBuilder =

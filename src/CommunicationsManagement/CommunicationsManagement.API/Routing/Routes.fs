@@ -247,6 +247,10 @@ module EffectfulRoutes =
   open Rendering
   open Urls
 
+  let errorFor name (errors: ValidateError list) (tr: Translator) =
+    errors
+    |> Seq.tryFind (fun e -> e.FieldName = name)
+    |> Option.map (fun e -> tr e.Error)
 
   let buildUrl segments queryParams : EffectRoute<string> =
     effectRoute {
