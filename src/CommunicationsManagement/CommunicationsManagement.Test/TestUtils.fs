@@ -39,7 +39,7 @@ let login email (setup: Setup) =
     | Login ln -> ln
     | _ -> failwith "Should have been a login notification"
 
-  driver.FindElement(By.Id("home-button")).Click()
+  driver |> click "#home-button"
 
   Assert.Equal(
     $"{setup.config.BaseUrl}/login/confirm?code={loginNotification.ActivationCode}",
@@ -61,7 +61,7 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 
   login setup.config.AdminEmail setup
   let driver = setup.driver
-  driver.FindElement(By.Id "users-link").Click()
+  driver |> click "#users-link"
   Assert.True(driver.Url.EndsWith("users"))
 
   Assert.Equal(
@@ -73,14 +73,10 @@ let createAndLogin (roles: Roles) (setup: Setup) =
       .Count
   )
 
-  driver
-    .FindElement(By.Id "new-user-button")
-    .Click()
+  driver |> click "#new-user-button"
 
   // Just trigger the validation.
-  driver
-    .FindElement(By.Id "create-user-sumbit")
-    .Click()
+  driver |> click "#create-user-sumbit"
   
   Thread.Sleep 150
 
@@ -107,9 +103,7 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 
   roleInputs |> Seq.iter (fun i -> i.Click())
 
-  driver
-    .FindElement(By.Id "create-user-sumbit")
-    .Click()
+  driver |> click "#create-user-sumbit"
 
   login testUser.Email setup
   testUser
@@ -117,7 +111,7 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 let createChannel name (setup: Setup) =
   let driver = setup.driver
   login setup.config.AdminEmail setup
-  driver.FindElement(By.Id "channels-link").Click()
+  driver |> click "#channels-link"
   Assert.Empty(driver.FindElements(By.CssSelector ".enable-channel-link"))
   Assert.Empty(driver.FindElements(By.CssSelector ".disable-channel-link"))
   driver |> click "#new-channel-link"
