@@ -107,7 +107,7 @@ let createPost =
       | Invalid ve -> renderValidationErrors dto ve
   }
 
-let private switchChannel id eventBuilder =
+let private switchChannel eventBuilder id  =
   effectRoute {
     do! requireRole Roles.ChannelManagement
     let! channel = find<Channel> id
@@ -117,7 +117,7 @@ let private switchChannel id eventBuilder =
   }
 
 let enableChannel id =
-  switchChannel id (fun c -> ChannelEnabled { ChannelID = c.ID })
+  switchChannel (fun c -> ChannelEnabled { ChannelID = c.ID }) id
 
 let disableChannel id =
-  switchChannel id (fun c -> ChannelDisabled { ChannelID = c.ID })
+  switchChannel (fun c -> ChannelDisabled { ChannelID = c.ID }) id
