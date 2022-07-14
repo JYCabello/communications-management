@@ -20,7 +20,8 @@ module Sessions =
   let getAll (storage: ConcurrentDictionary<Guid, Session>) =
     storage.Values |> Seq.toList |> TaskResult.ok
 
-  let save (storage: ConcurrentDictionary<Guid, Session>) (s: Session) = Task.FromResult <| storage[s.ID] <- s
+  let save (storage: ConcurrentDictionary<Guid, Session>) (s: Session) =
+    Task.FromResult <| storage[s.ID] <- s
 
   let find (storage: ConcurrentDictionary<Guid, Session>) q =
     storage.ToArray()
@@ -35,7 +36,7 @@ module Sessions =
 module Users =
   let query storage id = storage |> tryGet id |> Task.singleton
 
-  let getAll  (storage: ConcurrentDictionary<Guid, User>) =
+  let getAll (storage: ConcurrentDictionary<Guid, User>) =
     storage.Values
     |> Seq.sortByDescending (fun u ->
       match u.LastLogin with
@@ -50,7 +51,8 @@ module Users =
     |> Option.map (fun kvp -> kvp.Value)
     |> Task.singleton
 
-  let save (storage: ConcurrentDictionary<Guid, User>) (u: User) = Task.singleton <| storage[u.ID] <- u
+  let save (storage: ConcurrentDictionary<Guid, User>) (u: User) =
+    Task.singleton <| storage[u.ID] <- u
 
   let delete (storage: ConcurrentDictionary<Guid, User>) (id: Guid) =
     storage.TryRemove(id) |> ignore |> Task.singleton
@@ -59,7 +61,7 @@ module Users =
 module Channels =
   let query storage id = storage |> tryGet id |> Task.singleton
 
-  let getAll  (storage: ConcurrentDictionary<Guid, Channel>) =
+  let getAll (storage: ConcurrentDictionary<Guid, Channel>) =
     storage.Values
     |> Seq.sortBy (fun c -> c.IsEnabled)
     |> Seq.toList
@@ -71,7 +73,8 @@ module Channels =
     |> Option.map (fun kvp -> kvp.Value)
     |> Task.singleton
 
-  let save (storage: ConcurrentDictionary<Guid, Channel>) (c: Channel) = Task.singleton <| storage[c.ID] <- c
+  let save (storage: ConcurrentDictionary<Guid, Channel>) (c: Channel) =
+    Task.singleton <| storage[c.ID] <- c
 
   let delete (storage: ConcurrentDictionary<Guid, Channel>) (id: Guid) =
     storage.TryRemove(id) |> ignore |> Task.singleton
@@ -89,7 +92,11 @@ module EditingCommunicationsRequests =
     |> Option.map (fun kvp -> kvp.Value)
     |> Task.singleton
 
-  let save (storage: ConcurrentDictionary<Guid, EditingCommunicationsRequest>) (c: EditingCommunicationsRequest) = Task.singleton <| storage[c.ID] <- c
+  let save
+    (storage: ConcurrentDictionary<Guid, EditingCommunicationsRequest>)
+    (c: EditingCommunicationsRequest)
+    =
+    Task.singleton <| storage[c.ID] <- c
 
   let delete (storage: ConcurrentDictionary<Guid, EditingCommunicationsRequest>) (id: Guid) =
     storage.TryRemove(id) |> ignore |> Task.singleton
@@ -105,9 +112,13 @@ let query<'a> : MemoryStorage -> Configuration -> Guid -> Task<Result<'a, Domain
     taskResult {
       let! value =
         match typeof<'a> with
-        | t when t = typeof<Session> -> Sessions.query s.Sessions id |> optionToObjResult<Session>
+        | t when t = typeof<Session> ->
+          Sessions.query s.Sessions id
+          |> optionToObjResult<Session>
         | t when t = typeof<User> -> Users.query s.Users id |> optionToObjResult<User>
-        | t when t = typeof<Channel> -> Channels.query s.Channels id |> optionToObjResult<Channel>
+        | t when t = typeof<Channel> ->
+          Channels.query s.Channels id
+          |> optionToObjResult<Channel>
         | t when t = typeof<EditingCommunicationsRequest> ->
           EditingCommunicationsRequests.query s.EditingCommunicationsRequests id
           |> optionToObjResult<EditingCommunicationsRequest>
@@ -136,7 +147,10 @@ let getAll<'a> : MemoryStorage -> Configuration -> unit -> Task<Result<'a list, 
       return value :?> 'a list
     }
 
-let queryPredicate<'a> : MemoryStorage -> Configuration -> ('a -> bool) -> Task<Result<'a, DomainError>> =
+let queryPredicate<'a> : MemoryStorage
+  -> Configuration
+  -> ('a -> bool)
+  -> Task<Result<'a, DomainError>> =
   fun s _ predicate ->
     taskResult {
       let! value =
@@ -169,9 +183,18 @@ let save<'a> : MemoryStorage -> Configuration -> 'a -> Task<Result<unit, DomainE
     taskResult {
       do!
         match typeof<'a> with
-        | t when t = typeof<Session> -> box a :?> Session |> Sessions.save s.Sessions |> Task.map Ok
-        | t when t = typeof<User> -> box a :?> User |> Users.save s.Users |> Task.map Ok
-        | t when t = typeof<Channel> -> box a :?> Channel |> Channels.save s.Channels |> Task.map Ok
+        | t when t = typeof<Session> ->
+          box a :?> Session
+          |> Sessions.save s.Sessions
+          |> Task.map Ok
+        | t when t = typeof<User> ->
+          box a :?> User
+          |> Users.save s.Users
+          |> Task.map Ok
+        | t when t = typeof<Channel> ->
+          box a :?> Channel
+          |> Channels.save s.Channels
+          |> Task.map Ok
         | t when t = typeof<EditingCommunicationsRequest> ->
           box a :?> EditingCommunicationsRequest
           |> EditingCommunicationsRequests.save s.EditingCommunicationsRequests

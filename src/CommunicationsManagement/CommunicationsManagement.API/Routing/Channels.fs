@@ -1,7 +1,6 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Routing.Channels
 
-open System.ComponentModel.DataAnnotations
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
@@ -12,7 +11,6 @@ open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Views.Channels
 open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
-open Effects
 open System
 
 
@@ -20,7 +18,7 @@ open System
 type CreateChannelPostDto = { Name: string option }
 
 type private ValidationResult2 =
-  | Valid of string
+  | Valid2 of string
   | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
 
 let list =
@@ -47,78 +45,29 @@ let createGet =
         { Root = vmr
           Model = { Name = None; NameError = None } }
   }
-  
-let validatetv (p: IPorts) (dto: CreateChannelPostDto) : TaskEffectValidateResult<string> =
-  taskValidation {
-    let emptyError =
-      [{ FieldName = nameof dto.Name; Error = "CannotBeEmpty" }]
-      |> EffectValidate.invalid
-    let alreadyExistsError =
-      [ { FieldName = nameof dto.Name; Error = "AlreadyExists" } ]
-      |> EffectValidate.invalid
-
-    let! name =
-      match dto.Name with
-      | None -> emptyError
-      | Some n ->
-        if String.IsNullOrWhiteSpace n
-        then emptyError
-        else n |> EffectValidate.valid
-
-    and! _ =
-      match dto.Name with
-      | None -> emptyError
-      | Some name ->
-        p.query<Channel> (fun c -> c.Name = name)
-        |> Task.bind (function
-          | Ok _ -> alreadyExistsError
-          | Error error ->
-            match error with
-            | NotFound _ -> EffectValidate.valid name
-            | e -> e |> EffectValidate.fail)
-
-    return name
-  }
 
 let createPost =
-  let validate: EffectRoute<ValidationResult2> =
-    let existingError trx name =
-      effectRoute {
-        let! p = getPorts
-
-        return!
-          p.query<Channel> (fun c -> c.Name = name)
-          |> Task.map (function
-            | Ok _ -> "AlreadyExists" |> trx |> Some |> Ok
-            | Error error ->
-              match error with
-              | NotFound _ -> Ok None
-              | e -> Error e)
-      }
-
-    effectRoute {
-      let! dto = fromForm<CreateChannelPostDto>
-      let! vmr = getModelRoot
-
-      let emptyError =
-        match String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
-        | true -> "CannotBeEmpty" |> vmr.Translate |> Some
-        | false -> None
-
-      let! existingError =
+  let validate (dto: CreateChannelPostDto) (p: IPorts) : TaskEffectValidateResult<string> =
+    taskValidation {
+      let! name =
         match dto.Name with
-        | Some n -> existingError vmr.Translate n
-        | None -> effectRoute { return None }
+        | None -> EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+        | Some n ->
+          if String.IsNullOrWhiteSpace n then
+            EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+          else
+            n |> EffectValidate.valid
 
-      let error = emptyError |> Option.orElse existingError
+      do!
+        p.query<Channel> (fun c -> c.Name = name)
+        |> Task.bind (function
+          | Ok _ -> EffectValidate.validationError (nameof dto.Name) "AlreadyExists"
+          | Error error ->
+            match error with
+            | NotFound _ -> EffectValidate.valid ()
+            | e -> e |> EffectValidate.fail)
 
-      return
-        match error with
-        | None -> Valid dto.Name.Value
-        | Some e ->
-          Invalid2
-            { Root = vmr
-              Model = { Name = dto.Name; NameError = Some e } }
+      return name
     }
 
   let save name =
@@ -136,16 +85,31 @@ let createPost =
 
   effectRoute {
     do! requireRole Roles.ChannelManagement
-    let! validation = validate
 
     let! dto = fromForm<CreateChannelPostDto>
-    let! p = getPorts
-    let! v2 = validatetv p dto
+    let! validateResult = validate dto
 
     return!
-      match validation with
+      match validateResult with
       | Valid s -> save s
-      | Invalid2 m -> effectRoute { return renderOk CreateChannel.create m }
+      | Invalid ve ->
+        effectRoute {
+          let! vmr = getModelRoot
+
+          let nameError =
+            ve
+            |> Seq.tryFind (fun e -> e.FieldName = "Name")
+            |> Option.map (fun e -> e.Error)
+            |> Option.map vmr.Translate
+
+          return
+            renderOk
+              CreateChannel.create
+              { Root = vmr
+                Model =
+                  { Name = dto.Name
+                    NameError = nameError } }
+        }
   }
 
 let private switchChannel id eventBuilder =
@@ -153,9 +117,7 @@ let private switchChannel id eventBuilder =
     do! requireRole Roles.ChannelManagement
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
-
     let! returnUrl = buildUrl [ "channels" ] []
-
     return! renderSuccess returnUrl
   }
 

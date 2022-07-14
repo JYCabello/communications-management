@@ -60,7 +60,7 @@ type EditingCommunicationsRequest =
     Title: string
     Body: string
     Media: Media list }
-  
+
 type MemoryStorage =
   { Users: ConcurrentDictionary<Guid, User>
     Sessions: ConcurrentDictionary<Guid, Session>

@@ -71,7 +71,7 @@ let ports config : IPorts =
       Sessions = ConcurrentDictionary<Guid, Session>()
       Channels = ConcurrentDictionary<Guid, Channel>()
       EditingCommunicationsRequests = ConcurrentDictionary<Guid, EditingCommunicationsRequest>() }
-  
+
   { new IPorts with
       member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
