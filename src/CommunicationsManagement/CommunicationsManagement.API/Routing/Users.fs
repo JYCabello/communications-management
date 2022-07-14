@@ -51,10 +51,6 @@ type CreateUserDto =
     Email: string option
     Roles: Roles option }
 
-type UserCreationValidation =
-  | UserValid of UserCreated
-  | UserInvalid of CreateUser.UserCreationViewModel
-
 let createPost =
   let validate (dto: CreateUserDto) (p: IPorts) : TaskEffectValidateResult<UserCreated> =
     taskEffValid {
