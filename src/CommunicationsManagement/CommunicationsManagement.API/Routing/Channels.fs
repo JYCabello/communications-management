@@ -107,7 +107,7 @@ let createPost =
       | Invalid ve -> renderValidationErrors dto ve
   }
 
-let private switchChannel eventBuilder id  =
+let private switchChannel eventBuilder id =
   effectRoute {
     do! requireRole Roles.ChannelManagement
     let! channel = find<Channel> id

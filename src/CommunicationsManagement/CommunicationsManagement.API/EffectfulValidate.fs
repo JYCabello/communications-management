@@ -20,9 +20,8 @@ let flattenV (vv: ValidateResult<ValidateResult<'a>>) : ValidateResult<'a> =
   | Valid v -> v
   | Invalid iv -> iv |> Invalid
 
-let bindV (f: 'a -> ValidateResult<'b>) vr =
-  vr |> mapV f |> flattenV
-  
+let bindV (f: 'a -> ValidateResult<'b>) vr = vr |> mapV f |> flattenV
+
 let zipV left right =
   match left with
   | Valid a ->
@@ -33,7 +32,7 @@ let zipV left right =
     match right with
     | Valid _ -> vel |> Invalid
     | Invalid ver -> vel @ ver |> Invalid
-  
+
 module Validate =
   let valid a : ValidateResult<'a> = a |> Valid
   let invalid ve : ValidateResult<'a> = ve |> Invalid
@@ -42,13 +41,9 @@ module Validate =
     [ { FieldName = name; Error = value } ] |> invalid
 
 type ValidateBuilder() =
-  member inline _.Return(value: 'ok) : ValidateResult<'ok> =
-    value |> Valid
+  member inline _.Return(value: 'ok) : ValidateResult<'ok> = value |> Valid
 
-  member inline _.ReturnFrom
-    (result: ValidateResult<'ok>)
-    : ValidateResult<'ok> =
-    result
+  member inline _.ReturnFrom(result: ValidateResult<'ok>) : ValidateResult<'ok> = result
 
   member inline _.Bind
     (
@@ -173,6 +168,13 @@ type TaskEffectValidateBuilder() =
       right: TaskEffectValidateResult<'right>
     ) : TaskEffectValidateResult<'left * 'right> =
     zipTV left right
+
+  member inline _.Source(vr: ValidateResult<'a>) : TaskEffectValidateResult<'a> =
+    match vr with
+    | Valid a -> EffectValidate.valid a
+    | Invalid ve -> EffectValidate.invalid ve
+
+  member inline _.Source(vr: Task<EffectValidateResult<'a>>) : TaskEffectValidateResult<'a> = vr
 
 
 let taskEffValid = TaskEffectValidateBuilder()

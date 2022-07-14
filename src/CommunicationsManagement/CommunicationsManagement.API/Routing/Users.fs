@@ -2,8 +2,8 @@
 module CommunicationsManagement.API.Routing.Users
 
 open System
-open System.Threading.Tasks
 open CommunicationsManagement.API
+open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Views.Users
@@ -52,65 +52,44 @@ type CreateUserDto =
     Roles: Roles option }
 
 type UserCreationValidation =
-  | Valid of UserCreated
-  | Invalid of CreateUser.UserCreationViewModel
+  | UserValid of UserCreated
+  | UserInvalid of CreateUser.UserCreationViewModel
 
 let createPost =
-  let validate (p: IPorts) (dto: CreateUserDto) (tr: Translator) : Task<UserCreationValidation> =
-    task {
-      let emailError = validateEmail dto.Email tr
+  let validateX (dto: CreateUserDto) (p: IPorts) : TaskEffectValidateResult<UserCreated> =
+    taskEffValid {
+      let! email =
+        match validateEmail2 (nameof dto.Email) dto.Email with
+        | Invalid ve -> EffectValidate.invalid ve
+        | Valid email ->
+          p.query<User> (fun u -> u.Email = Email email)
+          |> Task.bind (fun r ->
+            r
+            |> function
+              | Ok _ -> EffectValidate.validationError (nameof dto.Email) "EmailAlreadyInUse"
+              | Error err ->
+                match err with
+                | NotFound _ -> EffectValidate.valid email
+                | e -> EffectValidate.fail e)
 
-      let! emailExists =
-        match emailError with
-        | Some _ -> false |> Task.FromResult
-        | None ->
-          match dto.Email with
-          | None -> true |> Task.FromResult
-          | Some email ->
-            p.query<User> (fun u -> u.Email = Email email)
-            |> Task.map (fun r ->
-              r
-              |> function
-                | Ok _ -> true
-                | Error _ -> false)
+      and! name =
+        match dto.Name with
+        | None -> EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+        | Some n ->
+          if String.IsNullOrWhiteSpace(n)
+          then EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+          else EffectValidate.valid n
 
-      let emailError' =
-        if emailExists then
-          "EmailAlreadyInUse" |> tr |> Some
-        else
-          emailError
-
-      let nameError =
-        match String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
-        | true -> "CannotBeEmpty" |> tr |> Some
-        | false -> None
-
-      let rolesError =
+      and! roles =
         match dto.Roles with
-        | None -> "MustSelectOneOption" |> tr |> Some
-        | _ -> None
-
-      let hasErrors =
-        emailError'.IsSome
-        || nameError.IsSome
-        || rolesError.IsSome
+        | None -> EffectValidate.validationError (nameof dto.Roles) "MustSelectOneOption"
+        | Some r -> EffectValidate.valid r
 
       return
-        match hasErrors with
-        | true ->
-          Invalid
-            { Name = dto.Name
-              NameError = nameError
-              Email = dto.Email
-              EmailError = emailError'
-              Roles = dto.Roles |> Option.defaultValue Roles.None
-              RolesError = rolesError }
-        | false ->
-          Valid
-            { Name = dto.Name.Value
-              Email = dto.Email.Value
-              UserID = Guid.NewGuid()
-              Roles = dto.Roles.Value }
+        { Name = name
+          Email = email
+          UserID = Guid.NewGuid()
+          Roles = roles }
     }
 
   let save usr : EffectRoute<HttpHandler> =
@@ -124,18 +103,28 @@ let createPost =
     let! vmr = getModelRoot
     do! requireRole Roles.UserManagement
     let! dto = fromForm<CreateUserDto>
-    let! p = getPorts
-    let! validationResult = validate p dto vmr.Translate
+    let! vr = validateX dto
 
     return!
-      match validationResult with
-      | Valid user -> save user
-      | Invalid userCreationViewModel ->
-        renderOk
-          CreateUser.createUserView
-          { Model = userCreationViewModel
-            Root = vmr }
-        |> toEffectRoute
+      match vr with
+      | Valid userCreated -> save userCreated
+      | Invalid ve ->
+        effectRoute {
+          let errorFor n = errorFor n ve vmr.Translate
+          let nameError = errorFor (nameof dto.Name)
+          let emailError = errorFor (nameof dto.Email)
+          let rolesError = errorFor (nameof dto.Roles)
+
+          let (model: CreateUser.UserCreationViewModel) =
+            { Name = dto.Name
+              NameError = nameError
+              Email = dto.Email
+              EmailError = emailError
+              Roles = dto.Roles |> Option.defaultValue Roles.None
+              RolesError = rolesError }
+
+          return renderOk CreateUser.createUserView { Model = model; Root = vmr }
+        }
   }
 
 let details id =
