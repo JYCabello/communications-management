@@ -25,9 +25,7 @@ let login email (setup: Setup) =
 
   Assert.Equal(urlFor setup.config.BaseUrl [ "login" ] [], driver.Url)
 
-  driver
-    .FindElement(By.Name "email")
-    .SendKeys email
+  driver.FindElement(By.Name "email").SendKeys email
 
   driver.FindElement(By.Id "email-sumbit").Click()
   Thread.Sleep(200)
@@ -77,7 +75,7 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 
   // Just trigger the validation.
   driver |> click "#create-user-sumbit"
-  
+
   Thread.Sleep 150
 
   driver

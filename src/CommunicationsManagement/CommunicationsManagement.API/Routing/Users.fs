@@ -72,9 +72,10 @@ let createPost =
         match dto.Name with
         | None -> EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
         | Some n ->
-          if String.IsNullOrWhiteSpace(n)
-          then EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
-          else EffectValidate.valid n
+          if String.IsNullOrWhiteSpace(n) then
+            EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+          else
+            EffectValidate.valid n
 
       and! roles =
         match dto.Roles with
