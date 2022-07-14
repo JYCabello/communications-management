@@ -23,12 +23,58 @@ let flattenV (vv: ValidateResult<ValidateResult<'a>>) : ValidateResult<'a> =
 let bindV (f: 'a -> ValidateResult<'b>) vr =
   vr |> mapV f |> flattenV
   
+let zipV left right =
+  match left with
+  | Valid a ->
+    match right with
+    | Valid b -> (a, b) |> Valid
+    | Invalid ver -> ver |> Invalid
+  | Invalid vel ->
+    match right with
+    | Valid _ -> vel |> Invalid
+    | Invalid ver -> vel @ ver |> Invalid
+  
 module Validate =
   let valid a : ValidateResult<'a> = a |> Valid
   let invalid ve : ValidateResult<'a> = ve |> Invalid
 
   let validationError name value : ValidateResult<'a> =
     [ { FieldName = name; Error = value } ] |> invalid
+
+type ValidateBuilder() =
+  member inline _.Return(value: 'ok) : ValidateResult<'ok> =
+    value |> Valid
+
+  member inline _.ReturnFrom
+    (result: ValidateResult<'ok>)
+    : ValidateResult<'ok> =
+    result
+
+  member inline _.Bind
+    (
+      result: ValidateResult<'okInput>,
+      [<InlineIfLambda>] binder: 'okInput -> ValidateResult<'okOutput>
+    ) : ValidateResult<'okOutput> =
+    bindV binder result
+
+  member inline this.Zero() : ValidateResult<unit> = this.Return()
+
+  member inline _.BindReturn
+    (
+      input: ValidateResult<'okInput>,
+      [<InlineIfLambda>] mapper: 'okInput -> 'okOutput
+    ) : ValidateResult<'okOutput> =
+    mapV mapper input
+
+  member inline _.MergeSources
+    (
+      left: ValidateResult<'left>,
+      right: ValidateResult<'right>
+    ) : ValidateResult<'left * 'right> =
+    zipV left right
+
+
+let validate = ValidateBuilder()
 
 type EffectValidateResult<'a> =
   | EffectValid of 'a
@@ -96,8 +142,7 @@ let zipTV
       | EffectFail fl -> EffectFail fl
   }
 
-
-type TaskEffectValidationBuilder() =
+type TaskEffectValidateBuilder() =
   member inline _.Return(value: 'ok) : TaskEffectValidateResult<'ok> =
     value |> EffectValid |> Task.singleton
 
@@ -130,4 +175,4 @@ type TaskEffectValidationBuilder() =
     zipTV left right
 
 
-let taskEffValid = TaskEffectValidationBuilder()
+let taskEffValid = TaskEffectValidateBuilder()
