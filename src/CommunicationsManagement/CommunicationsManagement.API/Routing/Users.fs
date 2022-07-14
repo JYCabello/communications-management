@@ -56,7 +56,7 @@ type UserCreationValidation =
   | UserInvalid of CreateUser.UserCreationViewModel
 
 let createPost =
-  let validateX (dto: CreateUserDto) (p: IPorts) : TaskEffectValidateResult<UserCreated> =
+  let validate (dto: CreateUserDto) (p: IPorts) : TaskEffectValidateResult<UserCreated> =
     taskEffValid {
       let! email =
         match validateEmail2 (nameof dto.Email) dto.Email with
@@ -103,7 +103,7 @@ let createPost =
     let! vmr = getModelRoot
     do! requireRole Roles.UserManagement
     let! dto = fromForm<CreateUserDto>
-    let! vr = validateX dto
+    let! vr = validate dto
 
     return!
       match vr with
