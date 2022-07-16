@@ -1,6 +1,7 @@
 ﻿module CommunicationsManagement.API.EffectfulValidate
 
 open System.Threading.Tasks
+open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open FsToolkit.ErrorHandling
 
@@ -137,6 +138,19 @@ let zipTV
       | EffectFail fl -> EffectFail fl
   }
 
+let validateNotExisting<'a, 'b> q name v (p: IPorts) : TaskEffectValidateResult<'b> =
+  task {
+    let! r = p.query<'a> q
+
+    return!
+      match r with
+      | Ok _ -> EffectValidate.validationError name "AlreadyInUse"
+      | Error e ->
+        match e with
+        | NotFound _ -> EffectValidate.valid v
+        | err -> EffectValidate.fail err
+  }
+
 type TaskEffectValidateBuilder() =
   member inline _.Return(value: 'ok) : TaskEffectValidateResult<'ok> =
     value |> EffectValid |> Task.singleton
@@ -175,6 +189,5 @@ type TaskEffectValidateBuilder() =
     | Invalid ve -> EffectValidate.invalid ve
 
   member inline _.Source(vr: Task<EffectValidateResult<'a>>) : TaskEffectValidateResult<'a> = vr
-
 
 let taskEffValid = TaskEffectValidateBuilder()

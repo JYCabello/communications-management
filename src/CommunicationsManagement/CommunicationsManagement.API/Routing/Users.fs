@@ -58,15 +58,11 @@ let createPost =
         match validateEmail2 (nameof dto.Email) dto.Email with
         | Invalid ve -> EffectValidate.invalid ve
         | Valid email ->
-          p.query<User> (fun u -> u.Email = Email email)
-          |> Task.bind (fun r ->
-            r
-            |> function
-              | Ok _ -> EffectValidate.validationError (nameof dto.Email) "EmailAlreadyInUse"
-              | Error err ->
-                match err with
-                | NotFound _ -> EffectValidate.valid email
-                | e -> EffectValidate.fail e)
+          validateNotExisting<User, string>
+            (fun u -> u.Email = Email email)
+            (nameof dto.Email)
+            email
+            p
 
       and! name =
         match dto.Name with
