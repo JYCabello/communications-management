@@ -26,4 +26,17 @@ let ``creates a communication request`` () =
     driver |> click "#request-sumbit"
     driver |> click "#close-button"
     driver |> click ".details-request-link"
+
+    driver.FindElement(By.Name "title")
+    |> fun titleInput ->
+         Assert.Equal("test request in edition", titleInput.GetAttribute "value")
+         titleInput.Clear()
+         titleInput.SendKeys "edited test request"
+
+    driver |> click "#request-sumbit"
+    driver |> click "#close-button"
+
+    driver.FindElement(By.Name "title")
+    |> fun titleInput -> Assert.Equal("edited test request", titleInput.GetAttribute "value")
+
   }
