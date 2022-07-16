@@ -1,7 +1,6 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Routing.Channels
 
-open System.Linq.Expressions
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
@@ -9,7 +8,6 @@ open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Views.Channels
-open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
 open System
 
@@ -58,14 +56,7 @@ let createPost =
           else
             n |> EffectValidate.valid
 
-      do!
-        p.query<Channel> (fun c -> c.Name = name)
-        |> Task.bind (function
-          | Ok _ -> EffectValidate.validationError (nameof dto.Name) "AlreadyExists"
-          | Error error ->
-            match error with
-            | NotFound _ -> EffectValidate.valid ()
-            | e -> e |> EffectValidate.fail)
+      do! validateNotExisting<Channel, unit> (fun c -> c.Name = name) (nameof dto.Name) () p
 
       return name
     }
