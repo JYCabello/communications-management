@@ -55,7 +55,7 @@ let createPost =
   let validate (dto: CreateUserDto) (p: IPorts) : TaskEffectValidateResult<UserCreated> =
     taskEffValid {
       let! email =
-        match validateEmail2 (nameof dto.Email) dto.Email with
+        match validateEmail (nameof dto.Email) dto.Email with
         | Invalid ve -> EffectValidate.invalid ve
         | Valid email ->
           validateNotExisting<User, string>

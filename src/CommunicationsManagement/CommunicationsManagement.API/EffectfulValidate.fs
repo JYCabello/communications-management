@@ -11,30 +11,30 @@ type ValidateResult<'a> =
   | Valid of 'a
   | Invalid of ValidateError list
 
-let mapV f v =
-  match v with
-  | Valid a -> a |> f |> Valid
-  | Invalid ve -> ve |> Invalid
-
-let flattenV (vv: ValidateResult<ValidateResult<'a>>) : ValidateResult<'a> =
-  match vv with
-  | Valid v -> v
-  | Invalid iv -> iv |> Invalid
-
-let bindV (f: 'a -> ValidateResult<'b>) vr = vr |> mapV f |> flattenV
-
-let zipV left right =
-  match left with
-  | Valid a ->
-    match right with
-    | Valid b -> (a, b) |> Valid
-    | Invalid ver -> ver |> Invalid
-  | Invalid vel ->
-    match right with
-    | Valid _ -> vel |> Invalid
-    | Invalid ver -> vel @ ver |> Invalid
-
 module Validate =
+  let map f v =
+    match v with
+    | Valid a -> a |> f |> Valid
+    | Invalid ve -> ve |> Invalid
+
+  let flattenV (vv: ValidateResult<ValidateResult<'a>>) : ValidateResult<'a> =
+    match vv with
+    | Valid v -> v
+    | Invalid iv -> iv |> Invalid
+
+  let bindV (f: 'a -> ValidateResult<'b>) vr = vr |> map f |> flattenV
+
+  let zipV left right =
+    match left with
+    | Valid a ->
+      match right with
+      | Valid b -> (a, b) |> Valid
+      | Invalid ver -> ver |> Invalid
+    | Invalid vel ->
+      match right with
+      | Valid _ -> vel |> Invalid
+      | Invalid ver -> vel @ ver |> Invalid
+
   let valid a : ValidateResult<'a> = a |> Valid
   let invalid ve : ValidateResult<'a> = ve |> Invalid
 
@@ -51,7 +51,7 @@ type ValidateBuilder() =
       result: ValidateResult<'okInput>,
       [<InlineIfLambda>] binder: 'okInput -> ValidateResult<'okOutput>
     ) : ValidateResult<'okOutput> =
-    bindV binder result
+    Validate.bindV binder result
 
   member inline this.Zero() : ValidateResult<unit> = this.Return()
 
@@ -60,14 +60,14 @@ type ValidateBuilder() =
       input: ValidateResult<'okInput>,
       [<InlineIfLambda>] mapper: 'okInput -> 'okOutput
     ) : ValidateResult<'okOutput> =
-    mapV mapper input
+    Validate.map mapper input
 
   member inline _.MergeSources
     (
       left: ValidateResult<'left>,
       right: ValidateResult<'right>
     ) : ValidateResult<'left * 'right> =
-    zipV left right
+    Validate.zipV left right
 
 
 let validate = ValidateBuilder()
