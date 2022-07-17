@@ -58,11 +58,7 @@ let createPost =
         match validateEmail (nameof dto.Email) dto.Email with
         | Invalid ve -> EffectValidate.invalid ve
         | Valid email ->
-          validateNotExisting<User, string>
-            (fun u -> u.Email = Email email)
-            (nameof dto.Email)
-            email
-            p
+          validateNotExisting<User, Email> (fun u -> u.Email = email) (nameof dto.Email) email p
 
       and! name =
         match dto.Name with
@@ -80,7 +76,10 @@ let createPost =
 
       return
         { Name = name
-          Email = email
+          Email =
+            email
+            |> function
+              | Email e -> e
           UserID = Guid.NewGuid()
           Roles = roles }
     }

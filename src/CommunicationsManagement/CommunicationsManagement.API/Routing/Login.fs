@@ -74,11 +74,7 @@ let post =
     }
 
   let validate (dto: LoginDto) (_: IPorts) : TaskEffectValidateResult<Email> =
-    taskEffValid {
-      return!
-        DataValidation.validateEmail (nameof dto.Email) dto.Email
-        |> Validate.map Email
-    }
+    taskEffValid { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
 
   effectRoute {
     let! dto = fromForm<LoginDto>
