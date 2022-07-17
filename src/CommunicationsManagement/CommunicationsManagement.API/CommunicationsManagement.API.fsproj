@@ -12,6 +12,7 @@
         <Compile Include="Models.fs" />
         <Compile Include="Storage.fs" />
         <Compile Include="Effects.fs" />
+        <Compile Include="EffectfulValidate.fs" />
         <Compile Include="Notifications.fs" />
         <Compile Include="DataValidation.fs" />
         <Compile Include="Configuration.fs" />

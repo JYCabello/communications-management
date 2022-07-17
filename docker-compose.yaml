@@ -22,6 +22,16 @@ services:
         source: eventstore-communications-logs
         target: /var/log/eventstore
 
+  azurite-blob:
+    image: "mcr.microsoft.com/azure-storage/azurite"
+    ports:
+      - "10000:10000"
+    volumes:
+      - type: volume
+        source: azurite-blob-storage
+        target: /data
+
 volumes:
   eventstore-communications-data:
   eventstore-communications-logs:
+  azurite-blob-storage:

@@ -1,24 +1,23 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
 module CommunicationsManagement.API.Routing.Channels
 
-open CommunicationsManagement.API
+open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
+open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Views.Channels
-open FsToolkit.ErrorHandling
 open Microsoft.FSharp.Core
-open Effects
 open System
 
 
 [<CLIMutable>]
 type CreateChannelPostDto = { Name: string option }
 
-type private ValidationResult =
-  | Valid of string
-  | Invalid of ViewModel<CreateChannel.ChannelCreationViewModel>
+type private ValidationResult2 =
+  | Valid2 of string
+  | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
 
 let list =
   effectRoute {
@@ -46,44 +45,20 @@ let createGet =
   }
 
 let createPost =
-  let validate: EffectRoute<ValidationResult> =
-    let existingError trx name =
-      effectRoute {
-        let! p = getPorts
-
-        return!
-          p.query<Channel> (fun c -> c.Name = name)
-          |> Task.map (function
-            | Ok _ -> "AlreadyExists" |> trx |> Some |> Ok
-            | Error error ->
-              match error with
-              | NotFound _ -> Ok None
-              | e -> Error e)
-      }
-
-    effectRoute {
-      let! dto = fromForm<CreateChannelPostDto>
-      let! vmr = getModelRoot
-
-      let emptyError =
-        match String.IsNullOrWhiteSpace(dto.Name |> Option.defaultValue "") with
-        | true -> "CannotBeEmpty" |> vmr.Translate |> Some
-        | false -> None
-
-      let! existingError =
+  let validate (dto: CreateChannelPostDto) (p: IPorts) : TaskEffectValidateResult<string> =
+    taskEffValid {
+      let! name =
         match dto.Name with
-        | Some n -> existingError vmr.Translate n
-        | None -> effectRoute { return None }
+        | None -> EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+        | Some n ->
+          if String.IsNullOrWhiteSpace n then
+            EffectValidate.validationError (nameof dto.Name) "CannotBeEmpty"
+          else
+            n |> EffectValidate.valid
 
-      let error = emptyError |> Option.orElse existingError
+      do! validateNotExisting<Channel, unit> (fun c -> c.Name = name) (nameof dto.Name) () p
 
-      return
-        match error with
-        | None -> Valid dto.Name.Value
-        | Some e ->
-          Invalid
-            { Root = vmr
-              Model = { Name = dto.Name; NameError = Some e } }
+      return name
     }
 
   let save name =
@@ -99,29 +74,41 @@ let createPost =
       return! renderSuccess returnUrl
     }
 
+  let renderValidationErrors dto ve =
+    effectRoute {
+      let! vmr = getModelRoot
+
+      return
+        renderOk
+          CreateChannel.create
+          { Root = vmr
+            Model =
+              { Name = dto.Name
+                NameError = errorFor (nameof dto.Name) ve vmr.Translate } }
+    }
+
   effectRoute {
     do! requireRole Roles.ChannelManagement
-    let! validation = validate
+    let! dto = fromForm<CreateChannelPostDto>
+    let! validateResult = validate dto
 
     return!
-      match validation with
+      match validateResult with
       | Valid s -> save s
-      | Invalid m -> effectRoute { return renderOk CreateChannel.create m }
+      | Invalid ve -> renderValidationErrors dto ve
   }
 
-let private switchChannel id eventBuilder =
+let private switchChannel eventBuilder id =
   effectRoute {
     do! requireRole Roles.ChannelManagement
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
-
     let! returnUrl = buildUrl [ "channels" ] []
-
     return! renderSuccess returnUrl
   }
 
 let enableChannel id =
-  switchChannel id (fun c -> ChannelEnabled { ChannelID = c.ID })
+  switchChannel (fun c -> ChannelEnabled { ChannelID = c.ID }) id
 
 let disableChannel id =
-  switchChannel id (fun c -> ChannelDisabled { ChannelID = c.ID })
+  switchChannel (fun c -> ChannelDisabled { ChannelID = c.ID }) id

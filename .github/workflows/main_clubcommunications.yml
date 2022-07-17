@@ -24,6 +24,9 @@ jobs:
 
       - name: Pull event store image
         run: docker pull eventstore/eventstore:latest
+
+      - name: Pull azurite image
+        run: docker pull mcr.microsoft.com/azure-storage/azurite
       
       - name: Disable test parallelism
         uses: microsoft/variable-substitution@v1

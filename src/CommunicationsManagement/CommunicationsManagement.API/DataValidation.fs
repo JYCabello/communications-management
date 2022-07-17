@@ -1,24 +1,23 @@
 ﻿module CommunicationsManagement.API.DataValidation
 
 open System.Net.Mail
+open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Models
 
-let validateEmail (email: string option) (tr: Translator) : string option =
-  let errorMessage = "InvalidEmail" |> tr |> Some
-
+let validateEmail fieldName (email: string option) : ValidateResult<Email> =
   match email with
-  | None -> errorMessage
+  | None -> Validate.validationError fieldName "CannotBeEmpty"
   | Some e ->
     let trimmedEmail = e.Trim()
 
     match trimmedEmail.EndsWith(".") with
-    | true -> errorMessage
+    | true -> Validate.validationError fieldName "InvalidEmail"
     | false ->
       try
         let a = MailAddress(e)
 
         match a.Address = trimmedEmail with
-        | true -> None
-        | false -> errorMessage
+        | true -> e |> Email |> Validate.valid
+        | false -> Validate.validationError fieldName "InvalidEmail"
       with
-      | _ -> errorMessage
+      | _ -> Validate.validationError fieldName "InvalidEmail"

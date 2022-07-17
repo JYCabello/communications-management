@@ -1,10 +1,12 @@
 ﻿module Main
 
+open System
+open System.Collections.Concurrent
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
-open FsToolkit.ErrorHandling
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
@@ -64,18 +66,24 @@ let buildHost ports forcedPort =
   }
 
 let ports config : IPorts =
+  let (storage: MemoryStorage) =
+    { Users = ConcurrentDictionary<Guid, User>()
+      Sessions = ConcurrentDictionary<Guid, Session>()
+      Channels = ConcurrentDictionary<Guid, Channel>()
+      EditingCommunicationsRequests = ConcurrentDictionary<Guid, EditingCommunicationsRequest>() }
+
   { new IPorts with
       member this.sendEvent p = EventStore.sendEvent config p
       member this.sendNotification tr p = Notifications.send config p tr
       member this.configuration = config
-      member this.find<'a> id = Storage.query<'a> config id
+      member this.find<'a> id = Storage.query<'a> storage config id
 
       member this.query<'a> predicate =
-        Storage.queryPredicate<'a> config predicate
+        Storage.queryPredicate<'a> storage config predicate
 
-      member this.save<'a> a = Storage.save<'a> config a
-      member this.delete<'a> id = Storage.delete<'a> config id
-      member this.getAll<'a>() = Storage.getAll<'a> config () }
+      member this.save<'a> a = Storage.save<'a> storage config a
+      member this.delete<'a> id = Storage.delete<'a> storage config id
+      member this.getAll<'a>() = Storage.getAll<'a> storage config () }
 
 [<EntryPoint>]
 let main _ =

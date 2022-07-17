@@ -3,6 +3,7 @@ module CommunicationsManagement.API.Routing.Login
 
 open System
 open CommunicationsManagement.API
+open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
 open CommunicationsManagement.API.Routing.Routes
@@ -34,9 +35,9 @@ type LoginResult =
   | Failure of Views.Login.LoginModel
 
 let post =
-  let create dto rm =
+  let create email rm =
     effectRoute {
-      let! user = query<User> (fun u -> u.Email = (dto.Email |> (Option.defaultValue "") |> Email))
+      let! user = query<User> (fun u -> u.Email = email)
 
       let session =
         { UserID = user.ID
@@ -72,21 +73,25 @@ let post =
             Model = rm.Translate "EmailLoginDetails" }
     }
 
+  let validate (dto: LoginDto) (_: IPorts) : TaskEffectValidateResult<Email> =
+    taskEffValid { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
+
   effectRoute {
     let! dto = fromForm<LoginDto>
     let! rm = getAnonymousRootModel
+    let! validationResult = validate dto
 
     return!
-      match DataValidation.validateEmail dto.Email rm.Translate with
-      | None -> create dto rm
-      | Some error ->
+      match validationResult with
+      | Valid email -> create email rm
+      | Invalid ve ->
         effectRoute {
           return
             renderOk
               Views.Login.loginView
               { Model =
                   { Email = dto.Email
-                    EmailError = Some error }
+                    EmailError = errorFor (nameof dto.Email) ve rm.Translate }
                 Root = rm }
         }
   }

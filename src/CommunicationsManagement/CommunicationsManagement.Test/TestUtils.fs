@@ -25,11 +25,9 @@ let login email (setup: Setup) =
 
   Assert.Equal(urlFor setup.config.BaseUrl [ "login" ] [], driver.Url)
 
-  driver
-    .FindElement(By.Name("email"))
-    .SendKeys email
+  driver.FindElement(By.Name "email").SendKeys email
 
-  driver.FindElement(By.Id("email-sumbit")).Click()
+  driver.FindElement(By.Id "email-sumbit").Click()
   Thread.Sleep(200)
   let notification = setup.lastNotification
   Assert.Equal(email |> Email, notification.Email)
@@ -39,7 +37,7 @@ let login email (setup: Setup) =
     | Login ln -> ln
     | _ -> failwith "Should have been a login notification"
 
-  driver.FindElement(By.Id("home-button")).Click()
+  driver |> click "#home-button"
 
   Assert.Equal(
     $"{setup.config.BaseUrl}/login/confirm?code={loginNotification.ActivationCode}",
@@ -48,7 +46,7 @@ let login email (setup: Setup) =
 
   driver.Url <- loginNotification.ActivationUrl
 
-  let link = driver.FindElement(By.Id("logout-link"))
+  let link = driver.FindElement(By.Id "logout-link")
   Assert.Equal("Logout", link.Text)
   Assert.Equal(setup.config.BaseUrl + "/", driver.Url)
 
@@ -61,33 +59,31 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 
   login setup.config.AdminEmail setup
   let driver = setup.driver
-  driver.FindElement(By.Id("users-link")).Click()
+  driver |> click "#users-link"
   Assert.True(driver.Url.EndsWith("users"))
 
   Assert.Equal(
     1,
     driver
       .FindElements(
-        By.ClassName("user-link")
+        By.ClassName "user-link"
       )
       .Count
   )
 
-  driver
-    .FindElement(By.Id("new-user-button"))
-    .Click()
+  driver |> click "#new-user-button"
 
   // Just trigger the validation.
-  driver
-    .FindElement(By.Id("create-user-sumbit"))
-    .Click()
+  driver |> click "#create-user-sumbit"
+
+  Thread.Sleep 150
 
   driver
-    .FindElement(By.Id("input-name"))
+    .FindElement(By.Id "input-name")
     .SendKeys(testUser.Name)
 
   driver
-    .FindElement(By.Id("input-email"))
+    .FindElement(By.Id "input-email")
     .SendKeys(testUser.Email)
 
   let roles =
@@ -95,7 +91,7 @@ let createAndLogin (roles: Roles) (setup: Setup) =
     |> Seq.filter (fun r -> contains r roles)
 
   let roleInputs =
-    driver.FindElements(By.Name("roles"))
+    driver.FindElements(By.Name "roles")
     |> Seq.filter (fun e ->
       roles
       |> Seq.exists (fun r -> e.GetAttribute("value") = (r |> int |> string)))
@@ -105,9 +101,18 @@ let createAndLogin (roles: Roles) (setup: Setup) =
 
   roleInputs |> Seq.iter (fun i -> i.Click())
 
-  driver
-    .FindElement(By.Id("create-user-sumbit"))
-    .Click()
+  driver |> click "#create-user-sumbit"
 
   login testUser.Email setup
   testUser
+
+let createChannel name (setup: Setup) =
+  let driver = setup.driver
+  login setup.config.AdminEmail setup
+  driver |> click "#channels-link"
+  Assert.Empty(driver.FindElements(By.CssSelector ".enable-channel-link"))
+  Assert.Empty(driver.FindElements(By.CssSelector ".disable-channel-link"))
+  driver |> click "#new-channel-link"
+  driver.FindElement(By.Name "name").SendKeys(name)
+  driver |> click "#channel-sumbit"
+  driver.Url <- setup.config.BaseUrl

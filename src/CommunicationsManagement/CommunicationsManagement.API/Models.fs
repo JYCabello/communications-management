@@ -1,14 +1,8 @@
 ﻿module CommunicationsManagement.API.Models
 
 open System
+open System.Collections.Concurrent
 
-[<CLIMutable>]
-type Configuration =
-  { EventStoreConnectionString: string
-    BaseUrl: string
-    AdminEmail: string
-    SendGridKey: string
-    MailFrom: string }
 
 type Email = Email of string
 
@@ -58,6 +52,29 @@ type Channel =
   { ID: Guid
     Name: string
     IsEnabled: bool }
+
+type Media = { ID: Guid; FileName: string }
+
+type EditingCommunicationsRequest =
+  { ID: Guid
+    Title: string
+    Body: string
+    Media: Media list }
+
+type MemoryStorage =
+  { Users: ConcurrentDictionary<Guid, User>
+    Sessions: ConcurrentDictionary<Guid, Session>
+    Channels: ConcurrentDictionary<Guid, Channel>
+    EditingCommunicationsRequests: ConcurrentDictionary<Guid, EditingCommunicationsRequest> }
+
+[<CLIMutable>]
+type Configuration =
+  { BlobStorageConnectionString: string
+    EventStoreConnectionString: string
+    BaseUrl: string
+    AdminEmail: string
+    SendGridKey: string
+    MailFrom: string }
 
 type Translator = string -> string
 

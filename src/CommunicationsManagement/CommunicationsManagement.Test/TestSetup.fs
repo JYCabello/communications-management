@@ -88,6 +88,29 @@ let private startContainer (cp: CreateContainerParameters) =
     return id
   }
 
+let private azuriteCreateParams port =
+  let name = $"comm-mgmt-test-azurite-deleteme%i{port}"
+
+  let hostConfig =
+    let hostConfig = HostConfig()
+
+    let storage =
+      PortBinding()
+      |> fun b ->
+           b.HostPort <- $"%i{port}/tcp"
+           b.HostIP <- "0.0.0.0"
+           b
+
+    hostConfig.PortBindings <- Dictionary<string, IList<PortBinding>>()
+    hostConfig.PortBindings.Add("10000/tcp", List<PortBinding>([ storage ]))
+    hostConfig
+
+  let createParams = CreateContainerParameters()
+  createParams.Name <- name
+  createParams.Image <- "mcr.microsoft.com/azure-storage/azurite"
+  createParams.HostConfig <- hostConfig
+  createParams
+
 let private eventStoreCreateParams port =
   let name = $"comm-mgmt-test-event-store-db-deleteme%i{port}"
 
@@ -148,11 +171,17 @@ let getFreePort () =
 
 let testSetup () =
   task {
-    let containerPort = getFreePort ()
+    let eventStorePort = getFreePort ()
 
-    let! containerID =
+    let! eventStoreContainerID =
       startContainer
-      <| eventStoreCreateParams containerPort
+      <| eventStoreCreateParams eventStorePort
+
+    let blobStoragePort = getFreePort ()
+
+    let! azuriteContainerID =
+      startContainer
+      <| azuriteCreateParams blobStoragePort
 
     let driver =
       let driverOptions =
@@ -173,7 +202,9 @@ let testSetup () =
     let baseUrl = $"http://localhost:{sitePort}"
 
     let config =
-      { EventStoreConnectionString = $"esdb://admin:changeit@localhost:{containerPort}?tls=false"
+      { BlobStorageConnectionString =
+          $"DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:{blobStoragePort}/devstoreaccount1;"
+        EventStoreConnectionString = $"esdb://admin:changeit@localhost:{eventStorePort}?tls=false"
         BaseUrl = baseUrl
         AdminEmail = "notareal@email.com"
         SendGridKey = ""
@@ -204,7 +235,14 @@ let testSetup () =
       }
 
     let disposers =
-      [ fun () -> deleteContainer containerID |> fun t -> t.Result
+      [ fun () ->
+          eventStoreContainerID
+          |> deleteContainer
+          |> fun t -> t.Result
+        fun () ->
+          azuriteContainerID
+          |> deleteContainer
+          |> fun t -> t.Result
         host.Dispose
         driver.Dispose ]
 
