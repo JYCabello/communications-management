@@ -15,7 +15,6 @@
         <Compile Include="ContainsRolesShould.fs" />
         <Compile Include="UserEdition.fs" />
         <Compile Include="ChannelManagement.fs" />
-        <Compile Include="EditingCommunicationsRequest.fs" />
         <Compile Include="Program.fs" />
         <Content Include="xunit.runner.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
