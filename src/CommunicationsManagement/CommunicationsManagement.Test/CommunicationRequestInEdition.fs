@@ -33,10 +33,20 @@ let ``creates a communication request`` () =
          titleInput.Clear()
          titleInput.SendKeys "edited test request"
 
+    driver.FindElement(By.Name "content")
+    |> fun titleInput ->
+         Assert.Equal("", titleInput.GetAttribute "value")
+         titleInput.Clear()
+         titleInput.SendKeys "Content of the request"
+
     driver |> click "#request-sumbit"
     driver |> click "#close-button"
 
     driver.FindElement(By.Name "title")
     |> fun titleInput -> Assert.Equal("edited test request", titleInput.GetAttribute "value")
 
+    driver.FindElement(By.Name "content")
+    |> fun contentInput -> Assert.Equal("Content of the request", contentInput.GetAttribute "value")
+
+    failwith "pending check for file uploads"
   }

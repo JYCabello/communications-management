@@ -90,9 +90,27 @@ let createPost =
       let! url = buildUrl [ "users" ] []
       return! renderSuccess url
     }
+    
+  let renderErrors ve dto : EffectRoute<HttpHandler> =
+    effectRoute {
+      let! vmr = getModelRoot
+      let errorFor n = errorFor n ve vmr.Translate
+      let nameError = errorFor (nameof dto.Name)
+      let emailError = errorFor (nameof dto.Email)
+      let rolesError = errorFor (nameof dto.Roles)
+
+      let (model: CreateUser.UserCreationViewModel) =
+        { Name = dto.Name
+          NameError = nameError
+          Email = dto.Email
+          EmailError = emailError
+          Roles = dto.Roles |> Option.defaultValue Roles.None
+          RolesError = rolesError }
+
+      return renderOk CreateUser.createUserView { Model = model; Root = vmr }
+    }
 
   effectRoute {
-    let! vmr = getModelRoot
     do! requireRole Roles.UserManagement
     let! dto = fromForm<CreateUserDto>
     let! vr = validate dto
@@ -100,23 +118,7 @@ let createPost =
     return!
       match vr with
       | Valid userCreated -> save userCreated
-      | Invalid ve ->
-        effectRoute {
-          let errorFor n = errorFor n ve vmr.Translate
-          let nameError = errorFor (nameof dto.Name)
-          let emailError = errorFor (nameof dto.Email)
-          let rolesError = errorFor (nameof dto.Roles)
-
-          let (model: CreateUser.UserCreationViewModel) =
-            { Name = dto.Name
-              NameError = nameError
-              Email = dto.Email
-              EmailError = emailError
-              Roles = dto.Roles |> Option.defaultValue Roles.None
-              RolesError = rolesError }
-
-          return renderOk CreateUser.createUserView { Model = model; Root = vmr }
-        }
+      | Invalid ve -> renderErrors ve dto
   }
 
 let details id =
