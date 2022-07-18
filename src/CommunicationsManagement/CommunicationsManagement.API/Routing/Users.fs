@@ -90,7 +90,7 @@ let createPost =
       let! url = buildUrl [ "users" ] []
       return! renderSuccess url
     }
-    
+
   let renderErrors ve dto : EffectRoute<HttpHandler> =
     effectRoute {
       let! vmr = getModelRoot
