@@ -7,7 +7,6 @@ open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
 open CommunicationsManagement.API.Routing.Routes
-open FsToolkit.ErrorHandling
 open Routes.Rendering
 open Giraffe
 open Models
@@ -74,7 +73,20 @@ let post =
     }
 
   let validate (dto: LoginDto) (_: IPorts) : TaskEffectValidateResult<Email> =
-    taskEffValid { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
+    effectValidation { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
+
+  let renderErrors dto ve =
+    effectRoute {
+      let! rm = getAnonymousRootModel
+
+      return
+        renderOk
+          Views.Login.loginView
+          { Model =
+              { Email = dto.Email
+                EmailError = errorFor (nameof dto.Email) ve rm.Translate }
+            Root = rm }
+    }
 
   effectRoute {
     let! dto = fromForm<LoginDto>
@@ -84,16 +96,7 @@ let post =
     return!
       match validationResult with
       | Valid email -> create email rm
-      | Invalid ve ->
-        effectRoute {
-          return
-            renderOk
-              Views.Login.loginView
-              { Model =
-                  { Email = dto.Email
-                    EmailError = errorFor (nameof dto.Email) ve rm.Translate }
-                Root = rm }
-        }
+      | Invalid ve -> renderErrors dto ve
   }
 
 let confirm =

@@ -190,4 +190,4 @@ type TaskEffectValidateBuilder() =
 
   member inline _.Source(vr: Task<EffectValidateResult<'a>>) : TaskEffectValidateResult<'a> = vr
 
-let taskEffValid = TaskEffectValidateBuilder()
+let effectValidation = TaskEffectValidateBuilder()
