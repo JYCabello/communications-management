@@ -202,7 +202,7 @@ let triggerSubscriptions (ports: IPorts) =
       Name = "Admin"
       LastLogin = None }
 
-  do ports.save admin |> fun t -> t.Result |> ignore
+  do ports.save<User> admin |> fun t -> t.Result |> ignore
 
   let getCheckpoint cp () : Task<FromAll> =
     cp
