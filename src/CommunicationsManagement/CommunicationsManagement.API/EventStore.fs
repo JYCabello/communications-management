@@ -171,7 +171,7 @@ let subscribe cs (subscription: SubscriptionDetails) =
 
 let sendEvent (c: Configuration) (e: SendEventParams) : Task<Result<unit, DomainError>> =
   taskResult {
-    let cl = getClient c.EventStoreConnectionString
+    use cl = getClient c.EventStoreConnectionString
     let sn = getStreamName e.Event
     let etn = getEventTypeName e.Event
 
@@ -202,7 +202,10 @@ let triggerSubscriptions (ports: IPorts) =
       Name = "Admin"
       LastLogin = None }
 
-  do ports.save<User> admin |> fun t -> t.Result |> ignore
+  do
+    admin
+    |> ports.save<User>
+    |> fun t -> t.Result |> ignore
 
   let getCheckpoint cp () : Task<FromAll> =
     cp
