@@ -66,7 +66,7 @@ let buildHost ports forcedPort =
   }
 
 let ports config : IPorts =
-  let (storage: MemoryStorage) =
+  let storage =
     { Users = ConcurrentDictionary<Guid, User>()
       Sessions = ConcurrentDictionary<Guid, Session>()
       Channels = ConcurrentDictionary<Guid, Channel>()
