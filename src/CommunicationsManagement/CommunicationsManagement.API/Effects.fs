@@ -33,6 +33,20 @@ let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> 
         |> Error
   }
 
+type FreeRailway<'dep, 'ok, 'err> = 'dep -> Task<Result<'ok, 'err>>
+
+let mapFR (f: 'a -> 'b) (fr: FreeRailway<'dep, 'a, 'err>) : FreeRailway<'dep, 'b, 'err> =
+  fun d -> d |> fr |> TaskResult.map f
+
+let bindFR
+  (f: 'a -> FreeRailway<'dep, 'b, 'err>)
+  (fr: FreeRailway<'dep, 'a, 'err>)
+  : FreeRailway<'dep, 'b, 'err> =
+  fun d ->
+    d
+    |> fr
+    |> TaskResult.bind (fun a -> a |> f |> (fun frb -> frb d))
+
 type Effect<'a> = IPorts -> Task<Result<'a, DomainError>>
 
 let mapE (f: 'a -> 'b) (e: Effect<'a>) : Effect<'b> = fun p -> p |> e |> TaskResult.map f
