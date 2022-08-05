@@ -50,17 +50,26 @@ let bindFR
 
 type FreeRailwayBuilder() =
   let fromTask (ta: Task<'a>) : FreeRailway<'dep, 'a, 'err> = fun _ -> ta |> Task.map Ok
-  let fromTaskVoid (t: Task) :  FreeRailway<'dep, unit, 'err> = task { do! t } |> fromTask
+  let fromTaskVoid (t: Task) : FreeRailway<'dep, unit, 'err> = task { do! t } |> fromTask
   let fromResult (r: Result<'a, 'e>) : FreeRailway<'dep, 'a, 'e> = fun _ -> r |> Task.singleton
-  let fromTR (tr: Task<Result<'a, 'e>>): FreeRailway<'dep, 'a, 'e> = fun _ -> tr
+  let fromTR (tr: Task<Result<'a, 'e>>) : FreeRailway<'dep, 'a, 'e> = fun _ -> tr
 
-  member inline this.Bind(e: FreeRailway<'dep, 'a, 'err>, [<InlineIfLambda>] f: 'a -> FreeRailway<'dep, 'b, 'err>) : FreeRailway<'dep, 'b, 'err> =
+  member inline this.Bind
+    (
+      e: FreeRailway<'dep, 'a, 'err>,
+      [<InlineIfLambda>] f: 'a -> FreeRailway<'dep, 'b, 'err>
+    ) : FreeRailway<'dep, 'b, 'err> =
     bindFR f e
 
   member inline this.Return a : FreeRailway<'dep, 'a, 'err> = fun _ -> TaskResult.ok a
   member inline this.ReturnFrom(e: FreeRailway<'dep, 'a, 'err>) : FreeRailway<'dep, 'a, 'err> = e
   member inline this.Zero() : FreeRailway<'dep, unit, 'err> = fun _ -> TaskResult.ok ()
-  member inline this.Combine(a: FreeRailway<'dep, 'a, 'err>, b: FreeRailway<'dep, 'b, 'err>) : FreeRailway<'dep, 'b, 'err> =
+
+  member inline this.Combine
+    (
+      a: FreeRailway<'dep, 'a, 'err>,
+      b: FreeRailway<'dep, 'b, 'err>
+    ) : FreeRailway<'dep, 'b, 'err> =
     a |> bindFR (fun _ -> b)
 
   member inline _.TryWith
@@ -122,12 +131,25 @@ type FreeRailwayBuilder() =
     else
       this.Zero()
 
-  member inline _.BindReturn(x: FreeRailway<'dep, 'a, 'err>, [<InlineIfLambda>] f: 'a -> 'b) :FreeRailway<'dep, 'b, 'err> = mapFR f x
+  member inline _.BindReturn
+    (
+      x: FreeRailway<'dep, 'a, 'err>,
+      [<InlineIfLambda>] f: 'a -> 'b
+    ) : FreeRailway<'dep, 'b, 'err> =
+    mapFR f x
 
-  member inline this.MergeSources(ea: FreeRailway<'dep, 'a, 'err>, eb: FreeRailway<'dep, 'b, 'err>) : FreeRailway<'dep, 'a * 'b, 'err> =
+  member inline this.MergeSources
+    (
+      ea: FreeRailway<'dep, 'a, 'err>,
+      eb: FreeRailway<'dep, 'b, 'err>
+    ) : FreeRailway<'dep, 'a * 'b, 'err> =
     this.Bind(ea, (fun a -> eb |> mapFR (fun b -> (a, b))))
 
-  member inline _.Source<'a, 'dep, 'err when 'a: not struct>(tsk: Task<'a>) : FreeRailway<'dep, 'a, 'err> = tsk |> fromTask
+  member inline _.Source<'a, 'dep, 'err when 'a: not struct>
+    (tsk: Task<'a>)
+    : FreeRailway<'dep, 'a, 'err> =
+    tsk |> fromTask
+
   member inline _.Source(tsk: Task) : FreeRailway<'dep, unit, 'err> = tsk |> fromTaskVoid
   member inline _.Source(r: Result<'a, 'err>) : FreeRailway<'dep, 'a, 'err> = r |> fromResult
   member inline _.Source(tr: Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> = tr |> fromTR
