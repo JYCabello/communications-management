@@ -48,11 +48,14 @@ let bindFR
       return! d |> f a
     }
 
-type FreeRailwayBuilder() =
+module FRBConverters =
   let fromTask (ta: Task<'a>) : FreeRailway<'dep, 'a, 'err> = fun _ -> ta |> Task.map Ok
   let fromTaskVoid (t: Task) : FreeRailway<'dep, unit, 'err> = task { do! t } |> fromTask
   let fromResult (r: Result<'a, 'e>) : FreeRailway<'dep, 'a, 'e> = fun _ -> r |> Task.singleton
   let fromTR (tr: Task<Result<'a, 'e>>) : FreeRailway<'dep, 'a, 'e> = fun _ -> tr
+
+type FreeRailwayBuilder() =
+
 
   member inline this.Bind
     (
@@ -148,11 +151,16 @@ type FreeRailwayBuilder() =
   member inline _.Source<'a, 'dep, 'err when 'a: not struct>
     (tsk: Task<'a>)
     : FreeRailway<'dep, 'a, 'err> =
-    tsk |> fromTask
+    tsk |> FRBConverters.fromTask
 
-  member inline _.Source(tsk: Task) : FreeRailway<'dep, unit, 'err> = tsk |> fromTaskVoid
-  member inline _.Source(r: Result<'a, 'err>) : FreeRailway<'dep, 'a, 'err> = r |> fromResult
-  member inline _.Source(tr: Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> = tr |> fromTR
+  member inline _.Source(tsk: Task) : FreeRailway<'dep, unit, 'err> =
+    tsk |> FRBConverters.fromTaskVoid
+
+  member inline _.Source(r: Result<'a, 'err>) : FreeRailway<'dep, 'a, 'err> =
+    r |> FRBConverters.fromResult
+
+  member inline _.Source(tr: Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> =
+    tr |> FRBConverters.fromTR
 
 let freeRW = FreeRailwayBuilder()
 
