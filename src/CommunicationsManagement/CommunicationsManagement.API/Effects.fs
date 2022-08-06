@@ -183,3 +183,12 @@ module EffectOps =
   let save<'a> a : Effect<unit> = fun p -> p.save<'a> a
   let delete<'a> a : Effect<unit> = fun p -> p.delete<'a> a
   let solve p (e: Effect<'a>) = e p
+
+module EffectRouteOps =
+  let getPorts: EffectRoute<IPorts> = fun (p, _, _) -> TaskResult.ok p
+  let emit e : EffectRoute<unit> = fun (p, _, _) -> p.sendEvent e
+  let getAll<'a> : EffectRoute<'a list> = fun (p, _, _) -> p.getAll<'a> ()
+  let find<'a> id : EffectRoute<'a> = fun (p, _, _) -> p.find id
+  let query<'a> q : EffectRoute<'a> = fun (p, _, _) -> p.query q
+  let save<'a> a : EffectRoute<unit> = fun (p, _, _) -> p.save<'a> a
+  let delete<'a> a : EffectRoute<unit> = fun (p, _, _) -> p.delete<'a> a

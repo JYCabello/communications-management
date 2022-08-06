@@ -74,8 +74,8 @@ let post =
   let validate (dto: LoginDto) (_: IPorts) : TaskEffectValidateResult<Email> =
     effectValidation { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
 
-  let renderErrors dto ve =
-    effectRoute {
+  let renderErrors dto ve : EffectRoute<HttpHandler> =
+    effect {
       let! rm = getAnonymousRootModel
 
       return
@@ -106,10 +106,10 @@ let confirm: EffectRoute<HttpHandler> =
     return redirectTo false mr.BaseUrl
   }
 
-let logout =
-  effectRoute {
+let logout: EffectRoute<HttpHandler> =
+  effect {
     let! sessionID = getSessionID
-    do! emit { Event = SessionTerminated { SessionID = sessionID } }
+    do! EffectRouteOps.emit { Event = SessionTerminated { SessionID = sessionID } }
     let! loginUrl = buildUrl [ "login" ] []
-    return! redirectTo false loginUrl
+    return redirectTo false loginUrl
   }
