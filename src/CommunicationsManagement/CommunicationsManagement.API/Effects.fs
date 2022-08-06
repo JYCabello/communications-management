@@ -6,6 +6,8 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
 open FsToolkit.ErrorHandling
+open Giraffe
+open Microsoft.AspNetCore.Http
 
 type IPorts =
   abstract member sendEvent: SendEventParams -> Task<Result<unit, DomainError>>
@@ -170,6 +172,8 @@ type FreeRailwayBuilder() =
 let effect = FreeRailwayBuilder()
 
 type Effect<'a> = FreeRailway<IPorts, 'a, DomainError>
+type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
+
 
 let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
 let emit e : Effect<unit> = fun p -> p.sendEvent e

@@ -16,7 +16,6 @@ open Giraffe.ViewEngine
 
 open type HttpContextExtensions
 
-type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
 
 module Rendering =
   open type HttpContextExtensions
