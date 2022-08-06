@@ -340,7 +340,7 @@ module EffectfulRoutes =
     }
 
   let requireRole (role: Roles) : EffectRoute<unit> =
-    effectRoute {
+    effect {
       let! user = auth
       let! vmr = getAnonymousRootModel
 
