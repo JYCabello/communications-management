@@ -2,6 +2,7 @@
 
 open System
 open System.Threading.Tasks
+open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Ports
 open FsToolkit.ErrorHandling
@@ -42,6 +43,9 @@ module FRBConverters =
   let fromTaskVoid (t: Task) : FreeRailway<'dep, unit, 'err> = task { do! t } |> fromTask
   let fromResult (r: Result<'a, 'e>) : FreeRailway<'dep, 'a, 'e> = fun _ -> r |> Task.singleton
   let fromTR (tr: Task<Result<'a, 'e>>) : FreeRailway<'dep, 'a, 'e> = fun _ -> tr
+
+type Effect<'a> = FreeRailway<IPorts, 'a, DomainError>
+type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
 
 type FreeRailwayBuilder() =
   member inline this.Bind
@@ -155,11 +159,22 @@ type FreeRailwayBuilder() =
     tsk |> FRBConverters.fromTask
 
   member inline _.Source(bt: 'dep -> Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> = bt
+  
+  member inline _.Source
+    (pvr: IPorts -> TaskEffectValidateResult<'a>)
+    : EffectRoute<ValidateResult<'a>> =
+    fun (p, _, _) ->
+      task {
+        let! vr = pvr p
+
+        return
+          match vr with
+          | EffectValid a -> a |> Valid |> Ok
+          | EffectInvalid ve -> ve |> Invalid |> Ok
+          | EffectFail de -> de |> Error
+      }
 
 let effect = FreeRailwayBuilder()
-
-type Effect<'a> = FreeRailway<IPorts, 'a, DomainError>
-type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
 
 module EffectOps =
   let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
