@@ -11,18 +11,16 @@ open CommunicationsManagement.API.Models.NotificationModels
 open CommunicationsManagement.API.Routing.Routes
 open Routes.Rendering
 open Giraffe
-open Models
 open EffectfulRoutes
 
 
 [<CLIMutable>]
 type LoginDto = { Email: string option }
 
-let get =
-  effectRoute {
+let get: EffectRoute<HttpHandler> =
+  effect {
     let! vmr = getAnonymousRootModel
-
-    return!
+    return
       renderOk
         Views.Login.loginView
         { Model = { Email = None; EmailError = None }
