@@ -293,9 +293,13 @@ module EffectfulRoutes =
           |> (fun r -> r n c)
       }
 
-  let fromForm<'a> (c: HttpContext) =
-    c.TryBindFormAsync<'a>()
-    |> TaskResult.mapError (fun _ -> BadRequest)
+  let fromForm<'a> =
+    effect {
+      let! ctx = context
+      return!
+        ctx.TryBindFormAsync<'a>()
+        |> TaskResult.mapError (fun _ -> BadRequest)
+    }
 
   let queryGuid name  =
     effect {
