@@ -20,6 +20,8 @@ type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainErr
 
 module Rendering =
   open type HttpContextExtensions
+  
+  let context : EffectRoute<HttpContext> = fun (_, _, c: HttpContext) -> TaskResult.ok c
 
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
@@ -73,8 +75,9 @@ module Rendering =
       | "" -> $"[%s{key}]"
       | t -> t
 
-  let getSessionID (ctx: HttpContext) : Effect<Guid> =
+  let getSessionID : EffectRoute<Guid> =
     effect {
+      let! ctx = context
       return!
         (if ctx.Request.Cookies.ContainsKey("sessionID") then
            match ctx.Request.Cookies["sessionID"] |> Guid.TryParse with
@@ -87,12 +90,12 @@ module Rendering =
   let getUrl (ctx: HttpContext) =
     $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
 
-  let auth (ctx: HttpContext) : Effect<User> =
+  let auth : EffectRoute<User> =
     effect {
-      let! sessionID = getSessionID ctx
+      let! sessionID = getSessionID
 
       let! session =
-        fun (p: IPorts) ->
+        fun (p: IPorts, _, _) ->
           p.find<Session> sessionID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
@@ -103,18 +106,19 @@ module Rendering =
             | false -> TaskResult.error NotAuthenticated)
 
       return!
-        fun (p: IPorts) ->
+        fun (p: IPorts, _, _) ->
           p.find<User> session.UserID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
             | e -> e)
     }
 
-  let getModelRoot (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let getModelRoot: EffectRoute<ViewModelRoot> =
     effect {
-      let! user = auth ctx
+      let! user = auth
+      let! ctx = context
       let tr = getTranslator ctx
-      let! config = fun (p: IPorts) -> p.configuration |> TaskResult.ok
+      let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
 
       return
         { User = Some user
@@ -126,7 +130,7 @@ module Rendering =
 
   let getAnonymousRootModel : EffectRoute<ViewModelRoot> =
     effect {
-      let! ctx = fun (_, _, c: HttpContext) -> TaskResult.ok c
+      let! ctx = context
       let tr = getTranslator ctx
       let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
 
