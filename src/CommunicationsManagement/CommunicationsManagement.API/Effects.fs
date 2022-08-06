@@ -3,24 +3,11 @@
 open System
 open System.Threading.Tasks
 open CommunicationsManagement.API.Models
-open CommunicationsManagement.API.Models.EventModels
-open CommunicationsManagement.API.Models.NotificationModels
+open CommunicationsManagement.API.Ports
 open FsToolkit.ErrorHandling
 open Giraffe
 open Microsoft.AspNetCore.Http
 
-type IPorts =
-  abstract member sendEvent: SendEventParams -> Task<Result<unit, DomainError>>
-
-  abstract member sendNotification:
-    Translator -> SendNotificationParams -> Task<Result<unit, DomainError>>
-
-  abstract member configuration: Configuration
-  abstract member find<'a> : Guid -> Task<Result<'a, DomainError>>
-  abstract member query<'a> : ('a -> bool) -> Task<Result<'a, DomainError>>
-  abstract member save<'a> : 'a -> Task<Result<unit, DomainError>>
-  abstract member delete<'a> : Guid -> Task<Result<unit, DomainError>>
-  abstract member getAll<'a> : unit -> Task<Result<'a list, DomainError>>
 
 let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> =
   task {

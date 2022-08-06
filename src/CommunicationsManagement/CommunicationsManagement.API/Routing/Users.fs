@@ -6,6 +6,7 @@ open CommunicationsManagement.API
 open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Ports
 open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe

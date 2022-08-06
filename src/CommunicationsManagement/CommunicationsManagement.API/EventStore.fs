@@ -9,6 +9,7 @@ open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Ports
 open EventStore.Client
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling

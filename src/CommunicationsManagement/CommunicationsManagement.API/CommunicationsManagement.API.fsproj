@@ -11,6 +11,7 @@
         <Compile Include="Urls.fs" />
         <Compile Include="Models.fs" />
         <Compile Include="Storage.fs" />
+        <Compile Include="Ports.fs" />
         <Compile Include="Effects.fs" />
         <Compile Include="EffectfulValidate.fs" />
         <Compile Include="Notifications.fs" />

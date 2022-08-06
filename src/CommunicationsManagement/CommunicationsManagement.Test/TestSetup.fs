@@ -6,9 +6,9 @@ open System.Net.NetworkInformation
 open System.Runtime.InteropServices
 open System.Threading
 open System.Threading.Tasks
-open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.NotificationModels
+open CommunicationsManagement.API.Ports
 open Docker.DotNet
 open Docker.DotNet.Models
 open FsToolkit.ErrorHandling

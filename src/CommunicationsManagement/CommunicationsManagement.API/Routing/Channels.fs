@@ -4,6 +4,7 @@ module CommunicationsManagement.API.Routing.Channels
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
+open CommunicationsManagement.API.Ports
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.EffectfulValidate

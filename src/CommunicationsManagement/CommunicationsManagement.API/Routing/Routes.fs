@@ -7,6 +7,7 @@ open CommunicationsManagement.API
 open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Ports
 open CommunicationsManagement.API.Views
 open CommunicationsManagement.Internationalization
 open FsToolkit.ErrorHandling

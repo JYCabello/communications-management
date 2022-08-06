@@ -5,6 +5,7 @@ open System.Collections.Concurrent
 open CommunicationsManagement.API
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
+open CommunicationsManagement.API.Ports
 open CommunicationsManagement.API.Routing
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open Microsoft.AspNetCore.Builder
