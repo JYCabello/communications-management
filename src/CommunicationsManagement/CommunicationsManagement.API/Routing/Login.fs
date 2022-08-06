@@ -13,7 +13,7 @@ open CommunicationsManagement.API.Routing.Routes
 open Routes.Rendering
 open Giraffe
 open EffectfulRoutes
-open EffectOps
+open EffectRouteOps
 
 
 [<CLIMutable>]
@@ -33,9 +33,9 @@ type LoginResult =
   | Success
   | Failure of Views.Login.LoginModel
 
-let post =
-  let create email rm =
-    effectRoute {
+let post :EffectRoute<HttpHandler> =
+  let create email rm : EffectRoute<HttpHandler> =
+    effect {
       let! user = query<User> (fun u -> u.Email = email)
 
       let session =
@@ -65,14 +65,14 @@ let post =
                   ActivationCode = session.ID
                   ActivationUrl = activationUrl } }
 
-      return!
+      return
         renderOk
           Views.Login.loginMessage
           { Root = rm
             Model = rm.Translate "EmailLoginDetails" }
     }
 
-  let validate (dto: LoginDto) (_: IPorts) : TaskEffectValidateResult<Email> =
+  let validate (dto: LoginDto) (_: IPorts) =
     effectValidation { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
 
   let renderErrors dto ve : EffectRoute<HttpHandler> =
@@ -88,7 +88,7 @@ let post =
             Root = rm }
     }
 
-  effectRoute {
+  effect {
     let! dto = fromForm<LoginDto>
     let! rm = getAnonymousRootModel
     let! validationResult = validate dto
@@ -110,7 +110,7 @@ let confirm: EffectRoute<HttpHandler> =
 let logout: EffectRoute<HttpHandler> =
   effect {
     let! sessionID = getSessionID
-    do! EffectRouteOps.emit { Event = SessionTerminated { SessionID = sessionID } }
+    do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! loginUrl = buildUrl [ "login" ] []
     return redirectTo false loginUrl
   }
