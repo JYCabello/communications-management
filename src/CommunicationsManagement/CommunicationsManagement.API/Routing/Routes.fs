@@ -91,7 +91,7 @@ module Rendering =
       let! sessionID = getSessionID ctx
 
       let! session =
-        fun p ->
+        fun (p: IPorts) ->
           p.find<Session> sessionID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
@@ -102,7 +102,7 @@ module Rendering =
             | false -> TaskResult.error NotAuthenticated)
 
       return!
-        fun p ->
+        fun (p: IPorts) ->
           p.find<User> session.UserID
           |> TaskResult.mapError (function
             | NotFound _ -> NotAuthenticated
@@ -113,7 +113,7 @@ module Rendering =
     effect {
       let! user = auth ctx
       let tr = getTranslator ctx
-      let! config = fun p -> p.configuration |> TaskResult.ok
+      let! config = fun (p: IPorts) -> p.configuration |> TaskResult.ok
 
       return
         { User = Some user
@@ -126,7 +126,7 @@ module Rendering =
   let getAnonymousRootModel (ctx: HttpContext) : Effect<ViewModelRoot> =
     effect {
       let tr = getTranslator ctx
-      let! config = fun p -> p.configuration |> TaskResult.ok
+      let! config = fun (p: IPorts) -> p.configuration |> TaskResult.ok
 
       return
         { User = None
