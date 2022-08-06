@@ -22,6 +22,7 @@ module Rendering =
   open type HttpContextExtensions
   
   let context : EffectRoute<HttpContext> = fun (_, _, c: HttpContext) -> TaskResult.ok c
+  let configuration : EffectRoute<Configuration> = fun (p: IPorts, _,_) -> TaskResult.ok p.configuration
 
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
@@ -74,6 +75,12 @@ module Rendering =
       | null -> $"[%s{key}]"
       | "" -> $"[%s{key}]"
       | t -> t
+  
+  let translator: EffectRoute<Translator> =
+    effect {
+      let! ctx = context
+      return getTranslator ctx
+    }
 
   let getSessionID : EffectRoute<Guid> =
     effect {
@@ -87,8 +94,12 @@ module Rendering =
            NotAuthenticated |> Error)
     }
 
-  let getUrl (ctx: HttpContext) =
-    $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
+  let getUrl =
+    effect {
+      let! ctx = context
+      return
+        $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
+    }
 
   let auth : EffectRoute<User> =
     effect {
@@ -116,29 +127,28 @@ module Rendering =
   let getModelRoot: EffectRoute<ViewModelRoot> =
     effect {
       let! user = auth
-      let! ctx = context
-      let tr = getTranslator ctx
-      let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
-
+      let! tr = translator
+      let! config = configuration
+      let! url = getUrl
       return
         { User = Some user
           Title = tr "AppName"
           Translate = tr
-          CurrentUrl = getUrl ctx
+          CurrentUrl = url
           BaseUrl = config.BaseUrl }
     }
 
   let getAnonymousRootModel : EffectRoute<ViewModelRoot> =
     effect {
-      let! ctx = context
-      let tr = getTranslator ctx
+      let! tr = translator
       let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
+      let! url = getUrl
 
       return
         { User = None
           Title = tr "AppName"
           Translate = tr
-          CurrentUrl = getUrl ctx
+          CurrentUrl = url
           BaseUrl = config.BaseUrl }
     }
 
