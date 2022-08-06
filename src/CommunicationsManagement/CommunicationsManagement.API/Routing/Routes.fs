@@ -299,7 +299,7 @@ module EffectfulRoutes =
 
   let queryGuid name  =
     effect {
-      let! ctx = fun (_, _, c: HttpContext) -> TaskResult.ok c
+      let! ctx = context
       return!
         ctx.TryGetQueryStringValue(name)
         |> Option.bind (fun c ->
@@ -313,7 +313,7 @@ module EffectfulRoutes =
 
   let setCookie name value =
     effect {
-      let! ctx = fun (_, _, c: HttpContext) -> TaskResult.ok c
+      let! ctx = context
       return!
         ctx.Response.Cookies.Append(name, value.ToString())
         |> TaskResult.ok  
