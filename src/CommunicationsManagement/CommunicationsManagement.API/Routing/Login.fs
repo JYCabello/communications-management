@@ -4,6 +4,8 @@ module CommunicationsManagement.API.Routing.Login
 open System
 open CommunicationsManagement.API
 open CommunicationsManagement.API.EffectfulValidate
+open CommunicationsManagement.API.Effects
+open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
 open CommunicationsManagement.API.Routing.Routes
@@ -11,8 +13,6 @@ open Routes.Rendering
 open Giraffe
 open Models
 open EffectfulRoutes
-open Effects
-
 
 
 [<CLIMutable>]
@@ -99,12 +99,12 @@ let post =
       | Invalid ve -> renderErrors dto ve
   }
 
-let confirm =
-  effectRoute {
+let confirm: EffectRoute<HttpHandler> =
+  effect {
     let! mr = getAnonymousRootModel
     let! code = queryGuid "code"
     do! setCookie "sessionID" code
-    return! redirectTo false mr.BaseUrl
+    return redirectTo false mr.BaseUrl
   }
 
 let logout =

@@ -16,6 +16,7 @@ open Giraffe.ViewEngine
 
 open type HttpContextExtensions
 
+type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
 
 module Rendering =
   open type HttpContextExtensions
@@ -123,10 +124,11 @@ module Rendering =
           BaseUrl = config.BaseUrl }
     }
 
-  let getAnonymousRootModel (ctx: HttpContext) : Effect<ViewModelRoot> =
+  let getAnonymousRootModel : EffectRoute<ViewModelRoot> =
     effect {
+      let! ctx = fun (_, _, c: HttpContext) -> TaskResult.ok c
       let tr = getTranslator ctx
-      let! config = fun (p: IPorts) -> p.configuration |> TaskResult.ok
+      let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
 
       return
         { User = None
@@ -168,20 +170,19 @@ module Rendering =
     |> fun handler -> handler next ctx
 
 module EffectfulRoutes =
-  type EffectRoute<'a> = IPorts -> HttpFunc -> HttpContext -> Task<Result<'a, DomainError>>
 
   let mapER (f: 'a -> 'b) (e: EffectRoute<'a>) : EffectRoute<'b> =
-    fun p next ctx -> e p next ctx |> TaskResult.map f
+    fun (p, next, ctx) -> e (p, next, ctx) |> TaskResult.map f
 
   let bindER (f: 'a -> EffectRoute<'b>) (e: EffectRoute<'a>) : EffectRoute<'b> =
-    fun p next ctx ->
+    fun (p, next, ctx) ->
       taskResult {
-        let! a = e p next ctx
+        let! a = e (p, next, ctx)
         let ber = f a |> mapER id
-        return! ber p next ctx
+        return! ber (p, next, ctx)
       }
 
-  let toEffectRoute h : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok h
+  let toEffectRoute h : EffectRoute<'a> = fun (_, _, _) -> TaskResult.ok h
 
   let solve p n c er : Task<Result<'a, DomainError>> = er p n c
 
@@ -193,9 +194,9 @@ module EffectfulRoutes =
       ) : EffectRoute<'b> =
       bindER f e
 
-    member inline this.Return a : EffectRoute<'a> = fun _ _ _ -> TaskResult.ok a
+    member inline this.Return a : EffectRoute<'a> = fun (_, _, _) -> TaskResult.ok a
     member inline this.ReturnFrom(e: EffectRoute<'a>) : EffectRoute<'a> = e
-    member inline this.Zero() : EffectRoute<Unit> = fun _ _ _ -> TaskResult.ok ()
+    member inline this.Zero() : EffectRoute<Unit> = fun (_, _, _) -> TaskResult.ok ()
 
     member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
       a |> bindER (fun _ -> b)
@@ -203,35 +204,35 @@ module EffectfulRoutes =
     member inline this.Source(er: EffectRoute<'a>) : EffectRoute<'a> = er
 
     member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
-      fun p _ c -> c |> ce |> (fun e -> e p)
+      fun (p, _, c) -> c |> ce |> (fun e -> e p)
 
     member inline this.Source(h: HttpHandler) : EffectRoute<HttpHandler> =
-      fun _ _ _ -> TaskResult.ok h
+      fun (_, _, _) -> TaskResult.ok h
 
     member inline this.Source(ce: HttpContext -> Task<Result<'a, DomainError>>) : EffectRoute<'a> =
-      fun _ _ c -> c |> ce
+      fun (_, _, c) -> c |> ce
 
-    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> = fun p _ _ -> e p
+    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> = fun (p, _, _) -> e p
 
     member inline this.Source<'a when 'a: not struct>(a: Task<'a>) : EffectRoute<'a> =
-      fun _ _ _ -> a |> Task.map Ok
+      fun (_, _, _) -> a |> Task.map Ok
 
-    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> = fun _ _ _ -> a
+    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> = fun (_, _, _) -> a
 
     member inline this.Source(t: Task) : EffectRoute<unit> =
-      fun _ _ _ ->
+      fun (_, _, _) ->
         task {
           do! t
           return! TaskResult.ok ()
         }
 
     member inline this.Source(a: Result<'a, DomainError>) : EffectRoute<'a> =
-      fun _ _ _ -> a |> Task.singleton
+      fun (_, _, _) -> a |> Task.singleton
 
     member inline _.Source
       (pvr: IPorts -> TaskEffectValidateResult<'a>)
       : EffectRoute<ValidateResult<'a>> =
-      fun p _ _ ->
+      fun (p, _, _) ->
         task {
           let! vr = pvr p
 
@@ -279,7 +280,7 @@ module EffectfulRoutes =
   let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
     fun n c ->
       task {
-        let! tr = er p n c |> attempt
+        let! tr = er (p, n, c) |> attempt
 
         return!
           match tr with
@@ -292,24 +293,32 @@ module EffectfulRoutes =
     c.TryBindFormAsync<'a>()
     |> TaskResult.mapError (fun _ -> BadRequest)
 
-  let queryGuid name (c: HttpContext) =
-    c.TryGetQueryStringValue(name)
-    |> Option.bind (fun c ->
-      match Guid.TryParse c with
-      | true, guid -> Some guid
-      | false, _ -> None)
-    |> function
-      | Some c -> TaskResult.ok c
-      | None -> TaskResult.error BadRequest
+  let queryGuid name  =
+    effect {
+      let! ctx = fun (_, _, c: HttpContext) -> TaskResult.ok c
+      return!
+        ctx.TryGetQueryStringValue(name)
+        |> Option.bind (fun c ->
+          match Guid.TryParse c with
+          | true, guid -> Some guid
+          | false, _ -> None)
+        |> function
+          | Some c -> TaskResult.ok c
+          | None -> TaskResult.error BadRequest
+    }
 
-  let setCookie name value (c: HttpContext) =
-    c.Response.Cookies.Append(name, value.ToString())
-    |> TaskResult.ok
+  let setCookie name value =
+    effect {
+      let! ctx = fun (_, _, c: HttpContext) -> TaskResult.ok c
+      return!
+        ctx.Response.Cookies.Append(name, value.ToString())
+        |> TaskResult.ok  
+    }
 
   let notify n : EffectRoute<unit> =
-    effectRoute {
+    effect {
       let! rm = getAnonymousRootModel
-      do! fun (p: IPorts) -> p.sendNotification rm.Translate n
+      do! fun (p: IPorts, _, _) -> p.sendNotification rm.Translate n
     }
 
   let requireRole (role: Roles) : EffectRoute<unit> =
