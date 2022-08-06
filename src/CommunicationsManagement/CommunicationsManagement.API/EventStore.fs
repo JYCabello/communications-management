@@ -12,6 +12,7 @@ open CommunicationsManagement.API.Models.EventModels
 open EventStore.Client
 open Newtonsoft.Json
 open FsToolkit.ErrorHandling
+open EffectOps
 
 type SubscriptionDetails =
   { Handler: StreamSubscription -> ResolvedEvent -> CancellationToken -> Task

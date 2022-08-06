@@ -10,6 +10,7 @@ open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Views.Channels
 open Microsoft.FSharp.Core
 open System
+open EffectOps
 
 
 [<CLIMutable>]

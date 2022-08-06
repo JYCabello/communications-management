@@ -13,6 +13,7 @@ open FsToolkit.ErrorHandling
 open Giraffe
 open Microsoft.AspNetCore.Http
 open Giraffe.ViewEngine
+open EffectOps
 
 open type HttpContextExtensions
 

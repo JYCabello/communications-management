@@ -6,7 +6,6 @@ open CommunicationsManagement.API
 open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models.EventModels
-open CommunicationsManagement.API.Routing.Routes
 open CommunicationsManagement.API.Views.Users
 open FsToolkit.ErrorHandling
 open Giraffe
@@ -14,6 +13,7 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
+open EffectOps
 
 let list =
   effectRoute {

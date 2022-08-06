@@ -174,12 +174,12 @@ let effect = FreeRailwayBuilder()
 type Effect<'a> = FreeRailway<IPorts, 'a, DomainError>
 type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
 
-
-let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
-let emit e : Effect<unit> = fun p -> p.sendEvent e
-let getAll<'a> : Effect<'a list> = fun p -> p.getAll<'a> ()
-let find<'a> id : Effect<'a> = fun p -> p.find id
-let query<'a> q : Effect<'a> = fun p -> p.query q
-let save<'a> a : Effect<unit> = fun p -> p.save<'a> a
-let delete<'a> a : Effect<unit> = fun p -> p.delete<'a> a
-let solve p (e: Effect<'a>) = e p
+module EffectOps =
+  let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
+  let emit e : Effect<unit> = fun p -> p.sendEvent e
+  let getAll<'a> : Effect<'a list> = fun p -> p.getAll<'a> ()
+  let find<'a> id : Effect<'a> = fun p -> p.find id
+  let query<'a> q : Effect<'a> = fun p -> p.query q
+  let save<'a> a : Effect<unit> = fun p -> p.save<'a> a
+  let delete<'a> a : Effect<unit> = fun p -> p.delete<'a> a
+  let solve p (e: Effect<'a>) = e p
