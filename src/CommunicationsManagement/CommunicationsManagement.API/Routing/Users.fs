@@ -14,27 +14,27 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
-open EffectOps
+open EffectRouteOps
 
-let list =
-  effectRoute {
+let list: EffectRoute<HttpHandler> =
+  effect {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
     let! users = getAll<User>
 
-    return!
+    return
       renderOk
         ListUsers.usersListView
         { Model = { Users = users }
           Root = root }
   }
 
-let createGet =
-  effectRoute {
+let createGet: EffectRoute<HttpHandler> =
+  effect {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
 
-    return!
+    return
       renderOk
         CreateUser.createUserView
         { Model =
@@ -88,7 +88,7 @@ let createPost =
 
   let save usr : EffectRoute<HttpHandler> =
     effect {
-      do! EffectRouteOps.emit { Event = UserCreated usr }
+      do! emit { Event = UserCreated usr }
       let! url = buildUrl [ "users" ] []
       return! renderSuccess url
     }
@@ -124,12 +124,12 @@ let details id =
   effect {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
-    let! user = EffectRouteOps.find<User> id
+    let! user = find<User> id
     return renderOk UserDetails.details { Model = user; Root = root }
   }
 
 let switchRole (userId, role) eventBuilder =
-  effectRoute {
+  effect {
     do! requireRole Roles.UserManagement
     let! user = find<User> userId
 
