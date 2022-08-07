@@ -125,7 +125,7 @@ module Rendering =
             | e -> e)
     }
 
-  let getModelRoot: EffectRoute<ViewModelRoot> =
+  let modelRoot: EffectRoute<ViewModelRoot> =
     effect {
       let! user = auth
       let! tr = translator
@@ -276,7 +276,7 @@ module EffectfulRoutes =
 
   let renderMsg m url : EffectRoute<HttpHandler> =
     effectRoute {
-      let! vmr = getModelRoot
+      let! vmr = modelRoot
 
       return!
         htmlView (
@@ -288,7 +288,7 @@ module EffectfulRoutes =
 
   let renderSuccess url : EffectRoute<HttpHandler> =
     effectRoute {
-      let! vmr = getModelRoot
+      let! vmr = modelRoot
       return! renderMsg ("OperationSuccessful" |> vmr.Translate) url
     }
 

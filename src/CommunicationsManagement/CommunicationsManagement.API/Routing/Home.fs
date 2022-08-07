@@ -10,6 +10,6 @@ open Effects
 
 let home: EffectRoute<HttpHandler> =
   effect {
-    let! root = getModelRoot
+    let! root = modelRoot
     return renderOk Views.Home.homeView { Model = (); Root = root }
   }

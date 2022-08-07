@@ -24,7 +24,7 @@ type private ValidationResult2 =
 let list =
   effectRoute {
     do! requireRole Roles.ChannelManagement
-    let! vmr = getModelRoot
+    let! vmr = modelRoot
     let! channels = getAll<Channel>
 
     return!
@@ -37,7 +37,7 @@ let list =
 let createGet =
   effectRoute {
     do! requireRole Roles.ChannelManagement
-    let! vmr = getModelRoot
+    let! vmr = modelRoot
 
     return!
       renderOk
@@ -78,7 +78,7 @@ let createPost =
 
   let renderValidationErrors dto ve =
     effectRoute {
-      let! vmr = getModelRoot
+      let! vmr = modelRoot
 
       return
         renderOk

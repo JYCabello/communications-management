@@ -18,7 +18,7 @@ open EffectOps
 
 let list =
   effectRoute {
-    let! root = getModelRoot
+    let! root = modelRoot
     do! requireRole Roles.UserManagement
     let! users = getAll<User>
 
@@ -31,7 +31,7 @@ let list =
 
 let createGet =
   effectRoute {
-    let! root = getModelRoot
+    let! root = modelRoot
     do! requireRole Roles.UserManagement
 
     return!
@@ -95,7 +95,7 @@ let createPost =
 
   let renderErrors ve dto : EffectRoute<HttpHandler> =
     effectRoute {
-      let! vmr = getModelRoot
+      let! vmr = modelRoot
       let errorFor n = errorFor n ve vmr.Translate
       let nameError = errorFor (nameof dto.Name)
       let emailError = errorFor (nameof dto.Email)
@@ -125,7 +125,7 @@ let createPost =
 
 let details id =
   effectRoute {
-    let! root = getModelRoot
+    let! root = modelRoot
     do! requireRole Roles.UserManagement
     let! user = find<User> id
     return renderOk UserDetails.details { Model = user; Root = root }
