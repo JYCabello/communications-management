@@ -21,9 +21,12 @@ open type HttpContextExtensions
 
 module Rendering =
   open type HttpContextExtensions
-  
-  let context : EffectRoute<HttpContext> = fun (_, _, c: HttpContext) -> TaskResult.ok c
-  let configuration : EffectRoute<Configuration> = fun (p: IPorts, _,_) -> TaskResult.ok p.configuration
+
+  let context: EffectRoute<HttpContext> =
+    fun (_, _, c: HttpContext) -> TaskResult.ok c
+
+  let configuration: EffectRoute<Configuration> =
+    fun (p: IPorts, _, _) -> TaskResult.ok p.configuration
 
   let getCulture (ctx: HttpContext) : CultureInfo =
     let defaultCulture () =
@@ -76,16 +79,17 @@ module Rendering =
       | null -> $"[%s{key}]"
       | "" -> $"[%s{key}]"
       | t -> t
-  
+
   let translator: EffectRoute<Translator> =
     effect {
       let! ctx = context
       return getTranslator ctx
     }
 
-  let getSessionID : EffectRoute<Guid> =
+  let getSessionID: EffectRoute<Guid> =
     effect {
       let! ctx = context
+
       return!
         (if ctx.Request.Cookies.ContainsKey("sessionID") then
            match ctx.Request.Cookies["sessionID"] |> Guid.TryParse with
@@ -98,11 +102,12 @@ module Rendering =
   let getUrl =
     effect {
       let! ctx = context
+
       return
         $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
     }
 
-  let auth : EffectRoute<User> =
+  let auth: EffectRoute<User> =
     effect {
       let! sessionID = getSessionID
 
@@ -131,6 +136,7 @@ module Rendering =
       let! tr = translator
       let! config = configuration
       let! url = getUrl
+
       return
         { User = Some user
           Title = tr "AppName"
@@ -139,7 +145,7 @@ module Rendering =
           BaseUrl = config.BaseUrl }
     }
 
-  let getAnonymousRootModel : EffectRoute<ViewModelRoot> =
+  let getAnonymousRootModel: EffectRoute<ViewModelRoot> =
     effect {
       let! tr = translator
       let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
@@ -232,7 +238,8 @@ module EffectfulRoutes =
     member inline this.Source<'a when 'a: not struct>(a: Task<'a>) : EffectRoute<'a> =
       fun (_, _, _) -> a |> Task.map Ok
 
-    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> = fun (_, _, _) -> a
+    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> =
+      fun (_, _, _) -> a
 
     member inline this.Source(t: Task) : EffectRoute<unit> =
       fun (_, _, _) ->
@@ -307,14 +314,16 @@ module EffectfulRoutes =
   let fromForm<'a> =
     effect {
       let! ctx = context
+
       return!
         ctx.TryBindFormAsync<'a>()
         |> TaskResult.mapError (fun _ -> BadRequest)
     }
 
-  let queryGuid name  =
+  let queryGuid name =
     effect {
       let! ctx = context
+
       return!
         ctx.TryGetQueryStringValue(name)
         |> Option.bind (fun c ->
@@ -329,9 +338,10 @@ module EffectfulRoutes =
   let setCookie name value =
     effect {
       let! ctx = context
+
       return!
         ctx.Response.Cookies.Append(name, value.ToString())
-        |> TaskResult.ok  
+        |> TaskResult.ok
     }
 
   let notify n : EffectRoute<unit> =

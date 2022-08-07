@@ -45,7 +45,7 @@ module FRBConverters =
   let fromTR (tr: Task<Result<'a, 'e>>) : FreeRailway<'dep, 'a, 'e> = fun _ -> tr
 
 type Effect<'a> = FreeRailway<IPorts, 'a, DomainError>
-type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext,'a, DomainError>
+type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext, 'a, DomainError>
 
 type FreeRailwayBuilder() =
   member inline this.Bind
@@ -159,7 +159,7 @@ type FreeRailwayBuilder() =
     tsk |> FRBConverters.fromTask
 
   member inline _.Source(bt: 'dep -> Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> = bt
-  
+
   member inline _.Source
     (pvr: IPorts -> TaskEffectValidateResult<'a>)
     : EffectRoute<ValidateResult<'a>> =

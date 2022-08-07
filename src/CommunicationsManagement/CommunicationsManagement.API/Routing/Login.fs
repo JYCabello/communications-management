@@ -22,6 +22,7 @@ type LoginDto = { Email: string option }
 let get: EffectRoute<HttpHandler> =
   effect {
     let! vmr = getAnonymousRootModel
+
     return
       renderOk
         Views.Login.loginView
@@ -33,7 +34,7 @@ type LoginResult =
   | Success
   | Failure of Views.Login.LoginModel
 
-let post :EffectRoute<HttpHandler> =
+let post: EffectRoute<HttpHandler> =
   let create email rm : EffectRoute<HttpHandler> =
     effect {
       let! user = query<User> (fun u -> u.Email = email)
