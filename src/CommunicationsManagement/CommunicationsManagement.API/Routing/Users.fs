@@ -109,7 +109,7 @@ let createPost =
       return renderOk CreateUser.createUserView { Model = model; Root = vmr }
     }
 
-  effectRoute {
+  effect {
     do! requireRole Roles.UserManagement
     let! dto = fromForm<CreateUserDto>
     let! vr = validate dto
@@ -121,13 +121,12 @@ let createPost =
   }
 
 let details id =
-  effectRoute {
+  effect {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
-    let! user = find<User> id
+    let! user = EffectRouteOps.find<User> id
     return renderOk UserDetails.details { Model = user; Root = root }
   }
-
 
 let switchRole (userId, role) eventBuilder =
   effectRoute {
