@@ -11,7 +11,8 @@ open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Views.Channels
 open Microsoft.FSharp.Core
 open System
-open EffectOps
+open EffectRouteOps
+open Giraffe
 
 
 [<CLIMutable>]
@@ -21,25 +22,25 @@ type private ValidationResult2 =
   | Valid2 of string
   | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
 
-let list =
-  effectRoute {
+let list: EffectRoute<HttpHandler> =
+  effect {
     do! requireRole Roles.ChannelManagement
     let! vmr = modelRoot
     let! channels = getAll<Channel>
 
-    return!
+    return
       renderOk
         ListChannels.list
         { Model = { Channels = channels }
           Root = vmr }
   }
 
-let createGet =
-  effectRoute {
+let createGet: EffectRoute<HttpHandler> =
+  effect {
     do! requireRole Roles.ChannelManagement
     let! vmr = modelRoot
 
-    return!
+    return
       renderOk
         CreateChannel.create
         { Root = vmr
@@ -63,8 +64,8 @@ let createPost =
       return name
     }
 
-  let save name =
-    effectRoute {
+  let save name : EffectRoute<HttpHandler> =
+    effect {
       do!
         emit
           { Event =
@@ -76,8 +77,8 @@ let createPost =
       return! renderSuccess returnUrl
     }
 
-  let renderValidationErrors dto ve =
-    effectRoute {
+  let renderValidationErrors dto ve : EffectRoute<HttpHandler> =
+    effect {
       let! vmr = modelRoot
 
       return
@@ -89,7 +90,7 @@ let createPost =
                 NameError = errorFor (nameof dto.Name) ve vmr.Translate } }
     }
 
-  effectRoute {
+  effect {
     do! requireRole Roles.ChannelManagement
     let! dto = fromForm<CreateChannelPostDto>
     let! validateResult = validate dto
@@ -101,7 +102,7 @@ let createPost =
   }
 
 let private switchChannel eventBuilder id =
-  effectRoute {
+  effect {
     do! requireRole Roles.ChannelManagement
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }
