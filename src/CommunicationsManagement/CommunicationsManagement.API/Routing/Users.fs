@@ -97,7 +97,7 @@ let createPost =
     effect {
       let! vmr = modelRoot
       let errorFor n = errorFor n ve vmr.Translate
-      
+
       let (model: CreateUser.UserCreationViewModel) =
         { Name = dto.Name
           NameError = errorFor (nameof dto.Name)
