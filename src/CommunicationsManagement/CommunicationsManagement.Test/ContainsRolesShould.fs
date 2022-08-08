@@ -6,18 +6,11 @@ open Models
 
 [<Theory>]
 // None has no roles, not even None
-[<InlineData(false, Roles.Admin, Roles.None)>]
 [<InlineData(false, Roles.Press, Roles.None)>]
 [<InlineData(false, Roles.Delegate, Roles.None)>]
 [<InlineData(false, Roles.UserManagement, Roles.None)>]
 [<InlineData(false, Roles.ChannelManagement, Roles.None)>]
 [<InlineData(false, Roles.None, Roles.None)>]
-// Admin has all roles
-[<InlineData(true, Roles.Delegate, Roles.Admin)>]
-[<InlineData(true, Roles.Press, Roles.Admin)>]
-[<InlineData(true, Roles.Admin, Roles.Admin)>]
-[<InlineData(true, Roles.UserManagement, Roles.Admin)>]
-[<InlineData(true, Roles.ChannelManagement, Roles.Admin)>]
 // Roles match
 [<InlineData(true, Roles.Press, Roles.Press)>]
 [<InlineData(true, Roles.Press, Roles.Press ||| Roles.Delegate)>]
@@ -34,7 +27,6 @@ open Models
 [<InlineData(false, Roles.Delegate, Roles.Press ||| Roles.UserManagement)>]
 [<InlineData(false, Roles.UserManagement, Roles.Press ||| Roles.Delegate)>]
 // Nobody has the None role
-[<InlineData(false, Roles.None, Roles.Admin)>]
 [<InlineData(false, Roles.None, Roles.UserManagement)>]
 [<InlineData(false, Roles.None, Roles.Delegate)>]
 [<InlineData(false, Roles.None, Roles.Press)>]

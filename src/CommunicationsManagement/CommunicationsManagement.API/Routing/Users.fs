@@ -124,13 +124,25 @@ let details id =
     let! root = modelRoot
     do! requireRole Roles.UserManagement
     let! user = find<User> id
-    return renderOk UserDetails.details { Model = user; Root = root }
+
+    let! regularUser =
+      match user with
+      | Admin _ -> "Admin" |> root.Translate |> Unauthorized |> Error
+      | Regular ru -> Ok ru
+
+    return renderOk UserDetails.details { Model = regularUser; Root = root }
   }
 
 let switchRole (userId, role) eventBuilder =
   rail {
     do! requireRole Roles.UserManagement
-    let! user = find<User> userId
+    let! root = modelRoot
+    let! userCandidate = find<User> userId
+
+    let! user =
+      match userCandidate with
+      | Admin _ -> "Admin" |> root.Translate |> Unauthorized |> Error
+      | Regular ru -> Ok ru
 
     let! role =
       Enum.GetValues<Roles>()

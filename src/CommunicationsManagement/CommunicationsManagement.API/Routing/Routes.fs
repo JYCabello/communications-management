@@ -22,8 +22,7 @@ open type HttpContextExtensions
 module Rendering =
   open type HttpContextExtensions
 
-  let context: RailRoute<HttpContext> =
-    fun (_, _, c: HttpContext) -> TaskResult.ok c
+  let context: RailRoute<HttpContext> = fun (_, _, c: HttpContext) -> TaskResult.ok c
 
   let configuration: RailRoute<Configuration> =
     fun (p: IPorts, _, _) -> TaskResult.ok p.configuration

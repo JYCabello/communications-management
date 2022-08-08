@@ -77,29 +77,50 @@ let private ignoreErrors =
 
 let private handle (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   let userCreated (uc: UserCreated) =
-    save<User>
-      { Name = uc.Name
-        Email = uc.Email |> Email
-        ID = uc.UserID
-        Roles = uc.Roles
-        LastLogin = None }
+    { Name = uc.Name
+      Email = uc.Email |> Email
+      ID = uc.UserID
+      Roles = uc.Roles
+      LastLogin = None }
+    |> Regular
+    |> save<User>
+
 
   let roleAdded (ra: RoleAdded) =
     rail {
       let! user = find<User> ra.UserID
-      do! save<User> { user with Roles = user.Roles + ra.RoleToAdd }
+
+      do!
+        match user with
+        | Admin _ -> fun _ -> TaskResult.ok ()
+        | Regular ru ->
+          { ru with Roles = ru.Roles + ra.RoleToAdd }
+          |> Regular
+          |> save<User>
     }
 
   let roleRemoved (rr: RoleRemoved) =
     rail {
       let! user = find<User> rr.UserID
-      do! save<User> { user with Roles = user.Roles - rr.RoleRemoved }
+
+      do!
+        match user with
+        | Admin _ -> fun _ -> TaskResult.ok ()
+        | Regular ru ->
+          { ru with Roles = ru.Roles - rr.RoleRemoved }
+          |> Regular
+          |> save<User>
     }
 
   let sessionCreated (sc: SessionCreated) =
     rail {
       let! user = find<User> sc.UserID
-      do! save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
+
+      do!
+        match user with
+        | Admin a -> Admin { a with LastLogin = se.OriginalEvent.Created |> Some }
+        | Regular ru -> Regular { ru with LastLogin = se.OriginalEvent.Created |> Some }
+        |> save<User>
 
       do!
         save<Session>
@@ -198,14 +219,13 @@ let triggerSubscriptions (ports: IPorts) =
   let subscribe' = subscribe ports.configuration.EventStoreConnectionString
 
   let admin =
-    { ID = Guid.Empty
-      Email = Email ports.configuration.AdminEmail
-      Roles = Roles.Admin
+    { Email = Email ports.configuration.AdminEmail
       Name = "Admin"
       LastLogin = None }
 
   do
     admin
+    |> Admin
     |> ports.save<User>
     |> fun t -> t.Result |> ignore
 

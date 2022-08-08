@@ -12,7 +12,7 @@ type UserListViewModel = { Users: User list }
 let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
   let trxTxt = vm.Root.Translate >> Text
 
-  let url (u: User) =
+  let url (u: RegularUser) =
     urlFor vm.Root.BaseUrl [ "users"; u.ID |> string ] []
 
   let userRow (u: User) =
@@ -31,10 +31,10 @@ let usersListView (vm: ViewModel<UserListViewModel>) : XmlNode list =
       ]
       div [ _class "col" ] [
         yield!
-          match u.Roles with
-          | Roles.Admin -> []
-          | _ ->
-            [ a [ _href <| url u
+          match u with
+          | Admin _ -> []
+          | Regular ru ->
+            [ a [ _href <| url ru
                   _class "btn btn-info btn-sm"
                   _data "user-details" email ] [
                 "Details" |> trxTxt

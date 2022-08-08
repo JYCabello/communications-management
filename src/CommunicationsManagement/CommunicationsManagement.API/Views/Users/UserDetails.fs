@@ -6,7 +6,7 @@ open CommunicationsManagement.API.Models
 open Giraffe.ViewEngine
 open Urls
 
-let details (vm: ViewModel<User>) =
+let details (vm: ViewModel<RegularUser>) =
   let trxTxt = vm.Root.Translate >> Text
   let m = vm.Model
 

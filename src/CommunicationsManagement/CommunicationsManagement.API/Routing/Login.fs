@@ -37,8 +37,13 @@ let post: RailRoute<HttpHandler> =
     rail {
       let! user = query<User> (fun u -> u.Email = email)
 
+      let userID =
+        match user with
+        | Admin _ -> AdminUser.id
+        | Regular ru -> ru.ID
+
       let session =
-        { UserID = user.ID
+        { UserID = userID
           ID = Guid.NewGuid()
           ExpiresAt = DateTime.UtcNow.AddDays(15) }
 

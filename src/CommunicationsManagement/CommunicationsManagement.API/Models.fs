@@ -12,7 +12,6 @@ type Roles =
   | Press = 2
   | UserManagement = 4
   | ChannelManagement = 8
-  | Admin = 131071
 
 let getRoleName =
   function
@@ -35,13 +34,42 @@ type DomainError =
   | BadRequest
   | InternalServerError of errorMessage: string
 
-type User =
+type RegularUser =
   { Name: string
     ID: Guid
     Email: Email
     Roles: Roles
     LastLogin: DateTime option }
   member this.hasRole roles = contains roles this.Roles
+
+type AdminUser =
+  { Name: string
+    Email: Email
+    LastLogin: DateTime option }
+  static member id = Guid.Empty
+
+type User =
+  | Admin of AdminUser
+  | Regular of RegularUser
+  member this.hasRole roles =
+    match this with
+    | Admin _ -> true
+    | Regular ru -> contains roles ru.Roles
+
+  member this.LastLogin =
+    match this with
+    | Admin a -> a.LastLogin
+    | Regular ru -> ru.LastLogin
+
+  member this.Name =
+    match this with
+    | Admin a -> a.Name
+    | Regular ru -> ru.Name
+
+  member this.Email =
+    match this with
+    | Admin a -> a.Email
+    | Regular ru -> ru.Email
 
 type Session =
   { ID: Guid

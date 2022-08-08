@@ -52,7 +52,10 @@ module Users =
     |> Task.singleton
 
   let save (storage: ConcurrentDictionary<Guid, User>) (u: User) =
-    Task.singleton <| storage[u.ID] <- u
+    match u with
+    | Admin _ -> storage[AdminUser.id] <- u
+    | Regular ru -> storage[ru.ID] <- u
+    |> Task.singleton
 
   let delete (storage: ConcurrentDictionary<Guid, User>) (id: Guid) =
     storage.TryRemove(id) |> ignore |> Task.singleton
