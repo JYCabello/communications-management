@@ -33,7 +33,7 @@ type LoginResult =
   | Failure of Views.Login.LoginModel
 
 let post: RailRoute<HttpHandler> =
-  let create email rm : RailRoute<HttpHandler> =
+  let accept email rm : RailRoute<HttpHandler> =
     rail {
       let! user = query<User> (fun u -> u.Email = email)
 
@@ -99,7 +99,7 @@ let post: RailRoute<HttpHandler> =
 
     return!
       match validationResult with
-      | Valid email -> create email rm
+      | Valid email -> accept email rm
       | Invalid ve -> renderErrors dto ve
   }
 
