@@ -81,13 +81,13 @@ module Rendering =
       | t -> t
 
   let translator: EffectRoute<Translator> =
-    effect {
+    rail {
       let! ctx = context
       return getTranslator ctx
     }
 
   let getSessionID: EffectRoute<Guid> =
-    effect {
+    rail {
       let! ctx = context
 
       return!
@@ -100,7 +100,7 @@ module Rendering =
     }
 
   let getUrl =
-    effect {
+    rail {
       let! ctx = context
 
       return
@@ -108,7 +108,7 @@ module Rendering =
     }
 
   let auth: EffectRoute<User> =
-    effect {
+    rail {
       let! sessionID = getSessionID
 
       let! session =
@@ -131,7 +131,7 @@ module Rendering =
     }
 
   let modelRoot: EffectRoute<ViewModelRoot> =
-    effect {
+    rail {
       let! user = auth
       let! tr = translator
       let! config = configuration
@@ -146,7 +146,7 @@ module Rendering =
     }
 
   let getAnonymousRootModel: EffectRoute<ViewModelRoot> =
-    effect {
+    rail {
       let! tr = translator
       let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
       let! url = getUrl
@@ -198,13 +198,13 @@ module Rendering =
     |> Option.map (fun e -> tr e.Error)
 
   let buildUrl segments queryParams : EffectRoute<string> =
-    effect {
+    rail {
       let! ports = getPorts
       return urlFor ports.configuration.BaseUrl segments queryParams
     }
 
   let renderMsg m url : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       let! vmr = modelRoot
 
       return
@@ -216,7 +216,7 @@ module Rendering =
     }
 
   let renderSuccess url : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       let! vmr = modelRoot
       return! renderMsg ("OperationSuccessful" |> vmr.Translate) url
     }
@@ -234,7 +234,7 @@ module Rendering =
       }
 
   let fromForm<'a> =
-    effect {
+    rail {
       let! ctx = context
 
       return!
@@ -243,7 +243,7 @@ module Rendering =
     }
 
   let queryGuid name =
-    effect {
+    rail {
       let! ctx = context
 
       return!
@@ -258,7 +258,7 @@ module Rendering =
     }
 
   let setCookie name value =
-    effect {
+    rail {
       let! ctx = context
 
       return!
@@ -267,13 +267,13 @@ module Rendering =
     }
 
   let notify n : EffectRoute<unit> =
-    effect {
+    rail {
       let! rm = getAnonymousRootModel
       do! fun (p: IPorts, _, _) -> p.sendNotification rm.Translate n
     }
 
   let requireRole (role: Roles) : EffectRoute<unit> =
-    effect {
+    rail {
       let! user = auth
       let! vmr = getAnonymousRootModel
 

@@ -50,15 +50,15 @@ type EffectRoute<'a> = ReaderRailway<IPorts * HttpFunc * HttpContext, 'a, Domain
 type FreeRailwayBuilder() =
   member inline this.Bind
     (
-      e: ReaderRailway<'dep, 'a, 'err>,
+      rr: ReaderRailway<'dep, 'a, 'err>,
       [<InlineIfLambda>] f: 'a -> ReaderRailway<'dep, 'b, 'err>
     ) : ReaderRailway<'dep, 'b, 'err> =
-    bindFR f e
+    bindFR f rr
 
   member inline this.Return a : ReaderRailway<'dep, 'a, 'err> = fun _ -> TaskResult.ok a
 
-  member inline this.ReturnFrom(e: ReaderRailway<'dep, 'a, 'err>) : ReaderRailway<'dep, 'a, 'err> =
-    e
+  member inline this.ReturnFrom(rr: ReaderRailway<'dep, 'a, 'err>) : ReaderRailway<'dep, 'a, 'err> =
+    rr
 
   member inline this.Zero() : ReaderRailway<'dep, unit, 'err> = fun _ -> TaskResult.ok ()
 
@@ -71,26 +71,26 @@ type FreeRailwayBuilder() =
 
   member inline _.TryWith
     (
-      e: ReaderRailway<'dep, 'a, 'err>,
+      rr: ReaderRailway<'dep, 'a, 'err>,
       [<InlineIfLambda>] handler: Exception -> ReaderRailway<'dep, 'a, 'err>
     ) : ReaderRailway<'dep, 'a, 'err> =
     fun p ->
       task {
         try
-          return! e p
+          return! rr p
         with
         | e -> return! handler e p
       }
 
   member inline _.TryFinally
     (
-      e: ReaderRailway<'dep, 'a, 'err>,
+      rr: ReaderRailway<'dep, 'a, 'err>,
       [<InlineIfLambda>] compensation: unit -> unit
     ) : ReaderRailway<'dep, 'a, 'err> =
     fun p ->
       task {
         try
-          return! e p
+          return! rr p
         finally
           do compensation ()
       }
@@ -177,7 +177,7 @@ type FreeRailwayBuilder() =
           | EffectFail de -> de |> Error
       }
 
-let effect = FreeRailwayBuilder()
+let rail = FreeRailwayBuilder()
 
 module EffectOps =
   let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p

@@ -18,7 +18,7 @@ open EffectRouteOps
 type LoginDto = { Email: string option }
 
 let get: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     let! vmr = getAnonymousRootModel
 
     return
@@ -34,7 +34,7 @@ type LoginResult =
 
 let post: EffectRoute<HttpHandler> =
   let create email rm : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       let! user = query<User> (fun u -> u.Email = email)
 
       let session =
@@ -75,7 +75,7 @@ let post: EffectRoute<HttpHandler> =
     effectValidation { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
 
   let renderErrors dto ve : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       let! rm = getAnonymousRootModel
 
       return
@@ -87,7 +87,7 @@ let post: EffectRoute<HttpHandler> =
             Root = rm }
     }
 
-  effect {
+  rail {
     let! dto = fromForm<LoginDto>
     let! rm = getAnonymousRootModel
     let! validationResult = validate dto
@@ -99,7 +99,7 @@ let post: EffectRoute<HttpHandler> =
   }
 
 let confirm: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     let! mr = getAnonymousRootModel
     let! code = queryGuid "code"
     do! setCookie "sessionID" code
@@ -107,7 +107,7 @@ let confirm: EffectRoute<HttpHandler> =
   }
 
 let logout: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }
     let! loginUrl = buildUrl [ "login" ] []

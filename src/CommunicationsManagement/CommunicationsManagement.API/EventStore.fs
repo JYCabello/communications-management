@@ -85,19 +85,19 @@ let private handle (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
         LastLogin = None }
 
   let roleAdded (ra: RoleAdded) =
-    effect {
+    rail {
       let! user = find<User> ra.UserID
       do! save<User> { user with Roles = user.Roles + ra.RoleToAdd }
     }
 
   let roleRemoved (rr: RoleRemoved) =
-    effect {
+    rail {
       let! user = find<User> rr.UserID
       do! save<User> { user with Roles = user.Roles - rr.RoleRemoved }
     }
 
   let sessionCreated (sc: SessionCreated) =
-    effect {
+    rail {
       let! user = find<User> sc.UserID
       do! save<User> { user with LastLogin = se.OriginalEvent.Created |> Some }
 
@@ -117,13 +117,13 @@ let private handle (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
         IsEnabled = true }
 
   let channelEnabled (e: ChannelEnabled) =
-    effect {
+    rail {
       let! channel = find<Channel> e.ChannelID
       do! save { channel with IsEnabled = true }
     }
 
   let channelDisabled (e: ChannelDisabled) =
-    effect {
+    rail {
       let! channel = find<Channel> e.ChannelID
       do! save { channel with IsEnabled = false }
     }
@@ -137,7 +137,7 @@ let private handle (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   | ChannelCreated cc -> channelCreated cc
   | ChannelEnabled ce -> channelEnabled ce
   | ChannelDisabled cd -> channelDisabled cd
-  | _ -> effect { return () }
+  | _ -> rail { return () }
   |> solve ports
   |> ignoreErrors
 

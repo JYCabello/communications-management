@@ -16,7 +16,7 @@ open CommunicationsManagement.API.DataValidation
 open EffectRouteOps
 
 let list: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
     let! users = getAll<User>
@@ -29,7 +29,7 @@ let list: EffectRoute<HttpHandler> =
   }
 
 let createGet: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
 
@@ -86,14 +86,14 @@ let createPost =
     }
 
   let save usr : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       do! emit { Event = UserCreated usr }
       let! url = buildUrl [ "users" ] []
       return! renderSuccess url
     }
 
   let renderErrors ve dto : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       let! vmr = modelRoot
       let errorFor n = errorFor n ve vmr.Translate
 
@@ -108,7 +108,7 @@ let createPost =
       return renderOk CreateUser.createUserView { Model = model; Root = vmr }
     }
 
-  effect {
+  rail {
     do! requireRole Roles.UserManagement
     let! dto = fromForm<CreateUserDto>
     let! vr = validate dto
@@ -120,7 +120,7 @@ let createPost =
   }
 
 let details id =
-  effect {
+  rail {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
     let! user = find<User> id
@@ -128,7 +128,7 @@ let details id =
   }
 
 let switchRole (userId, role) eventBuilder =
-  effect {
+  rail {
     do! requireRole Roles.UserManagement
     let! user = find<User> userId
 

@@ -22,7 +22,7 @@ type private ValidationResult2 =
   | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
 
 let list: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     do! requireRole Roles.ChannelManagement
     let! vmr = modelRoot
     let! channels = getAll<Channel>
@@ -35,7 +35,7 @@ let list: EffectRoute<HttpHandler> =
   }
 
 let createGet: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     do! requireRole Roles.ChannelManagement
     let! vmr = modelRoot
 
@@ -64,7 +64,7 @@ let createPost =
     }
 
   let save name : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       do!
         emit
           { Event =
@@ -77,7 +77,7 @@ let createPost =
     }
 
   let renderValidationErrors dto ve : EffectRoute<HttpHandler> =
-    effect {
+    rail {
       let! vmr = modelRoot
 
       return
@@ -89,7 +89,7 @@ let createPost =
                 NameError = errorFor (nameof dto.Name) ve vmr.Translate } }
     }
 
-  effect {
+  rail {
     do! requireRole Roles.ChannelManagement
     let! dto = fromForm<CreateChannelPostDto>
     let! validateResult = validate dto
@@ -101,7 +101,7 @@ let createPost =
   }
 
 let private switchChannel eventBuilder id =
-  effect {
+  rail {
     do! requireRole Roles.ChannelManagement
     let! channel = find<Channel> id
     do! emit { Event = eventBuilder channel }

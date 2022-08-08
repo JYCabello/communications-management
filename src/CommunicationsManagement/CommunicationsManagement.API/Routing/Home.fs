@@ -9,7 +9,7 @@ open Models
 open Effects
 
 let home: EffectRoute<HttpHandler> =
-  effect {
+  rail {
     let! root = modelRoot
     return renderOk Views.Home.homeView { Model = (); Root = root }
   }
