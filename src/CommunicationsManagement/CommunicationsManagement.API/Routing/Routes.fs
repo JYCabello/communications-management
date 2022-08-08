@@ -22,10 +22,10 @@ open type HttpContextExtensions
 module Rendering =
   open type HttpContextExtensions
 
-  let context: EffectRoute<HttpContext> =
+  let context: RailRoute<HttpContext> =
     fun (_, _, c: HttpContext) -> TaskResult.ok c
 
-  let configuration: EffectRoute<Configuration> =
+  let configuration: RailRoute<Configuration> =
     fun (p: IPorts, _, _) -> TaskResult.ok p.configuration
 
   let getCulture (ctx: HttpContext) : CultureInfo =
@@ -80,13 +80,13 @@ module Rendering =
       | "" -> $"[%s{key}]"
       | t -> t
 
-  let translator: EffectRoute<Translator> =
+  let translator: RailRoute<Translator> =
     rail {
       let! ctx = context
       return getTranslator ctx
     }
 
-  let getSessionID: EffectRoute<Guid> =
+  let getSessionID: RailRoute<Guid> =
     rail {
       let! ctx = context
 
@@ -107,7 +107,7 @@ module Rendering =
         $"{ctx.Request.Scheme}://{ctx.Request.Host}{ctx.Request.Path}{ctx.Request.QueryString.Value}"
     }
 
-  let auth: EffectRoute<User> =
+  let auth: RailRoute<User> =
     rail {
       let! sessionID = getSessionID
 
@@ -130,7 +130,7 @@ module Rendering =
             | e -> e)
     }
 
-  let modelRoot: EffectRoute<ViewModelRoot> =
+  let modelRoot: RailRoute<ViewModelRoot> =
     rail {
       let! user = auth
       let! tr = translator
@@ -145,7 +145,7 @@ module Rendering =
           BaseUrl = config.BaseUrl }
     }
 
-  let getAnonymousRootModel: EffectRoute<ViewModelRoot> =
+  let getAnonymousRootModel: RailRoute<ViewModelRoot> =
     rail {
       let! tr = translator
       let! config = fun (p: IPorts, _, _) -> p.configuration |> TaskResult.ok
@@ -197,13 +197,13 @@ module Rendering =
     |> Seq.tryFind (fun e -> e.FieldName = name)
     |> Option.map (fun e -> tr e.Error)
 
-  let buildUrl segments queryParams : EffectRoute<string> =
+  let buildUrl segments queryParams : RailRoute<string> =
     rail {
       let! ports = getPorts
       return urlFor ports.configuration.BaseUrl segments queryParams
     }
 
-  let renderMsg m url : EffectRoute<HttpHandler> =
+  let renderMsg m url : RailRoute<HttpHandler> =
     rail {
       let! vmr = modelRoot
 
@@ -215,13 +215,13 @@ module Rendering =
         )
     }
 
-  let renderSuccess url : EffectRoute<HttpHandler> =
+  let renderSuccess url : RailRoute<HttpHandler> =
     rail {
       let! vmr = modelRoot
       return! renderMsg ("OperationSuccessful" |> vmr.Translate) url
     }
 
-  let solveHandler (p: IPorts) (er: EffectRoute<HttpHandler>) : HttpHandler =
+  let solveHandler (p: IPorts) (er: RailRoute<HttpHandler>) : HttpHandler =
     fun n c ->
       task {
         let! tr = er (p, n, c) |> attempt
@@ -266,13 +266,13 @@ module Rendering =
         |> TaskResult.ok
     }
 
-  let notify n : EffectRoute<unit> =
+  let notify n : RailRoute<unit> =
     rail {
       let! rm = getAnonymousRootModel
       do! fun (p: IPorts, _, _) -> p.sendNotification rm.Translate n
     }
 
-  let requireRole (role: Roles) : EffectRoute<unit> =
+  let requireRole (role: Roles) : RailRoute<unit> =
     rail {
       let! user = auth
       let! vmr = getAnonymousRootModel

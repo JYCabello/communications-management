@@ -21,7 +21,7 @@ type private ValidationResult2 =
   | Valid2 of string
   | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
 
-let list: EffectRoute<HttpHandler> =
+let list: RailRoute<HttpHandler> =
   rail {
     do! requireRole Roles.ChannelManagement
     let! vmr = modelRoot
@@ -34,7 +34,7 @@ let list: EffectRoute<HttpHandler> =
           Root = vmr }
   }
 
-let createGet: EffectRoute<HttpHandler> =
+let createGet: RailRoute<HttpHandler> =
   rail {
     do! requireRole Roles.ChannelManagement
     let! vmr = modelRoot
@@ -63,7 +63,7 @@ let createPost =
       return name
     }
 
-  let save name : EffectRoute<HttpHandler> =
+  let save name : RailRoute<HttpHandler> =
     rail {
       do!
         emit
@@ -76,7 +76,7 @@ let createPost =
       return! renderSuccess returnUrl
     }
 
-  let renderValidationErrors dto ve : EffectRoute<HttpHandler> =
+  let renderValidationErrors dto ve : RailRoute<HttpHandler> =
     rail {
       let! vmr = modelRoot
 

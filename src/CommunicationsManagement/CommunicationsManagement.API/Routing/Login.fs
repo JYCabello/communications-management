@@ -17,7 +17,7 @@ open EffectRouteOps
 [<CLIMutable>]
 type LoginDto = { Email: string option }
 
-let get: EffectRoute<HttpHandler> =
+let get: RailRoute<HttpHandler> =
   rail {
     let! vmr = getAnonymousRootModel
 
@@ -32,8 +32,8 @@ type LoginResult =
   | Success
   | Failure of Views.Login.LoginModel
 
-let post: EffectRoute<HttpHandler> =
-  let create email rm : EffectRoute<HttpHandler> =
+let post: RailRoute<HttpHandler> =
+  let create email rm : RailRoute<HttpHandler> =
     rail {
       let! user = query<User> (fun u -> u.Email = email)
 
@@ -74,7 +74,7 @@ let post: EffectRoute<HttpHandler> =
   let validate (dto: LoginDto) (_: IPorts) =
     effectValidation { return! DataValidation.validateEmail (nameof dto.Email) dto.Email }
 
-  let renderErrors dto ve : EffectRoute<HttpHandler> =
+  let renderErrors dto ve : RailRoute<HttpHandler> =
     rail {
       let! rm = getAnonymousRootModel
 
@@ -98,7 +98,7 @@ let post: EffectRoute<HttpHandler> =
       | Invalid ve -> renderErrors dto ve
   }
 
-let confirm: EffectRoute<HttpHandler> =
+let confirm: RailRoute<HttpHandler> =
   rail {
     let! mr = getAnonymousRootModel
     let! code = queryGuid "code"
@@ -106,7 +106,7 @@ let confirm: EffectRoute<HttpHandler> =
     return redirectTo false mr.BaseUrl
   }
 
-let logout: EffectRoute<HttpHandler> =
+let logout: RailRoute<HttpHandler> =
   rail {
     let! sessionID = getSessionID
     do! emit { Event = SessionTerminated { SessionID = sessionID } }

@@ -8,7 +8,7 @@ open Giraffe
 open Models
 open Effects
 
-let home: EffectRoute<HttpHandler> =
+let home: RailRoute<HttpHandler> =
   rail {
     let! root = modelRoot
     return renderOk Views.Home.homeView { Model = (); Root = root }

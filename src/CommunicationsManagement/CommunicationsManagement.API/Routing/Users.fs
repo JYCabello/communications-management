@@ -15,7 +15,7 @@ open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
 open EffectRouteOps
 
-let list: EffectRoute<HttpHandler> =
+let list: RailRoute<HttpHandler> =
   rail {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
@@ -28,7 +28,7 @@ let list: EffectRoute<HttpHandler> =
           Root = root }
   }
 
-let createGet: EffectRoute<HttpHandler> =
+let createGet: RailRoute<HttpHandler> =
   rail {
     let! root = modelRoot
     do! requireRole Roles.UserManagement
@@ -85,14 +85,14 @@ let createPost =
           Roles = roles }
     }
 
-  let save usr : EffectRoute<HttpHandler> =
+  let save usr : RailRoute<HttpHandler> =
     rail {
       do! emit { Event = UserCreated usr }
       let! url = buildUrl [ "users" ] []
       return! renderSuccess url
     }
 
-  let renderErrors ve dto : EffectRoute<HttpHandler> =
+  let renderErrors ve dto : RailRoute<HttpHandler> =
     rail {
       let! vmr = modelRoot
       let errorFor n = errorFor n ve vmr.Translate

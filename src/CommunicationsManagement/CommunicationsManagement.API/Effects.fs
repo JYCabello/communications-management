@@ -44,8 +44,8 @@ module FRBConverters =
   let fromResult (r: Result<'a, 'e>) : ReaderRailway<'dep, 'a, 'e> = fun _ -> r |> Task.singleton
   let fromTR (tr: Task<Result<'a, 'e>>) : ReaderRailway<'dep, 'a, 'e> = fun _ -> tr
 
-type Effect<'a> = ReaderRailway<IPorts, 'a, DomainError>
-type EffectRoute<'a> = ReaderRailway<IPorts * HttpFunc * HttpContext, 'a, DomainError>
+type Rail<'a> = ReaderRailway<IPorts, 'a, DomainError>
+type RailRoute<'a> = ReaderRailway<IPorts * HttpFunc * HttpContext, 'a, DomainError>
 
 type FreeRailwayBuilder() =
   member inline this.Bind
@@ -165,7 +165,7 @@ type FreeRailwayBuilder() =
 
   member inline _.Source
     (pvr: IPorts -> TaskEffectValidateResult<'a>)
-    : EffectRoute<ValidateResult<'a>> =
+    : RailRoute<ValidateResult<'a>> =
     fun (p, _, _) ->
       task {
         let! vr = pvr p
@@ -180,20 +180,20 @@ type FreeRailwayBuilder() =
 let rail = FreeRailwayBuilder()
 
 module EffectOps =
-  let getPorts: Effect<IPorts> = fun p -> TaskResult.ok p
-  let emit e : Effect<unit> = fun p -> p.sendEvent e
-  let getAll<'a> : Effect<'a list> = fun p -> p.getAll<'a> ()
-  let find<'a> id : Effect<'a> = fun p -> p.find id
-  let query<'a> q : Effect<'a> = fun p -> p.query q
-  let save<'a> a : Effect<unit> = fun p -> p.save<'a> a
-  let delete<'a> a : Effect<unit> = fun p -> p.delete<'a> a
-  let solve p (e: Effect<'a>) = e p
+  let getPorts: Rail<IPorts> = fun p -> TaskResult.ok p
+  let emit e : Rail<unit> = fun p -> p.sendEvent e
+  let getAll<'a> : Rail<'a list> = fun p -> p.getAll<'a> ()
+  let find<'a> id : Rail<'a> = fun p -> p.find id
+  let query<'a> q : Rail<'a> = fun p -> p.query q
+  let save<'a> a : Rail<unit> = fun p -> p.save<'a> a
+  let delete<'a> a : Rail<unit> = fun p -> p.delete<'a> a
+  let solve p (e: Rail<'a>) = e p
 
 module EffectRouteOps =
-  let getPorts: EffectRoute<IPorts> = fun (p, _, _) -> TaskResult.ok p
-  let emit e : EffectRoute<unit> = fun (p, _, _) -> p.sendEvent e
-  let getAll<'a> : EffectRoute<'a list> = fun (p, _, _) -> p.getAll<'a> ()
-  let find<'a> id : EffectRoute<'a> = fun (p, _, _) -> p.find id
-  let query<'a> q : EffectRoute<'a> = fun (p, _, _) -> p.query q
-  let save<'a> a : EffectRoute<unit> = fun (p, _, _) -> p.save<'a> a
-  let delete<'a> a : EffectRoute<unit> = fun (p, _, _) -> p.delete<'a> a
+  let getPorts: RailRoute<IPorts> = fun (p, _, _) -> TaskResult.ok p
+  let emit e : RailRoute<unit> = fun (p, _, _) -> p.sendEvent e
+  let getAll<'a> : RailRoute<'a list> = fun (p, _, _) -> p.getAll<'a> ()
+  let find<'a> id : RailRoute<'a> = fun (p, _, _) -> p.find id
+  let query<'a> q : RailRoute<'a> = fun (p, _, _) -> p.query q
+  let save<'a> a : RailRoute<unit> = fun (p, _, _) -> p.save<'a> a
+  let delete<'a> a : RailRoute<unit> = fun (p, _, _) -> p.delete<'a> a
