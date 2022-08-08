@@ -13,7 +13,6 @@ open Giraffe
 open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Routing.Routes.Rendering
 open CommunicationsManagement.API.DataValidation
-open CommunicationsManagement.API.Routing.Routes.EffectfulRoutes
 open EffectRouteOps
 
 let list: EffectRoute<HttpHandler> =

@@ -14,7 +14,7 @@ open FsToolkit.ErrorHandling
 open Giraffe
 open Microsoft.AspNetCore.Http
 open Giraffe.ViewEngine
-open EffectOps
+open EffectRouteOps
 
 open type HttpContextExtensions
 
@@ -190,84 +190,6 @@ module Rendering =
        |> errorView)
     |> fun handler -> handler next ctx
 
-module EffectfulRoutes =
-
-  let mapER (f: 'a -> 'b) (e: EffectRoute<'a>) : EffectRoute<'b> =
-    fun (p, next, ctx) -> e (p, next, ctx) |> TaskResult.map f
-
-  let bindER (f: 'a -> EffectRoute<'b>) (e: EffectRoute<'a>) : EffectRoute<'b> =
-    fun (p, next, ctx) ->
-      taskResult {
-        let! a = e (p, next, ctx)
-        let ber = f a |> mapER id
-        return! ber (p, next, ctx)
-      }
-
-  let toEffectRoute h : EffectRoute<'a> = fun (_, _, _) -> TaskResult.ok h
-
-  let solve p n c er : Task<Result<'a, DomainError>> = er p n c
-
-  type EffectRouteBuilder() =
-    member inline this.Bind
-      (
-        e: EffectRoute<'a>,
-        [<InlineIfLambda>] f: 'a -> EffectRoute<'b>
-      ) : EffectRoute<'b> =
-      bindER f e
-
-    member inline this.Return a : EffectRoute<'a> = fun (_, _, _) -> TaskResult.ok a
-    member inline this.ReturnFrom(e: EffectRoute<'a>) : EffectRoute<'a> = e
-    member inline this.Zero() : EffectRoute<Unit> = fun (_, _, _) -> TaskResult.ok ()
-
-    member inline this.Combine(a: EffectRoute<'a>, b: EffectRoute<'b>) : EffectRoute<'b> =
-      a |> bindER (fun _ -> b)
-
-    member inline this.Source(er: EffectRoute<'a>) : EffectRoute<'a> = er
-
-    member inline this.Source(ce: HttpContext -> Effect<'a>) : EffectRoute<'a> =
-      fun (p, _, c) -> c |> ce |> (fun e -> e p)
-
-    member inline this.Source(h: HttpHandler) : EffectRoute<HttpHandler> =
-      fun (_, _, _) -> TaskResult.ok h
-
-    member inline this.Source(ce: HttpContext -> Task<Result<'a, DomainError>>) : EffectRoute<'a> =
-      fun (_, _, c) -> c |> ce
-
-    member inline this.Source(e: Effect<'a>) : EffectRoute<'a> = fun (p, _, _) -> e p
-
-    member inline this.Source<'a when 'a: not struct>(a: Task<'a>) : EffectRoute<'a> =
-      fun (_, _, _) -> a |> Task.map Ok
-
-    member inline this.Source(a: Task<Result<'a, DomainError>>) : EffectRoute<'a> =
-      fun (_, _, _) -> a
-
-    member inline this.Source(t: Task) : EffectRoute<unit> =
-      fun (_, _, _) ->
-        task {
-          do! t
-          return! TaskResult.ok ()
-        }
-
-    member inline this.Source(a: Result<'a, DomainError>) : EffectRoute<'a> =
-      fun (_, _, _) -> a |> Task.singleton
-
-    member inline _.Source
-      (pvr: IPorts -> TaskEffectValidateResult<'a>)
-      : EffectRoute<ValidateResult<'a>> =
-      fun (p, _, _) ->
-        task {
-          let! vr = pvr p
-
-          return
-            match vr with
-            | EffectValid a -> a |> Valid |> Ok
-            | EffectInvalid ve -> ve |> Invalid |> Ok
-            | EffectFail de -> de |> Error
-        }
-
-  let effectRoute = EffectRouteBuilder()
-
-  open Rendering
   open Urls
 
   let errorFor name (errors: ValidateError list) (tr: Translator) =
@@ -276,16 +198,16 @@ module EffectfulRoutes =
     |> Option.map (fun e -> tr e.Error)
 
   let buildUrl segments queryParams : EffectRoute<string> =
-    effectRoute {
+    effect {
       let! ports = getPorts
       return urlFor ports.configuration.BaseUrl segments queryParams
     }
 
   let renderMsg m url : EffectRoute<HttpHandler> =
-    effectRoute {
+    effect {
       let! vmr = modelRoot
 
-      return!
+      return
         htmlView (
           Layout.notificationReturn
             { Root = vmr
@@ -294,7 +216,7 @@ module EffectfulRoutes =
     }
 
   let renderSuccess url : EffectRoute<HttpHandler> =
-    effectRoute {
+    effect {
       let! vmr = modelRoot
       return! renderMsg ("OperationSuccessful" |> vmr.Translate) url
     }

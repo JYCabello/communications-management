@@ -9,10 +9,8 @@ open CommunicationsManagement.API.Models
 open CommunicationsManagement.API.Models.EventModels
 open CommunicationsManagement.API.Models.NotificationModels
 open CommunicationsManagement.API.Ports
-open CommunicationsManagement.API.Routing.Routes
 open Routes.Rendering
 open Giraffe
-open EffectfulRoutes
 open EffectRouteOps
 
 

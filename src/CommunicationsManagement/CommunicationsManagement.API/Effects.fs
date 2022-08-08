@@ -23,15 +23,15 @@ let attempt (tr: Task<Result<'a, DomainError>>) : Task<Result<'a, DomainError>> 
         |> Error
   }
 
-type FreeRailway<'dep, 'ok, 'err> = 'dep -> Task<Result<'ok, 'err>>
+type ReaderRailway<'dep, 'ok, 'err> = 'dep -> Task<Result<'ok, 'err>>
 
-let mapFR (f: 'a -> 'b) (fr: FreeRailway<'dep, 'a, 'err>) : FreeRailway<'dep, 'b, 'err> =
+let mapFR (f: 'a -> 'b) (fr: ReaderRailway<'dep, 'a, 'err>) : ReaderRailway<'dep, 'b, 'err> =
   fun d -> d |> fr |> TaskResult.map f
 
 let bindFR
-  (f: 'a -> FreeRailway<'dep, 'b, 'err>)
-  (fr: FreeRailway<'dep, 'a, 'err>)
-  : FreeRailway<'dep, 'b, 'err> =
+  (f: 'a -> ReaderRailway<'dep, 'b, 'err>)
+  (fr: ReaderRailway<'dep, 'a, 'err>)
+  : ReaderRailway<'dep, 'b, 'err> =
   fun d ->
     taskResult {
       let! a = fr d
@@ -39,38 +39,41 @@ let bindFR
     }
 
 module FRBConverters =
-  let fromTask (ta: Task<'a>) : FreeRailway<'dep, 'a, 'err> = fun _ -> ta |> Task.map Ok
-  let fromTaskVoid (t: Task) : FreeRailway<'dep, unit, 'err> = task { do! t } |> fromTask
-  let fromResult (r: Result<'a, 'e>) : FreeRailway<'dep, 'a, 'e> = fun _ -> r |> Task.singleton
-  let fromTR (tr: Task<Result<'a, 'e>>) : FreeRailway<'dep, 'a, 'e> = fun _ -> tr
+  let fromTask (ta: Task<'a>) : ReaderRailway<'dep, 'a, 'err> = fun _ -> ta |> Task.map Ok
+  let fromTaskVoid (t: Task) : ReaderRailway<'dep, unit, 'err> = task { do! t } |> fromTask
+  let fromResult (r: Result<'a, 'e>) : ReaderRailway<'dep, 'a, 'e> = fun _ -> r |> Task.singleton
+  let fromTR (tr: Task<Result<'a, 'e>>) : ReaderRailway<'dep, 'a, 'e> = fun _ -> tr
 
-type Effect<'a> = FreeRailway<IPorts, 'a, DomainError>
-type EffectRoute<'a> = FreeRailway<IPorts * HttpFunc * HttpContext, 'a, DomainError>
+type Effect<'a> = ReaderRailway<IPorts, 'a, DomainError>
+type EffectRoute<'a> = ReaderRailway<IPorts * HttpFunc * HttpContext, 'a, DomainError>
 
 type FreeRailwayBuilder() =
   member inline this.Bind
     (
-      e: FreeRailway<'dep, 'a, 'err>,
-      [<InlineIfLambda>] f: 'a -> FreeRailway<'dep, 'b, 'err>
-    ) : FreeRailway<'dep, 'b, 'err> =
+      e: ReaderRailway<'dep, 'a, 'err>,
+      [<InlineIfLambda>] f: 'a -> ReaderRailway<'dep, 'b, 'err>
+    ) : ReaderRailway<'dep, 'b, 'err> =
     bindFR f e
 
-  member inline this.Return a : FreeRailway<'dep, 'a, 'err> = fun _ -> TaskResult.ok a
-  member inline this.ReturnFrom(e: FreeRailway<'dep, 'a, 'err>) : FreeRailway<'dep, 'a, 'err> = e
-  member inline this.Zero() : FreeRailway<'dep, unit, 'err> = fun _ -> TaskResult.ok ()
+  member inline this.Return a : ReaderRailway<'dep, 'a, 'err> = fun _ -> TaskResult.ok a
+
+  member inline this.ReturnFrom(e: ReaderRailway<'dep, 'a, 'err>) : ReaderRailway<'dep, 'a, 'err> =
+    e
+
+  member inline this.Zero() : ReaderRailway<'dep, unit, 'err> = fun _ -> TaskResult.ok ()
 
   member inline this.Combine
     (
-      a: FreeRailway<'dep, 'a, 'err>,
-      b: FreeRailway<'dep, 'b, 'err>
-    ) : FreeRailway<'dep, 'b, 'err> =
+      a: ReaderRailway<'dep, 'a, 'err>,
+      b: ReaderRailway<'dep, 'b, 'err>
+    ) : ReaderRailway<'dep, 'b, 'err> =
     a |> bindFR (fun _ -> b)
 
   member inline _.TryWith
     (
-      e: FreeRailway<'dep, 'a, 'err>,
-      [<InlineIfLambda>] handler: Exception -> FreeRailway<'dep, 'a, 'err>
-    ) : FreeRailway<'dep, 'a, 'err> =
+      e: ReaderRailway<'dep, 'a, 'err>,
+      [<InlineIfLambda>] handler: Exception -> ReaderRailway<'dep, 'a, 'err>
+    ) : ReaderRailway<'dep, 'a, 'err> =
     fun p ->
       task {
         try
@@ -81,9 +84,9 @@ type FreeRailwayBuilder() =
 
   member inline _.TryFinally
     (
-      e: FreeRailway<'dep, 'a, 'err>,
+      e: ReaderRailway<'dep, 'a, 'err>,
       [<InlineIfLambda>] compensation: unit -> unit
-    ) : FreeRailway<'dep, 'a, 'err> =
+    ) : ReaderRailway<'dep, 'a, 'err> =
     fun p ->
       task {
         try
@@ -95,8 +98,8 @@ type FreeRailwayBuilder() =
   member inline _.Using
     (
       r: 'r :> IDisposable,
-      [<InlineIfLambda>] binder: 'r -> FreeRailway<'dep, 'a, 'err>
-    ) : FreeRailway<'dep, 'a, 'err> =
+      [<InlineIfLambda>] binder: 'r -> ReaderRailway<'dep, 'a, 'err>
+    ) : ReaderRailway<'dep, 'a, 'err> =
     fun p ->
       task {
         use rd = r
@@ -106,8 +109,8 @@ type FreeRailwayBuilder() =
   member inline this.While
     (
       [<InlineIfLambda>] guard: unit -> bool,
-      computation: FreeRailway<'dep, unit, 'err>
-    ) : FreeRailway<'dep, unit, 'err> =
+      computation: ReaderRailway<'dep, unit, 'err>
+    ) : ReaderRailway<'dep, unit, 'err> =
     if guard () then
       let mutable whileAsync = Unchecked.defaultof<_>
 
@@ -127,38 +130,38 @@ type FreeRailwayBuilder() =
 
   member inline _.BindReturn
     (
-      x: FreeRailway<'dep, 'a, 'err>,
+      x: ReaderRailway<'dep, 'a, 'err>,
       [<InlineIfLambda>] f: 'a -> 'b
-    ) : FreeRailway<'dep, 'b, 'err> =
+    ) : ReaderRailway<'dep, 'b, 'err> =
     mapFR f x
 
   member inline this.MergeSources
     (
-      ea: FreeRailway<'dep, 'a, 'err>,
-      eb: FreeRailway<'dep, 'b, 'err>
-    ) : FreeRailway<'dep, 'a * 'b, 'err> =
+      ea: ReaderRailway<'dep, 'a, 'err>,
+      eb: ReaderRailway<'dep, 'b, 'err>
+    ) : ReaderRailway<'dep, 'a * 'b, 'err> =
     this.Bind(ea, (fun a -> eb |> mapFR (fun b -> (a, b))))
 
   member inline _.Source<'a, 'dep, 'err when 'a: not struct>
     (tsk: Task<'a>)
-    : FreeRailway<'dep, 'a, 'err> =
+    : ReaderRailway<'dep, 'a, 'err> =
     tsk |> FRBConverters.fromTask
 
-  member inline _.Source(tsk: Task) : FreeRailway<'dep, unit, 'err> =
+  member inline _.Source(tsk: Task) : ReaderRailway<'dep, unit, 'err> =
     tsk |> FRBConverters.fromTaskVoid
 
-  member inline _.Source(r: Result<'a, 'err>) : FreeRailway<'dep, 'a, 'err> =
+  member inline _.Source(r: Result<'a, 'err>) : ReaderRailway<'dep, 'a, 'err> =
     r |> FRBConverters.fromResult
 
-  member inline _.Source(tr: Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> =
+  member inline _.Source(tr: Task<Result<'a, 'err>>) : ReaderRailway<'dep, 'a, 'err> =
     tr |> FRBConverters.fromTR
 
   member inline _.Source<'dep, 'a, 'err when 'a: not struct>
     (tsk: Task<'a>)
-    : FreeRailway<'dep, 'a, 'err> =
+    : ReaderRailway<'dep, 'a, 'err> =
     tsk |> FRBConverters.fromTask
 
-  member inline _.Source(bt: 'dep -> Task<Result<'a, 'err>>) : FreeRailway<'dep, 'a, 'err> = bt
+  member inline _.Source(bt: 'dep -> Task<Result<'a, 'err>>) : ReaderRailway<'dep, 'a, 'err> = bt
 
   member inline _.Source
     (pvr: IPorts -> TaskEffectValidateResult<'a>)
