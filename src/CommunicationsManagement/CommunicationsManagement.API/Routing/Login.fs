@@ -28,10 +28,6 @@ let get: RailRoute<HttpHandler> =
           Root = vmr }
   }
 
-type LoginResult =
-  | Success
-  | Failure of Views.Login.LoginModel
-
 let post: RailRoute<HttpHandler> =
   let accept email rm : RailRoute<HttpHandler> =
     rail {
