@@ -19,6 +19,9 @@ let ``creates a communication request`` () =
     Assert.Empty(driver.FindElements(By.CssSelector ".details-request-link"))
     driver |> click "#new-request-link"
 
+    // To trigger validation
+    driver |> click "#request-sumbit"
+
     driver
       .FindElement(By.Name "title")
       .SendKeys("test request in edition")
