@@ -22,4 +22,12 @@ let list: RailRoute<HttpHandler> =
   }
 
 let create: RailRoute<HttpHandler> = 
-  failwith "TODO"
+  rail {
+    let! root = modelRoot
+    do! requireRole Roles.Delegate
+    
+    return
+      renderOk
+        CreateRequest.create
+        { Root = root; Model = { Title = None; TitleError = None } }
+  }

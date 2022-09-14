@@ -150,6 +150,15 @@ namespace CommunicationsManagement.Internationalization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create communications request.
+        /// </summary>
+        public static string CreateCommunicationsRequest {
+            get {
+                return ResourceManager.GetString("CreateCommunicationsRequest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create user.
         /// </summary>
         public static string CreateUser {
@@ -371,6 +380,15 @@ namespace CommunicationsManagement.Internationalization {
         public static string Status {
             get {
                 return ResourceManager.GetString("Status", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Title.
+        /// </summary>
+        public static string Title {
+            get {
+                return ResourceManager.GetString("Title", resourceCulture);
             }
         }
         

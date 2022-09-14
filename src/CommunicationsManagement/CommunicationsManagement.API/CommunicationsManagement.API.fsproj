@@ -28,6 +28,7 @@
         <Compile Include="Views\Channels\ListChannels.fs" />
         <Compile Include="Views\Channels\CreateChannel.fs" />
         <Compile Include="Views\CommunicationRequests\ListRequests.fs" />
+        <Compile Include="Views\CommunicationRequests\CreateRequest.fs" />
         <Compile Include="Routing\Routes.fs" />
         <Compile Include="Routing\Login.fs" />
         <Compile Include="Routing\Home.fs" />
