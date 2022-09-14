@@ -134,6 +134,11 @@ let details id =
   }
 
 let switchRole (userId, role) eventBuilder =
+  let noneToBadRequest =
+    function
+    | Some r -> Ok r
+    | None -> BadRequest |> Error
+
   rail {
     do! requireRole Roles.UserManagement
     let! root = modelRoot
@@ -147,9 +152,7 @@ let switchRole (userId, role) eventBuilder =
     let! role =
       Enum.GetValues<Roles>()
       |> Seq.tryFind (fun r -> (r |> int) = role)
-      |> (function
-      | Some r -> Ok r
-      | None -> BadRequest |> Error)
+      |> noneToBadRequest
 
     do! emit { Event = (user, role) |> eventBuilder }
     let! url = buildUrl [ "users"; user.ID ] []
