@@ -33,7 +33,7 @@
         <Compile Include="Routing\Home.fs" />
         <Compile Include="Routing\Users.fs" />
         <Compile Include="Routing\Channels.fs" />
-        <Compile Include="Routing\CommunicationRequests.fs" />
+        <Compile Include="Routing\CommReqRoute.fs" />
         <Compile Include="Program.fs" />
         <Content Update="appsettings.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

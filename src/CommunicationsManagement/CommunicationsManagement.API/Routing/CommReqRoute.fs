@@ -1,5 +1,5 @@
 ﻿[<Microsoft.FSharp.Core.RequireQualifiedAccess>]
-module CommunicationsManagement.API.Routing.CommunicationRequests
+module CommunicationsManagement.API.Routing.CommReqRoute
 
 open CommunicationsManagement.API.Effects
 open CommunicationsManagement.API.Models
@@ -20,3 +20,6 @@ let list: RailRoute<HttpHandler> =
         { Root = root
           Model = { InEdition = requestsInEdition } }
   }
+
+let create: RailRoute<HttpHandler> = 
+  failwith "TODO"
