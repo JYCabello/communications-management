@@ -287,3 +287,19 @@ module Rendering =
            |> Error)
         |> Task.FromResult
     }
+
+  let requireOneRole (roles: Roles list) resourceName : RailRoute<unit> =
+    rail {
+      let! user = auth
+      let! vmr = getAnonymousRootModel
+
+      return!
+        (match roles |> List.exists user.hasRole with
+         | true -> Ok()
+         | false ->
+           resourceName
+           |> vmr.Translate
+           |> Unauthorized
+           |> Error)
+        |> Task.FromResult
+    }
