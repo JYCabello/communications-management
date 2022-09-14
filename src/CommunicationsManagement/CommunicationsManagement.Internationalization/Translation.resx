@@ -234,4 +234,10 @@
   <data name="Status" xml:space="preserve">
       <value>Status</value>
   </data>
+  <data name="CommunicationRequests" xml:space="preserve">
+      <value>Communication Requests</value>
+  </data>
+  <data name="Management" xml:space="preserve">
+      <value>Management</value>
+  </data>
 </root>

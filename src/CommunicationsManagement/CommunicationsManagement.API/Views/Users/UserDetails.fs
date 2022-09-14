@@ -17,10 +17,7 @@ let details (vm: ViewModel<RegularUser>) =
 
   let labelFor i18nTag forId =
     label [ _class "form-label"
-            yield!
-              forId
-              |> Option.map _for
-              |> Option.toList ] [
+            yield! forId |> Option.map _for |> Option.toList ] [
       i18nTag |> trxTxt
     ]
 

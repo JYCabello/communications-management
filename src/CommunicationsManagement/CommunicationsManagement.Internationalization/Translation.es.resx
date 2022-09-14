@@ -234,4 +234,10 @@
   <data name="Disabled" xml:space="preserve">
       <value>Desactivado</value>
   </data>
+  <data name="CommunicationRequests" xml:space="preserve">
+      <value>Solicitudes de comunicación</value>
+  </data>
+  <data name="Management" xml:space="preserve">
+      <value>Gestión</value>
+  </data>
 </root>

@@ -14,14 +14,14 @@ let validateEmail fieldName (email: string option) : ValidateResult<Email> =
       | false -> Validate.validationError fieldName "InvalidEmail"
     with
     | _ -> Validate.validationError fieldName "InvalidEmail"
-  
+
   let validatePresent (e: string) =
     let trimmedEmail = e.Trim()
 
     match trimmedEmail.EndsWith(".") with
     | true -> Validate.validationError fieldName "InvalidEmail"
     | false -> validateWithNetMail trimmedEmail
-      
+
 
   match email with
   | None -> Validate.validationError fieldName "CannotBeEmpty"
