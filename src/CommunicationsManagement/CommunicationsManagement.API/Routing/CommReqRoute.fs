@@ -21,13 +21,14 @@ let list: RailRoute<HttpHandler> =
           Model = { InEdition = requestsInEdition } }
   }
 
-let create: RailRoute<HttpHandler> = 
+let create: RailRoute<HttpHandler> =
   rail {
     let! root = modelRoot
     do! requireRole Roles.Delegate
-    
+
     return
       renderOk
         CreateRequest.create
-        { Root = root; Model = { Title = None; TitleError = None } }
+        { Root = root
+          Model = { Title = None; TitleError = None } }
   }

@@ -13,7 +13,9 @@ let create (vm: ViewModel<RequestCreationViewModel>) : XmlNode list =
   let trx = vm.Root.Translate
   let m = vm.Model
 
-  [ h1 [] [ "CreateCommunicationsRequest" |> trx |> Text ]
+  [ h1 [] [
+      "CreateCommunicationsRequest" |> trx |> Text
+    ]
     form [ _action "/communication-requests/create"
            _method "post"
            _novalidate ] [

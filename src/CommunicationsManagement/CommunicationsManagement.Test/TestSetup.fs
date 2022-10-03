@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open System.IO
 open System.Net.NetworkInformation
 open System.Runtime.InteropServices
 open System.Threading
@@ -17,17 +18,18 @@ open OpenQA.Selenium.Firefox
 
 type Setup
   (
+    tempFilePath: string,
     disposers: (unit -> unit) list,
     getLastNotification: unit -> SendNotificationParams,
     webDriver: WebDriver,
     ports: IPorts
   ) =
 
-  member this.lastNotification = getLastNotification ()
-
-  member this.driver = webDriver
-
-  member this.config = ports.configuration
+  member _.file = tempFilePath
+  member _.lastNotification = getLastNotification ()
+  member _.driver = webDriver
+  member _.config = ports.configuration
+  member this.goHome () = this.driver.Url = this.config.BaseUrl |> ignore
 
   interface IDisposable with
     member this.Dispose() =
@@ -171,6 +173,14 @@ let getFreePort () =
 
 let testSetup () =
   task {
+    let tempFilePath =
+      Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())
+      |> fun tf ->
+           do Directory.CreateDirectory tf |> ignore
+           let tfp = Path.Combine(tf, "./rickroll.jpg")
+           do File.Copy("./rickroll.jpg", tfp, true)
+           tfp
+
     let eventStorePort = getFreePort ()
 
     let! eventStoreContainerID =
@@ -248,5 +258,5 @@ let testSetup () =
 
     driver.Url <- baseUrl
 
-    return new Setup(disposers, getLastNotification, driver, ports)
+    return new Setup(tempFilePath, disposers, getLastNotification, driver, ports)
   }

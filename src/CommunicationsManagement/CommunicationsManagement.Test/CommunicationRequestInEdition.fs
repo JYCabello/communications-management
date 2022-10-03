@@ -51,5 +51,19 @@ let ``creates a communication request`` () =
     driver.FindElement(By.Name "content")
     |> fun contentInput -> Assert.Equal("Content of the request", contentInput.GetAttribute "value")
 
-    failwith "pending check for file uploads"
+    driver |> click "#add-media"
+
+    driver
+      .FindElement(By.Name "media")
+      .SendKeys(setup.file)
+
+    driver |> click "#media-submit"
+    driver |> click "#close-button"
+
+    driver.FindElement(By.ClassName "media-link")
+    |> fun e -> Assert.Contains(e.Text, "rickroll")
+
+    setup.goHome ()
+    driver |> click "#communication-requests-link"
+    Assert.NotEmpty(driver.FindElements(By.CssSelector ".details-request-link"))
   }
