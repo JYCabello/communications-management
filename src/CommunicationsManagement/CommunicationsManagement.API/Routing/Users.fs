@@ -133,7 +133,7 @@ let details id =
     return renderOk UserDetails.details { Model = regularUser; Root = root }
   }
 
-let switchRole (userId, role) eventBuilder =
+let private switchRole (userId, role) eventBuilder =
   let noneToBadRequest =
     function
     | Some r -> Ok r
