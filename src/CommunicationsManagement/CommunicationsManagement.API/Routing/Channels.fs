@@ -17,10 +17,6 @@ open Giraffe
 [<CLIMutable>]
 type CreateChannelPostDto = { Name: string option }
 
-type private ValidationResult2 =
-  | Valid2 of string
-  | Invalid2 of ViewModel<CreateChannel.ChannelCreationViewModel>
-
 let list: RailRoute<HttpHandler> =
   rail {
     do! requireRole Roles.ChannelManagement
