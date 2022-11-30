@@ -158,7 +158,7 @@ let private handle (se: ResolvedEvent) (ports: IPorts) : Task<unit> =
   | ChannelCreated cc -> channelCreated cc
   | ChannelEnabled ce -> channelEnabled ce
   | ChannelDisabled cd -> channelDisabled cd
-  | _ -> rail { return () }
+  | Toxic _ -> rail { return () }
   |> solve ports
   |> ignoreErrors
 

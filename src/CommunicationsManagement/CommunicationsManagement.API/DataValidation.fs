@@ -1,8 +1,18 @@
 ﻿module CommunicationsManagement.API.DataValidation
 
+open System
 open System.Net.Mail
 open CommunicationsManagement.API.EffectfulValidate
 open CommunicationsManagement.API.Models
+
+
+let (|WithValue|WhiteSpace|Empty|) str =
+  match String.IsNullOrEmpty(str) with
+  | true -> Empty
+  | false ->
+    match String.IsNullOrWhiteSpace(str) with
+    | true -> WhiteSpace
+    | false -> WithValue str
 
 let validateEmail fieldName (email: string option) : ValidateResult<Email> =
   let validateWithNetMail te =
